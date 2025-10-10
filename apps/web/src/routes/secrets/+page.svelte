@@ -1,6 +1,7 @@
 <script>
 	import SecretModal from '$lib/components/SecretModal.svelte';
 	import MaskedInput from '$lib/components/MaskedInput.svelte';
+	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 
 	let { data } = $props();
 
@@ -8,6 +9,8 @@
 	let projects = $state(data.projects || []);
 	let searchQuery = $state('');
 	let filterProject = $state('all');
+	let loading = $state(false);
+	let loadingMessage = $state('');
 
 	let modalOpen = $state(false);
 	let editingSecret = $state(null);
@@ -68,6 +71,8 @@
 		if (!confirm(`Delete secret "${secret.name}"? This cannot be undone.`)) return;
 
 		try {
+			loading = true;
+			loadingMessage = 'Deleting secret...';
 			const response = await fetch(`/api/secrets/${secret.id}`, {
 				method: 'DELETE'
 			});
@@ -77,6 +82,9 @@
 			secrets = secrets.filter((s) => s.id !== secret.id);
 		} catch (error) {
 			alert(`Error deleting secret: ${error.message}`);
+		} finally {
+			loading = false;
+			loadingMessage = '';
 		}
 	}
 
@@ -94,6 +102,15 @@
 </svelte:head>
 
 <div class="secrets-page">
+	{#if loading}
+		<div class="loading-overlay" role="status" aria-live="polite">
+			<div class="loading-content">
+				<LoadingSpinner size="large" label={loadingMessage} />
+				<p class="loading-message">{loadingMessage}</p>
+			</div>
+		</div>
+	{/if}
+
 	<header class="page-header">
 		<h1>Secrets Vault</h1>
 		<button class="btn-primary" onclick={handleCreate}>Create Secret</button>
@@ -168,8 +185,40 @@
 
 <style>
 	.secrets-page {
+		position: relative;
 		min-height: 100vh;
 		background: #f8f9fa;
+	}
+
+	.loading-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+	}
+
+	.loading-content {
+		background: white;
+		padding: 2rem 3rem;
+		border-radius: 8px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+	}
+
+	.loading-message {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 500;
+		color: #333;
 	}
 
 	.page-header {

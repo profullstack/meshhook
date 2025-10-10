@@ -4,7 +4,12 @@
 	 * Shows workflow version history with rollback capability
 	 */
 
+	import LoadingButton from './LoadingButton.svelte';
+
 	let { workflowId, versions = [], onRollback } = $props();
+
+	let rollingBack = $state(false);
+	let rollbackVersion = $state(null);
 
 	function formatDate(dateString) {
 		return new Date(dateString).toLocaleString('en-US', {
@@ -16,9 +21,16 @@
 		});
 	}
 
-	function handleRollback(version) {
+	async function handleRollback(version) {
 		if (confirm(`Rollback to version ${version.version}? This will create a new version.`)) {
-			onRollback?.(version);
+			try {
+				rollingBack = true;
+				rollbackVersion = version.id;
+				await onRollback?.(version);
+			} finally {
+				rollingBack = false;
+				rollbackVersion = null;
+			}
 		}
 	}
 </script>
@@ -56,9 +68,15 @@
 
 					{#if !version.is_current}
 						<div class="version-actions">
-							<button class="btn-rollback" onclick={() => handleRollback(version)}>
+							<LoadingButton
+								variant="secondary"
+								class="btn-rollback"
+								loading={rollingBack && rollbackVersion === version.id}
+								loadingText="Rolling back..."
+								onclick={() => handleRollback(version)}
+							>
 								Rollback to this version
-							</button>
+							</LoadingButton>
 						</div>
 					{/if}
 				</div>
@@ -170,19 +188,7 @@
 		border-top: 1px solid #e0e0e0;
 	}
 
-	.btn-rollback {
-		padding: 0.5rem 1rem;
-		background: white;
-		border: 1px solid #4075a6;
-		color: #4075a6;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.btn-rollback:hover {
-		background: #4075a6;
-		color: white;
+	.version-actions :global(.btn-rollback) {
+		width: 100%;
 	}
 </style>
