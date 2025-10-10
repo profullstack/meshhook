@@ -1,0 +1,15 @@
+{
+	"/": [
+		"src/routes/+layout.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/api/hooks/[slug]": [
+		"src/routes/api/hooks/[slug]/+server.js"
+	],
+	"/auth/login": [
+		"src/routes/+layout.server.js"
+	],
+	"/auth/logout": [
+		"src/routes/auth/logout/+server.js"
+	]
+}
