@@ -1,6 +1,7 @@
 {
   "name": "@profullstack/meshhook",
   "private": true,
+  "type": "module",
   "license": "MIT",
   "scripts": {
     "mh": "node packages/cli/bin/mh.js",
