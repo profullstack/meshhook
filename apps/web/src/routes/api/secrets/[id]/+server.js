@@ -1,22 +1,20 @@
-import { createServerSupabaseClient } from '$lib/supabase.js';
+import { getSupabase, getUser } from '$lib/auth.js';
 import { json } from '@sveltejs/kit';
 
 /**
  * PUT /api/secrets/[id] - Update a secret
  */
 export async function PUT(event) {
-	const supabase = createServerSupabaseClient(event);
+	const user = getUser(event);
+	
+	if (!user) {
+		return json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
+	}
+
+	const supabase = getSupabase(event);
 	const { id } = event.params;
 
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-
-		if (!session) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
-		}
-
 		const body = await event.request.json();
 		const { value, description } = body;
 
@@ -47,18 +45,16 @@ export async function PUT(event) {
  * DELETE /api/secrets/[id] - Delete a secret
  */
 export async function DELETE(event) {
-	const supabase = createServerSupabaseClient(event);
+	const user = getUser(event);
+	
+	if (!user) {
+		return json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
+	}
+
+	const supabase = getSupabase(event);
 	const { id } = event.params;
 
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-
-		if (!session) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
-		}
-
 		const { error } = await supabase.from('secrets').delete().eq('id', id);
 
 		if (error) throw error;

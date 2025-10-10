@@ -1,21 +1,19 @@
-import { createServerSupabaseClient } from '$lib/supabase.js';
+import { getSupabase, getUser } from '$lib/auth.js';
 import { json } from '@sveltejs/kit';
 
 /**
  * GET /api/secrets - List all secrets
  */
 export async function GET(event) {
-	const supabase = createServerSupabaseClient(event);
+	const user = getUser(event);
+	
+	if (!user) {
+		return json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
+	}
+
+	const supabase = getSupabase(event);
 
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-
-		if (!session) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
-		}
-
 		const { data: secrets, error } = await supabase
 			.from('secrets')
 			.select('*, project:projects(name)')
@@ -34,17 +32,15 @@ export async function GET(event) {
  * POST /api/secrets - Create a new secret
  */
 export async function POST(event) {
-	const supabase = createServerSupabaseClient(event);
+	const user = getUser(event);
+	
+	if (!user) {
+		return json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
+	}
+
+	const supabase = getSupabase(event);
 
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-
-		if (!session) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
-		}
-
 		const body = await event.request.json();
 		const { name, value, project_id, description } = body;
 

@@ -1,7 +1,9 @@
 /**
  * SvelteKit Server Hooks
- * Handles server-side middleware including www to non-www redirects
+ * Handles server-side middleware including authentication and www to non-www redirects
  */
+
+import { createServerSupabaseClient } from '$lib/supabase.js';
 
 /**
  * Handle function runs on every server request
@@ -33,6 +35,25 @@ export async function handle({ event, resolve }) {
 			}
 		});
 	}
+
+	// Create Supabase client for this request
+	const supabase = createServerSupabaseClient(event);
+
+	// Get the session using getUser() for security (not getSession())
+	const {
+		data: { user },
+		error
+	} = await supabase.auth.getUser();
+
+	// Make user available to all routes via event.locals
+	event.locals.supabase = supabase;
+	event.locals.user = user;
+	event.locals.getSession = async () => {
+		const {
+			data: { session }
+		} = await supabase.auth.getSession();
+		return session;
+	};
 
 	// Continue with normal request handling
 	const response = await resolve(event);

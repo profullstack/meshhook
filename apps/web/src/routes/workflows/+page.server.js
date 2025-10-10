@@ -1,20 +1,14 @@
-import { createServerSupabaseClient } from '$lib/supabase.js';
+import { requireAuth, getSupabase } from '$lib/auth.js';
 
 /**
  * Load workflows for the list view
  */
 export async function load(event) {
-	const supabase = createServerSupabaseClient(event);
+	// Require authentication - will redirect to /login if not authenticated
+	const user = requireAuth(event);
+	const supabase = getSupabase(event);
 
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-
-		if (!session) {
-			return { workflows: [] };
-		}
-
 		const { data: workflows, error } = await supabase
 			.from('workflows')
 			.select('*')
@@ -25,7 +19,10 @@ export async function load(event) {
 			return { workflows: [], error: error.message };
 		}
 
-		return { workflows: workflows || [] };
+		return {
+			workflows: workflows || [],
+			user
+		};
 	} catch (error) {
 		console.error('Error in workflows load:', error);
 		return { workflows: [], error: error.message };
