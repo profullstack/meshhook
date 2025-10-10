@@ -51,6 +51,12 @@
 					description: 'Branch based on condition'
 				},
 				{
+					type: 'branch',
+					label: 'Branch',
+					icon: '🌿',
+					description: 'Split flow to multiple paths'
+				},
+				{
 					type: 'loop',
 					label: 'Loop',
 					icon: '🔁',
