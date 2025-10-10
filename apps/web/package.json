@@ -5,11 +5,32 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
+    "lint": "eslint .",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.1",
+    "@supabase/ssr": "^0.5.2",
     "jmespath": "^0.16.0",
-    "undici": "^6.19.8"
+    "undici": "^6.19.8",
+    "@xyflow/svelte": "^0.1.19"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-auto": "^3.2.5",
+    "@sveltejs/kit": "^2.7.7",
+    "@sveltejs/vite-plugin-svelte": "^4.0.1",
+    "svelte": "^5.2.7",
+    "svelte-check": "^4.0.8",
+    "vite": "^5.4.11",
+    "@eslint/js": "^9.15.0",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-svelte": "^2.46.1",
+    "globals": "^15.12.0",
+    "prettier": "^3.3.3",
+    "prettier-plugin-svelte": "^3.2.8"
   }
 }
