@@ -3,25 +3,6 @@
 
 package "MeshHook System" {
     [Webhook Intake] <<SvelteKit>>
-<<<<<<< HEAD
-    [Workflow CRUD API] <<SvelteKit>>
-    [Publish Versions] <<SvelteKit>>
-    [Run Console] <<SvelteKit>>
-    database "Supabase Postgres" {
-        [Data + Queues]
-        [Realtime Log Streaming]
-        [Storage Artifacts]
-        [Edge Cron/Timers]
-=======
-    [Workflow CRUD] <<SvelteKit>>
-    [Publish Versions] <<SvelteKit>>
-    [Run Console] <<SvelteKit>>
-    database "Supabase" {
-        [Postgres]
-        [Realtime]
-        [Storage]
-        [Edge]
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
     }
     [Orchestrator Worker]
     [HTTP Executor Worker]
@@ -29,65 +10,5 @@ package "MeshHook System" {
 
 package "Connection Pooling Optimization" {
     [Connection Pool Manager] #LightGreen
-<<<<<<< HEAD
-    [Resource Monitor] #LightGreen
-    [Load Balancer] #LightGreen
-}
-
-[Webhook Intake] --> [Connection Pool Manager] : Uses
-[Workflow CRUD API] --> [Connection Pool Manager] : Uses
-[Publish Versions] --> [Connection Pool Manager] : Uses
-[Run Console] --> [Connection Pool Manager] : Uses
-[Connection Pool Manager] --> [Data + Queues] : Connects
-[Connection Pool Manager] --> [Resource Monitor] : Reports to
-[Resource Monitor] --> [Load Balancer] : Informs
-[Load Balancer] --> [Connection Pool Manager] : Adjusts
-
-note right of [Connection Pool Manager]
-  Core component for optimizing
-  database connections within the MeshHook system.
-  It manages the pool of database connections,
-  ensuring efficient resource utilization
-  and high performance.
-end note
-
-note right of [Resource Monitor]
-  Monitors resource usage and performance metrics,
-  providing data for dynamic adjustment
-  of the connection pool size.
-end note
-
-note right of [Load Balancer]
-  Dynamically adjusts the distribution
-  of database connections based on
-  current load and resource availability.
-end note
-=======
-    [Database Connection Pool] #LightGreen
-    [Resource Monitor] #LightGreen
-}
-
-[Connection Pool Manager] --> [Database Connection Pool] : Manages
-[Database Connection Pool] --> [Postgres] : Connects
-[Resource Monitor] --> [Database Connection Pool] : Monitors & Adjusts
-
-[Webhook Intake] --> [Connection Pool Manager] : Uses
-[Workflow CRUD] --> [Connection Pool Manager] : Uses
-[Publish Versions] --> [Connection Pool Manager] : Uses
-[Run Console] --> [Connection Pool Manager] : Uses
-
-note right of [Database Connection Pool]
-  Optimizes database connections
-  to maintain performance and
-  manage resource constraints.
-end note
-
-note "Integration with Supabase Postgres for data operations and queues. Utilizes existing database schema without changes." as N1
-[Connection Pooling Optimization] . N1
-N1 . [Supabase]
-
-note "Monitors connection usage and dynamically adjusts pool size based on load." as N2
-[Resource Monitor] . N2
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

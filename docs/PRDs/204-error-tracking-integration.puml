@@ -2,69 +2,10 @@
 !theme plain
 
 package "MeshHook System" {
-<<<<<<< HEAD
-    [SvelteKit SSR/API] as SSR
-    [Supabase] as Supabase
-    [Workers] as Workers
-    database "Postgres" as Postgres
-=======
-    [Webhook Intake] as Intake
-    [Workflow CRUD API] as CRUD
-    [Publish Versions] as Publish
-    [Run Console] as Console
-    [Error Tracking] as ErrorTracking
-}
-
-package "Supabase" {
-    [Postgres] as Postgres
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
     [Realtime] as Realtime
     [Storage] as Storage
     [Edge] as Edge
 }
 
-<<<<<<< HEAD
-package "Error Tracking Integration" {
-    [Error Tracking Service] as ErrorService
-    [Error Tracking SDK (Backend)] as ErrorSDKBackend
-    [Error Tracking SDK (Frontend)] as ErrorSDKFrontend
-    [Configuration & Documentation] as ConfigDocs
-}
-
-SSR --> ErrorSDKBackend : 1. Captures Backend Errors
-SSR --> ErrorSDKFrontend : 2. Initializes Frontend Client
-Supabase --> ErrorSDKBackend : 3. Captures Service Errors
-Workers --> ErrorSDKBackend : 4. Captures Worker Errors
-
-ErrorSDKBackend --> ErrorService : a. Reports Errors
-ErrorSDKFrontend --> ErrorService : b. Reports Errors
-
-ErrorService --> [Monitoring & Observability] : 5. Error Insights
-
-note right of ErrorService : Error Context Information\n- Workflow ID\n- Execution Step\n- User ID (if applicable)
-
-ConfigDocs .> SSR : Configures Error Tracking
-ConfigDocs .> Supabase : Configures Error Tracking
-ConfigDocs .> Workers : Configures Error Tracking
-ConfigDocs ..> ErrorService : Documents Setup & Management
-=======
-package "Workers" {
-    [Orchestrator] as Orchestrator
-    [HTTP Executor] as Executor
-}
-
-Intake --> ErrorTracking : triggers on error
-CRUD --> ErrorTracking : triggers on error
-Publish --> ErrorTracking : triggers on error
-Console --> ErrorTracking : triggers on error
-
-ErrorTracking --> Postgres : logs errors
-ErrorTracking --> Realtime : streams error logs
-
-Orchestrator --> ErrorTracking : reports task failures
-Executor --> ErrorTracking : reports HTTP errors
-
-note right of ErrorTracking : Integrates with existing components\nto track and log errors
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

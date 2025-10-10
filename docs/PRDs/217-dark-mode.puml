@@ -1,56 +1,5 @@
 @startuml
 !theme plain
 
-<<<<<<< HEAD
-package "MeshHook System" {
-    [User Interface] as UI
-    [Theme Switcher Component] as TSC
-    [User Profile Settings] as UPS
-    [Supabase Backend] as Supabase
-    [SvelteKit Store] as Store
-    database "Supabase DB" as DB {
-        [User Settings Table]
-    }
-}
-
-cloud {
-    [User's Browser] as Browser
-}
-
-Browser --> UI : Access Application
-UI --> TSC : Toggle Dark/Light Mode
-TSC --> Store : Update Theme State
-Store --> UPS : Store User Preference
-UPS --> DB : Update User Settings Table
-DB --> UPS : Retrieve User Preference on Login
-UPS --> Store : Initialize Theme State
-Store --> UI : Apply Theme
-
-note right of UI : Dark and Light Modes
-
-note right of DB : Stores\nUser Theme Preference
-
-Supabase --> DB : Manages
-=======
-title Dark Mode Implementation Flow
-
-actor User
-entity "UI Theme Switcher" as Switcher
-control "SvelteKit SSR/API" as SSR
-database "Postgres" as DB
-entity "Supabase Realtime" as Realtime
-control "HTTP Executor" as Executor
-
-User -> Switcher : Toggle Dark Mode
-Switcher -> SSR : Request Dark Mode UI
-SSR -> DB : Check User Preferences
-DB --> SSR : Return Preferences
-SSR -> Switcher : Serve Dark Mode UI
-Switcher --> User : Display Dark Mode
-
-SSR -> Executor : Trigger UI Update Event
-Executor -> Realtime : Log UI Change
-Realtime --> User : Notify UI Update
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml
