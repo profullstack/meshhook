@@ -1,5 +1,47 @@
 @startuml
 !theme plain
 
-package "MeshHook System" {
+package "MeshHook Infrastructure" {
+    [Supabase] #LightBlue
+    database "Postgres DB" as DB #LightGreen
+    [Real-time Log Streaming] #LightGrey
+    [Data Storage and Queues] #LightGrey
+}
+
+package "Database Performance Monitoring System" {
+    [Monitoring Tool] #Yellow
+    [Performance Dashboard] #Yellow
+    [Alerting Mechanism] #Yellow
+}
+
+[Supabase] --> DB : Utilizes
+DB --> [Monitoring Tool] : Monitors
+[Monitoring Tool] --> [Performance Dashboard] : Provides Data
+[Monitoring Tool] --> [Alerting Mechanism] : Triggers Alerts
+[Performance Dashboard] .> [MeshHook Admin Team] : Accessible by
+[Alerting Mechanism] .> [MeshHook Admin Team] : Notifies
+
+note right of [Monitoring Tool]
+  Evaluate tools that integrate well with Postgres and Supabase.
+  Prefer open-source solutions for extensibility.
+end note
+
+note right of [Performance Dashboard]
+  Develop custom dashboard using tool's API
+  or data export capabilities.
+end note
+
+note right of [Alerting Mechanism]
+  Configure alerts based on critical performance metrics.
+end note
+
+note right of DB
+  No changes to existing data model required.
+  Monitoring data stored externally.
+end note
+
+[MeshHook Admin Team] --> [Monitoring Tool] : Configures\nand Maintains
+[MeshHook Admin Team] --> [Performance Dashboard] : Uses
+[MeshHook Admin Team] --> [Alerting Mechanism] : Manages
+
 @enduml

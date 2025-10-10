@@ -1,5 +1,40 @@
 @startuml
 !theme plain
 
+title Query Optimization for MeshHook Workflow Engine
+
+package "MeshHook System" {
+    [Workflow Engine] as Engine
+    database "Supabase Postgres" as DB {
+        [Queries] as DBQueries
+        [Indexes] as DBIndexes
+    }
+    [Monitoring & Observability] as Monitoring
+}
+
+cloud {
+    [Supabase Performance Tools] as PerformanceTools
+}
+
+[Performance Analysis] as Analysis
+[Optimization Strategies] as Strategies
+[Implementation of Optimizations] as Implementation
+[Performance Benchmarking] as Benchmarking
+[Documentation] as Docs
+
+Engine --> DB : uses
+DB --> Monitoring : reports performance
+
+PerformanceTools --> Analysis : identifies inefficiencies
+Analysis --> DBQueries : analyzes
+Analysis --> Strategies : guides
+Strategies --> DBIndexes : proposes changes
+Strategies --> DBQueries : suggests refactoring
+DBQueries --> Implementation : applies optimizations
+DBIndexes --> Implementation : applies changes
+Implementation --> Benchmarking : validates improvements
+Benchmarking --> Monitoring : updates baselines
+Docs --> DB : documents changes
+Docs --> [API Endpoints] : documents impact
 
 @enduml

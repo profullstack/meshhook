@@ -1,7 +1,45 @@
 @startuml
 !theme plain
 
-package "MeshHook System" {
+package "MeshHook Application" {
+    [MeshHook Admin Console] - [Live Dashboard]
+    [MeshHook Admin Console] --> [API Endpoints]
+    [API Endpoints] --> [Metrics Collection]
+    [Metrics Collection] --> [Supabase Realtime]
+    [Metrics Collection] --> [External Monitoring Tools]
+    database "Supabase" {
+        [Supabase Realtime]
+    }
+    cloud "External Monitoring Tools" {
+        [Prometheus]
+        [Grafana]
+    }
+}
+
+node "Integration Points" {
+    [Supabase Realtime] --> [Prometheus] : Exports Metrics\n(in Prometheus Format)
+    [Prometheus] --> [Grafana] : Visualizes Metrics
+    [MeshHook Admin Console] --> [Grafana] : Embeds Metrics\nDashboard
+}
+
+[Metrics Collection] ..> [Alerting Mechanism] : Triggers Alerts\nfor Critical Metrics
+[Alerting Mechanism] --> [MeshHook Admin Console] : Configures Alerts
+[API Endpoints] --> [GET /api/metrics] : Fetches Aggregated\nMetrics Data
+[API Endpoints] --> [POST /api/metrics/alerts] : Configures New\nAlert Thresholds
+
+note right of [External Monitoring Tools]
+  Integration with external tools like Prometheus and Grafana
+  is crucial for metrics storage and visualization.
+end note
+
+note right of [Metrics Collection]
+  Collects system and application metrics
+  with minimal performance impact.
+end note
+
+note right of [Live Dashboard]
+  Provides real-time insights into system's health,
+  usage patterns, and potential bottlenecks.
 end note
 
 @enduml

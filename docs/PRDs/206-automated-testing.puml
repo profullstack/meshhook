@@ -1,5 +1,53 @@
 @startuml
 !theme plain
 
+package "Automated Testing Suite" {
+    [Test Runner] as Runner
+    [Unit Tests] as Unit
+    [Integration Tests] as Integration
+    [E2E Tests] as E2E
+    database "Test Database" as TestDB
+}
+
+package "MeshHook System" {
+    [Webhook Processing] as Webhook
+    [DAG Execution] as DAG
+    [User Authentication] as Auth
+    [GitHub Actions] as GitHub
+    [Documentation] as Docs
+}
+
+Runner --> Unit : executes
+Runner --> Integration : executes
+Runner --> E2E : executes
+
+Unit --> Webhook : tests
+Unit --> DAG : tests
+Unit --> Auth : tests
+
+Integration --> Webhook : tests interaction
+Integration --> DAG : tests interaction
+Integration --> Auth : tests interaction
+
+E2E --> Webhook : simulates user scenarios
+E2E --> DAG : simulates user scenarios
+E2E --> Auth : simulates user scenarios
+
+TestDB <.. Integration : uses
+TestDB <.. E2E : uses
+
+GitHub ..> Runner : triggers tests on\ncommit & pull request
+Runner ..> Docs : updates documentation
+
+note right of GitHub
+  CI/CD Integration
+end note
+
+note right of Docs
+  Includes guidelines for\nwriting, running, and updating tests
+end note
+
+note "SvelteKit/Svelte 5\nSupabase\nCustom Workers" as TechStack
+TechStack ..> MeshHook System : technology stack
 
 @enduml

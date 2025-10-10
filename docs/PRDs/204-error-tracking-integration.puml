@@ -1,11 +1,44 @@
 @startuml
 !theme plain
 
+title Error Tracking Integration
+
 package "MeshHook System" {
-    [Realtime] as Realtime
-    [Storage] as Storage
-    [Edge] as Edge
+    [Frontend (SvelteKit)] as FE
+    [Backend (Node.js)] as BE
+    database "Supabase" as DB
 }
 
+cloud {
+    [Error Tracking Service] as ETS
+}
+
+FE -down-> ETS : Captures frontend errors
+BE -down-> ETS : Captures backend errors
+DB --> BE : Provides backend services
+FE .right.> BE : Communicates for data
+
+note right of ETS : Sentry, Rollbar, etc.
+
+package "Configuration & Documentation" {
+    [Environment Variables] as ENV
+    [Configuration Files] as CONF
+    [Project Documentation] as DOC
+}
+
+BE --> ENV : Reads for setup
+BE --> CONF : Reads for setup
+DOC ..> ETS : Describes integration setup
+DOC ..> ENV : Details on environment variables
+DOC ..> CONF : Details on configuration options
+
+note over BE, FE : Error Context Includes:\n- Workflow ID\n- Execution Step\n- User ID (if applicable)\n- Relevant Data
+
+legend right
+  -- Key --
+  [ ] : Component
+  --> : Interaction
+  ..> : Documentation Reference
+endlegend
 
 @enduml

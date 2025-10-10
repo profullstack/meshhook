@@ -1,3 +1,39 @@
 @startuml
+!theme plain
+
+package "MeshHook CI/CD Pipeline" {
+    [GitHub Actions] as GitHubActions
+    node "CI/CD Tools" {
+        [Migration Scripts Execution]
+    }
+}
+
+package "Database Migration Tool" {
+    [Flyway/Liquibase] as MigrationTool
+    [Migration Scripts] as Scripts
+    [Migration Logs Table] as Logs
+}
+
+database "Supabase Postgres" {
+    [MeshHook Database]
+}
+
+[GitHubActions] --> [Migration Scripts Execution] : triggers
+[Migration Scripts Execution] --> MigrationTool : uses
+MigrationTool --> Scripts : generates/manages
+Scripts --> [MeshHook Database] : applies changes
+[MeshHook Database] --> Logs : logs status
+
+note right of MigrationTool : Integrates with\nSupabase Postgres
+note right of Scripts : Idempotent scripts
+note right of Logs : Execution date\nStatus\nErrors
+
+legend right
+  - Automated migration script generation
+  - Version control integration
+  - CI/CD pipeline execution
+  - Rollback capabilities
+  - Notification and reporting
+endlegend
 
 @enduml

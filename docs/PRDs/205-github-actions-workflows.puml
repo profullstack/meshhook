@@ -1,5 +1,41 @@
 @startuml
 !theme plain
 
+title GitHub Actions Workflows for MeshHook
+
+actor Developer as dev
+boundary "GitHub Repository" as repo
+collections ".github/workflows" as workflows
+entity "CI Workflow" as ci
+entity "CD Workflow" as cd
+entity "Security Scan Workflow" as security
+database "Staging Environment" as staging
+database "Production Environment" as production
+control "SvelteKit/Svelte 5 Frontend" as frontend
+control "Supabase Backend" as backend
+control "Workers" as workers
+
+dev --> repo : Push/PR to `main`
+dev --> repo : Merge to `main`
+repo --> workflows : Detect changes
+workflows --> ci : Trigger on push/PR
+workflows --> cd : Trigger on merge
+workflows ..> security : Schedule/Manual trigger
+
+ci --> frontend : Run tests
+ci --> backend : Run tests
+ci --> workers : Run tests
+ci --> repo : Linting
+ci --> repo : Build verification
+
+cd --> staging : Deploy application
+staging --> cd : Smoke tests
+cd ..> production : Manual trigger for deploy
+
+security --> repo : Static code analysis
+security --> dev : Alert on vulnerabilities
+
+frontend -[hidden]- backend : 
+backend -[hidden]- workers : 
 
 @enduml

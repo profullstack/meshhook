@@ -1,3 +1,37 @@
 @startuml
+!theme plain
+
+package "Queue Health Monitoring System" {
+    [Queue Metrics Collection] as Metrics
+    [Real-Time Monitoring Dashboard] as Dashboard
+    [Alerting Mechanism] as Alerts
+    database "Supabase Postgres" as Postgres {
+        [Queue Tables]
+        [Logs]
+    }
+    [Supabase Realtime] as Realtime
+    [SvelteKit Web Interface] as WebInterface
+}
+
+package "External Services" {
+    [Email/SMS Notifications] as Notifications
+    [AWS Lambda] as Lambda
+}
+
+cloud {
+    [pg-boss/pgmq]
+}
+
+[Queue Tables] --> Metrics : collects metrics
+[Logs] --> Metrics : collects metrics
+Metrics --> Realtime : feeds metrics
+Realtime --> Dashboard : updates in < 10s
+Dashboard --> WebInterface : integrates with
+Metrics --> Alerts : triggers on conditions
+Alerts --> Lambda : uses for logic
+Lambda --> Notifications : sends alerts
+
+pg-boss/pgmq -[hidden]-> Postgres : uses >> 
+Postgres -[hidden]-> Supabase Postgres : within >>
 
 @enduml

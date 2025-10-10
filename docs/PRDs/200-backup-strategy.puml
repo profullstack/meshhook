@@ -1,5 +1,43 @@
 @startuml
 !theme plain
 
+package "MeshHook System" {
+    [SvelteKit SSR/API] - [Supabase/Postgres]
+    [Dedicated Workers] - [Supabase/Postgres]
+    [Supabase/Postgres] --> [Backup System]
+
+    package "Backup System" {
+        [Automated Backup Jobs] - [Incremental Backup Mechanism]
+        [Backup Validation] - [Automated Backup Jobs]
+        [Secure Backup Storage] - [Backup Validation]
+        [Rapid Restoration Process] - [Secure Backup Storage]
+        [Multi-Tenant Data Handling] - [Rapid Restoration Process]
+        [Automated Backup Jobs] --> [Encryption & Access Control]
+        [Secure Backup Storage] --> [Encryption & Access Control]
+    }
+}
+
+[Supabase/Postgres] --> [Analysis]
+[Analysis] --> [Design]
+[Design] --> [Implementation]
+[Implementation] --> [Testing]
+[Testing] --> [Documentation]
+[Documentation] -.-> [MeshHook System]
+
+note right of [Backup System]
+  Key Operations:
+  - Scheduled backups
+  - Incremental backups
+  - Backup validation
+  - Encrypted storage
+  - Rapid data restoration
+  - Multi-tenant isolation
+end note
+
+note right of [Supabase/Postgres]
+  Integrates with:
+  - SvelteKit for SSR/API
+  - Dedicated workers for orchestration
+end note
 
 @enduml

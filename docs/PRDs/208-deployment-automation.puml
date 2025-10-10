@@ -1,5 +1,52 @@
 @startuml
-!theme plain
+!define RECTANGLE class
 
+skinparam rectangle {
+    BackgroundColor<<frontend>> Wheat
+    BackgroundColor<<backend>> LightBlue
+    BackgroundColor<<orchestration>> LightGreen
+    BackgroundColor<<ci/cd>> LightGrey
+    BackgroundColor<<iac>> Gold
+}
+
+rectangle "SvelteKit\nFrontend" as Frontend <<frontend>> {
+}
+
+rectangle "Supabase\nBackend" as Backend <<backend>> {
+}
+
+rectangle "Workers\nOrchestration" as Workers <<orchestration>> {
+}
+
+rectangle "GitHub Actions\nCI/CD" as CI_CD <<ci/cd>> {
+}
+
+rectangle "Terraform\nIaC" as Terraform <<iac>> {
+}
+
+rectangle "Notification\nSystem" as Notifications {
+}
+
+rectangle "Deployment\nPipelines" as DeploymentPipelines {
+}
+
+rectangle "Monitoring" as Monitoring {
+}
+
+Frontend -[hidden]-> Backend
+Backend -[hidden]-> Workers
+Workers -[hidden]-> CI_CD
+CI_CD -[hidden]-> Terraform
+Terraform -[hidden]-> Notifications
+Notifications -[hidden]-> DeploymentPipelines
+DeploymentPipelines -[hidden]-> Monitoring
+
+DeploymentPipelines -[dashed]-> CI_CD : Configures
+CI_CD --> Frontend : Deploys
+CI_CD --> Backend : Deploys
+CI_CD --> Workers : Deploys
+Terraform --> CI_CD : Infrastructure Changes
+Notifications <-- CI_CD : Deployment Status
+Monitoring --> CI_CD : Observes Deployments
 
 @enduml

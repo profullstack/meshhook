@@ -1,5 +1,5 @@
 import { json, error } from '@sveltejs/kit';
-import { HttpCallNode } from '$lib/../../src/nodes/http-call.js';
+import { HttpCallNode } from '$lib/nodes/http-call.js';
 
 /**
  * API endpoint for testing HTTP calls

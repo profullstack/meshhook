@@ -159,7 +159,7 @@
 	}
 </script>
 
-<div class="modal-overlay" onclick={handleOverlayClick} role="dialog" aria-modal="true">
+<div class="modal-overlay" onclick={handleOverlayClick} onkeydown={(e) => e.key === 'Escape' && handleCancel()} role="dialog" aria-modal="true" tabindex="-1">
 	<div class="modal-content">
 		<div class="modal-header">
 			<h2>Configure {node.data?.label || 'Node'}</h2>
@@ -241,8 +241,8 @@
 </div>
 
 {#if showTestResult && testResult}
-	<div class="test-result-overlay" onclick={closeTestResult}>
-		<div class="test-result-modal" onclick={(e) => e.stopPropagation()}>
+	<div class="test-result-overlay" onclick={closeTestResult} onkeydown={(e) => e.key === 'Escape' && closeTestResult()} role="dialog" aria-modal="true" tabindex="-1">
+		<div class="test-result-modal" onclick={(e) => e.stopPropagation()} role="document">
 			<div class="test-result-header">
 				<h2>HTTP Test Result</h2>
 				<button class="close-btn" onclick={closeTestResult} aria-label="Close">&times;</button>

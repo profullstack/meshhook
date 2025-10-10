@@ -2,5 +2,29 @@
 !theme plain
 
 package "MeshHook System" {
+    [SvelteKit UI] as UI
+    [Supabase DB] as DB
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as Executor
+    [Monitoring Service] as Monitor
+    [API Gateway] as API
+
+    UI --> API : Configures resource limits
+    API --> DB : Stores/Updates\nresource limits
+    DB --> Orchestrator : Provides\nresource limits
+    DB --> Executor : Provides\nresource limits
+    Orchestrator --> Executor : Orchestrates\nworkflow execution
+    Executor --> Monitor : Reports\nresource usage
+    Monitor --> DB : Logs\nresource usage
+    Monitor .> API : Triggers\nnotifications
+    API ..> UI : Sends\nnotifications
+}
+
+node "External Systems" {
+    [Tenant Administration] as Tenant
+}
+
+Tenant --> UI : Access & Configuration
+Tenant --> API : Uses endpoints\n(GET/POST)
 
 @enduml
