@@ -10,11 +10,14 @@
 		{ href: '/secrets', label: 'Secrets' }
 	];
 
+	// Get current pathname reactively
+	let currentPath = $derived($page.url.pathname);
+
 	function isActive(href) {
 		if (href === '/') {
-			return $page.url.pathname === '/';
+			return currentPath === '/';
 		}
-		return $page.url.pathname.startsWith(href);
+		return currentPath.startsWith(href);
 	}
 </script>
 
