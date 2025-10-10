@@ -1,0 +1,30 @@
+@startuml
+!theme plain
+
+title Node Reference Documentation Workflow
+
+actor Developer as dev
+participant "Documentation System" as docs
+participant "MeshHook Core" as core
+database "Supabase" as supabase
+participant "GitHub" as github
+
+dev -> docs : Request documentation
+docs -> core : Analyze existing codebase
+activate core
+
+core -> supabase : Query workflow\nand node details
+activate supabase
+supabase --> core : Return data
+deactivate supabase
+
+core -> core : Generate node reference
+core --> docs : Return generated documentation
+deactivate core
+
+docs -> github : Update documentation\nin repo
+activate github
+github --> dev : Notify documentation update
+deactivate github
+
+@enduml

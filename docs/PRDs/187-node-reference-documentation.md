@@ -1,173 +1,103 @@
 # PRD: Node reference documentation
 
+**Issue:** [#187](https://github.com/profullstack/meshhook/issues/187)
+**Milestone:** Phase 8: Documentation
+**Labels:** user-documentation, hacktoberfest
+
+---
+
+# PRD: Node Reference Documentation
+
 **Issue:** [#187](https://github.com/profullstack/meshhook/issues/187)  
 **Milestone:** Phase 8: Documentation  
-**Labels:** user-documentation  
+**Labels:** user-documentation, hacktoberfest  
 **Phase:** Phase 8  
 **Section:** User Documentation
 
 ---
 
-## Overview
+## 1. Overview
 
-This task is part of Phase 8 in the User Documentation section of the MeshHook project. 
+The purpose of this task is to create comprehensive node reference documentation for MeshHook. This documentation is essential for enabling developers, automation engineers, and indie builders to fully utilize MeshHook's workflow engine capabilities. It aligns with the project's goal of delivering a webhook-first, deterministic, Postgres-native workflow engine by ensuring users have the necessary resources to implement complex workflows with ease and confidence.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+**Objective:** Develop detailed, user-friendly node reference documentation that covers all available nodes within MeshHook, including their purposes, configurations, inputs, and outputs.
 
-**Task Objective:** Node reference documentation
+## 2. Functional Requirements
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+1. **Comprehensive Coverage:** Document each node available in MeshHook, including webhook triggers, transform nodes, HTTP calls, branches, delays, and termination nodes.
+2. **Examples:** Provide practical examples for each node, demonstrating common use cases and configurations.
+3. **Searchability:** Ensure the documentation is easily navigable and searchable, allowing users to find the information they need quickly.
+4. **Version Compatibility:** Clearly indicate the version compatibility of nodes, highlighting any version-specific features or limitations.
 
-## Requirements
+## 3. Non-Functional Requirements
 
-### Functional Requirements
+- **Usability:** Documentation should be clear, concise, and organized logically for easy consumption by the target audience.
+- **Maintainability:** The documentation format must be easy to update as new nodes are added or existing nodes are modified.
+- **Accessibility:** Ensure the documentation is accessible, following web content accessibility guidelines (WCAG).
 
-1. Implement the core functionality described in the task: "Node reference documentation"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
-
-## Technical Specifications
+## 4. Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+The node reference documentation will be integrated into the existing SvelteKit-based documentation site, leveraging Supabase for storing and managing versioned documentation content if necessary.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Content Creation:** Collaborate with the development team to gather detailed information on each node, including configuration options, inputs, outputs, and use cases.
+2. **Documentation Structure:** Design a template for node documentation to ensure consistency across the documentation. This template should include sections for description, configuration options, inputs, outputs, version compatibility, and examples.
+3. **Authoring:** Write the documentation, adhering to the designed template for each node. Use Markdown for formatting to ensure compatibility with the SvelteKit documentation site.
+4. **Review and Feedback:** Conduct technical reviews with the development team and usability reviews with a subset of the target audience. Incorporate feedback to improve clarity and completeness.
+5. **Publication:** Integrate the documentation into the existing SvelteKit site, ensuring it is searchable and well-organized.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+No data model changes are required for this task.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No new API endpoints are required for this task.
 
-### API Endpoints (if applicable)
+## 5. Acceptance Criteria
 
-No new API endpoints required for this task.
+- [ ] Each node in MeshHook is documented, including description, configuration, inputs, outputs, and examples.
+- [ ] Documentation is reviewed for technical accuracy and usability.
+- [ ] Documentation is integrated into the SvelteKit site, easily searchable and navigable.
+- [ ] Documentation adheres to web content accessibility guidelines (WCAG).
 
-## Acceptance Criteria
+## 6. Dependencies and Prerequisites
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- Access to MeshHook's current node implementations and developers for technical details.
+- Existing SvelteKit-based documentation site for integration.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
-
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Use Markdown for documentation to ensure compatibility and ease of updates.
+- Follow the established style guide for MeshHook documentation to maintain consistency.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Technical Accuracy:** Review by the MeshHook development team.
+- **Usability Testing:** Gather feedback from a small group of target users to ensure the documentation meets their needs.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+As this task involves documentation, the primary security consideration is ensuring that no sensitive information about the implementation details or security mechanisms is inadvertently disclosed.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+N/A for documentation tasks. However, user feedback mechanisms should be in place to monitor the effectiveness of the documentation and identify areas for improvement.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
+- [MeshHook Main PRD](../PRD.md)
+- [Architecture Overview](../Architecture.md)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
 
-## Task Details
-
-**Original Task Description:**
-Node reference documentation
-
-**Full Issue Body:**
-**Phase:** Phase 8
-**Section:** User Documentation
-
-**Task:** Node reference documentation
-
----
-_Auto-generated from TODO.md_
-
----
-
-*This PRD was auto-generated from GitHub issue #187*  
 *Last updated: 2025-10-10*
+
+---
+
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #187*
+*Generated: 2025-10-10*
