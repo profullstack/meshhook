@@ -1,6 +1,6 @@
 # Railway configuration for the Web Application (SvelteKit)
 [build]
-buildCommand = "npm install -g pnpm && pnpm install && cd apps/web && PUBLIC_SUPABASE_URL=$SUPABASE_URL PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY pnpm run build"
+buildCommand = "npm install -g pnpm && pnpm install --frozen-lockfile && cd apps/web && PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL PUBLIC_SUPABASE_ANON_KEY=$PUBLIC_SUPABASE_ANON_KEY pnpm run build"
 
 [deploy]
 startCommand = "cd apps/web && node build/index.js"

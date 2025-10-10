@@ -1,6 +1,6 @@
 # Railway configuration for the Orchestrator Worker
 [build]
-buildCommand = "npm install -g pnpm && pnpm install"
+buildCommand = "npm install -g pnpm && pnpm install --frozen-lockfile"
 
 [deploy]
 startCommand = "node workers/orchestrator.mjs"
