@@ -6,7 +6,7 @@
 
 ---
 
-# PRD: GitHub Actions Workflows
+# PRD: GitHub Actions workflows
 
 **Issue:** [#205](https://github.com/profullstack/meshhook/issues/205)  
 **Milestone:** Phase 9: Deployment & Operations  
@@ -18,94 +18,103 @@
 
 ## Overview
 
-The introduction of GitHub Actions workflows into the MeshHook project infrastructure aims to automate continuous integration (CI) and continuous deployment (CD) processes. This initiative is designed to streamline the development lifecycle, from code integration, testing, to deployment, aligning with MeshHook's goal to provide a robust, efficient, and secure workflow engine.
+This task is aimed at establishing and optimizing GitHub Actions workflows to automate the continuous integration (CI) and continuous deployment (CD) processes for MeshHook. By integrating GitHub Actions, we aim to streamline the development cycle, ensuring that code changes are automatically tested and deployed, thus aligning with MeshHook's goal of delivering a robust, scalable, and easy-to-maintain webhook-first workflow engine.
 
-**Objective:** Implement GitHub Actions workflows to automate CI/CD pipelines, enhancing project agility, reliability, and maintainability.
+The GitHub Actions workflows will be designed to support MeshHook's core features, including webhook triggers, visual DAG builder, durable runs, live logs, and multi-tenant RLS security, by ensuring that all integrations and functionalities are continuously validated against our suite of automated tests and deployment pipelines.
 
----
+## Functional Requirements
 
-## Requirements
+1. **CI Workflow:**
+   - Automatically trigger on every push to `main` and pull request creation against `main`.
+   - Run all unit and integration tests.
+   - Validate coding standards and linting.
+   - Build the project to ensure no build errors.
+2. **CD Workflow:**
+   - Trigger on every merge into `main`.
+   - Deploy the application to the staging environment.
+   - Run smoke tests against the staging environment.
+   - Manual trigger for production deployment after staging validation.
+3. **Security Scanning Workflow:**
+   - Schedule to run weekly and on demand.
+   - Include static code analysis to identify security vulnerabilities.
+   - Alert the team on discovery of vulnerabilities.
 
-### Functional Requirements
+## Non-Functional Requirements
 
-1. **CI Workflow:** Automatically trigger builds on push events to the `main` branch and pull requests targeting `main`.
-2. **CD Workflow:** Automate deployment to staging and production environments on successful CI runs against the `main` branch.
-3. **Testing:** Integrate automated testing within CI workflows, ensuring all tests pass before allowing merges into `main`.
-4. **Notifications:** Implement workflow failure notifications to the development team.
-
-### Non-Functional Requirements
-
-- **Performance:** Ensure workflows are optimized for speed, minimizing build and deployment times.
-- **Reliability:** Workflows must be reliable, with clear error handling and retry mechanisms for flaky operations.
-- **Security:** Secure handling of secrets and credentials within workflows.
-- **Maintainability:** Workflow configurations should be clear, well-documented, and easy to update.
+- **Performance:** Workflows must execute within acceptable time frames to not hinder development speed (preferably under 5 minutes for CI workflows).
+- **Reliability:** Workflows must be configured with proper error handling to gracefully recover from transient errors where possible.
+- **Security:** Use GitHub's encrypted secrets for storing sensitive information required for workflows (e.g., deployment credentials).
 
 ## Technical Specifications
 
 ### Architecture Context
 
-MeshHook leverages SvelteKit for its frontend and Supabase for backend services, including Postgres and Realtime functionalities. The GitHub Actions workflows need to integrate seamlessly with these technologies, ensuring a smooth CI/CD pipeline from code push to deployment.
+MeshHook utilizes a microservices architecture pattern with components orchestrated through SvelteKit/Svelte 5 for frontend, Supabase for backend services, and various workers for processing tasks. GitHub Actions workflows should integrate seamlessly with this existing setup, providing automated testing, building, and deployment processes.
 
 ### Implementation Approach
 
-1. **Analysis:** Evaluate the current project setup to determine the best integration points for GitHub Actions.
-2. **Workflow Design:** Define the steps for CI (build, test) and CD (deploy to staging/production) workflows.
-3. **Secrets Management:** Use GitHub Secrets for managing sensitive information required by the workflows.
-4. **Workflow Configuration:** Create `.github/workflows` directory and add YAML configuration files for each workflow.
-5. **Testing and Iteration:** Test workflows with dummy commits and pull requests, iterating based on the results.
-6. **Documentation:** Document the workflow setup and any project-specific configurations in the project's README or a dedicated documentation file.
+1. **Setup GitHub Actions in the Repository:**
+   - Create a new `.github/workflows` directory.
+   - Add separate YAML configuration files for CI, CD, and Security workflows.
+2. **CI Workflow Configuration:**
+   - Define jobs for linting, testing, and building.
+   - Utilize matrix strategy for testing across different environments if necessary.
+3. **CD Workflow Configuration:**
+   - Leverage GitHub environments for managing staging and production deployments.
+   - Implement environment-specific secrets for secure deployments.
+   - Setup manual review/approval steps for production deployment.
+4. **Security Workflow Configuration:**
+   - Integrate a static code analysis tool (e.g., CodeQL, SonarCloud).
+   - Configure alerting for found vulnerabilities.
 
-### Data Model Changes
+### Data Model
 
-Not applicable for this task.
+No data model changes are required for this task.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-Not applicable for this task.
+N/A
 
 ## Acceptance Criteria
 
-- [ ] CI workflow triggers on push to `main` and PRs targeting `main`.
-- [ ] CD workflow deploys successfully to staging and production environments.
-- [ ] Automated tests are executed, and results are visible in PR checks.
-- [ ] Workflow failure notifications are set up and tested.
-- [ ] Workflow execution times are optimized for performance.
-- [ ] All workflow configurations are documented.
+- [ ] CI workflow successfully triggers on push/PR, executing all tests, lint checks, and build processes.
+- [ ] CD workflow correctly deploys to staging on merge into `main` and supports manual production deployment.
+- [ ] Security scanning workflow is set up to run on the schedule and identifies any potential vulnerabilities.
+- [ ] Documentation is updated to reflect CI/CD processes and how to handle workflow failures.
 
-## Dependencies and Prerequisites
+## Dependencies
 
-- Access to the MeshHook GitHub repository with sufficient permissions to manage GitHub Actions.
-- Existing test suites and deployment scripts that can be integrated into the workflows.
+- Access permissions to the MeshHook GitHub repository for setting up GitHub Actions.
+- Existing test suites and linting configurations.
+- Staging and production environment setup for deployment.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-- Follow the DRY (Don't Repeat Yourself) principle to minimize redundancy in workflow configurations.
-- Use GitHub Actions' matrix strategy for running tests across multiple environments or versions if applicable.
+- Follow GitHub's best practices for action versioning to ensure workflows are stable and up to date.
+- Keep workflows as simple and modular as possible to facilitate maintenance and updates.
 
 ### Testing Strategy
 
-- Implement mock deployments to validate the CD workflow without affecting production.
-- Utilize GitHub Actions' `workflow_dispatch` event for manual triggering of workflows during the testing phase.
+- Validate workflows by making minor changes in a separate branch and observing the execution results.
+- Ensure that the failure of workflows correctly blocks merges where applicable.
 
 ### Security Considerations
 
-- Use GitHub Secrets for storing sensitive information (API keys, credentials) and reference them in workflow files.
-- Implement least privilege access principles, ensuring that the GitHub Actions token and any deployed services have only the permissions necessary to perform their tasks.
+- Store all sensitive information such as deployment credentials in GitHub's encrypted secrets.
+- Regularly review and update action versions to mitigate vulnerabilities from outdated dependencies.
 
-### Monitoring and Observability
+### Monitoring & Observability
 
-- Utilize GitHub Actions' built-in job summaries and annotations to provide insights into workflow executions.
-- Monitor deployment logs and metrics in target environments (staging/production) to ensure successful releases.
+- Utilize GitHub Actions' built-in monitoring tools to track the execution time and outcomes of workflows.
+- Set up notifications for workflow failures to promptly address any CI/CD pipeline issues.
 
 ## Related Documentation
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [MeshHook Architecture](../Architecture.md)
 - [MeshHook Security Guidelines](../Security.md)
-
-*Last updated: 2023-12-01*
+- [MeshHook Architecture Overview](../Architecture.md)
 
 ---
 

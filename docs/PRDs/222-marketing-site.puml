@@ -1,51 +1,64 @@
 @startuml
 !theme plain
 
-title Marketing Site Implementation for MeshHook
-
-package "MeshHook System" {
-    [SvelteKit SSR/API] as SvelteKit
-    [Supabase Postgres] as Postgres
-    [Supabase Realtime] as Realtime
-    [Supabase Storage] as Storage
-    [Supabase Edge] as Edge
-    [Orchestrator Worker] as Orchestrator
-    [HTTP Executor Worker] as HTTPExecutor
+package "MeshHook Marketing Site" {
+    [Marketing Site] as (site)
+    [Supabase Realtime] as (realtime)
+    [Postgres Database] as (db)
+    [SvelteKit SSR/API] as (ssr)
+    [Orchestrator Worker] as (orchestrator)
+    [HTTP Executor Worker] as (httpExecutor)
+    database "Supabase Storage" as (storage)
 }
 
-package "Marketing Site" {
-    [Marketing Site Code] as MarketingCode
-    [Static Content] as StaticContent
-    [Live Logs] as LiveLogs
-    [API Documentation] as APIDocs
+cloud {
+    [External Services] as (external)
 }
 
-MarketingCode --> SvelteKit : Renders using
-StaticContent --> [CDN] : Served through
-LiveLogs --> Realtime : Streams from
-APIDocs --> Postgres : Retrieves from
+node "Development Environment" {
+    [Local Development] as (dev)
+}
 
-SvelteKit --> Postgres : CRUD Operations
-SvelteKit --> Realtime : Subscribes for updates
-Orchestrator --> Postgres : Updates workflow states
-HTTPExecutor --> [External APIs] : Makes requests
+[Local Development] ..> [Marketing Site] : Deploys
+[Marketing Site] ..> [SvelteKit SSR/API] : Uses
+[SvelteKit SSR/API] ..> [Supabase Realtime] : Streams logs
+[SvelteKit SSR/API] ..> [Postgres Database] : CRUD operations
+[Orchestrator Worker] ..> [Postgres Database] : Reads/Writes
+[HTTP Executor Worker] ..> [External Services] : Makes requests
+[Supabase Realtime] <.. [Supabase Storage] : Syncs files
+[Postgres Database] ..> [Supabase Storage] : Stores artifacts
 
-note right of MarketingCode : SvelteKit/Svelte 5 based
-note right of StaticContent : Includes images, CSS, JS
-note right of LiveLogs : Supabase Realtime for updates
-note right of APIDocs : Auto-generated from code
+note right of (site)
+  Marketing site for MeshHook.
+  Showcases features and documentation.
+end note
 
-note right of Postgres : Central DB for data and queues
-note right of Realtime : For live log streaming
-note right of Storage : Stores artifacts
-note right of Edge : Manages cron/timers
+note right of (ssr)
+  SvelteKit for SSR and API endpoints.
+end note
 
-note right of Orchestrator : State machine + scheduling
-note right of HTTPExecutor : Robust HTTP with retries/backoff
+note right of (orchestrator)
+  Manages workflow execution.
+end note
 
-[CDN] --> [User Browser] : Serves site
-[User Browser] --> MarketingCode : Visits site
-[User Browser] --> LiveLogs : Views logs
-[User Browser] --> APIDocs : Accesses docs
+note right of (httpExecutor)
+  Handles HTTP requests with retries.
+end note
+
+note right of (db)
+  Stores data, queues, and logs.
+end note
+
+note right of (realtime)
+  Provides live updates to clients.
+end note
+
+note right of (external)
+  Includes webhook sources and other APIs.
+end note
+
+note right of (dev)
+  Where development and testing occur.
+end note
 
 @enduml

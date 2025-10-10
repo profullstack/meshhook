@@ -2,41 +2,42 @@
 !theme plain
 
 package "MeshHook System" {
-    [Supabase\n(Postgres, Realtime, Storage)] as Supabase
-    [SvelteKit\n(SSR/API)] as SvelteKit
-    [Orchestrator\n(Workers)] as Orchestrator
-    [HTTP Executor\n(Workers)] as HTTPExecutor
-    [Webhook Triggers\nwith Signature Verification] as Webhooks
-    [Visual DAG Builder\n(Svelte 5)] as DAGBuilder
-    [Event Sourcing\nfor Runs] as EventSourcing
-    [Live Logs\nvia Supabase Realtime] as LiveLogs
-    [Multi-tenant RLS Security] as RLS
+    [Webhook Intake] - [SvelteKit SSR/API]
+    [Workflow CRUD] - [SvelteKit SSR/API]
+    [Publish Versions] - [SvelteKit SSR/API]
+    [Run Console] - [SvelteKit SSR/API]
+    
+    package "Supabase" {
+        [Postgres] - [Data + Queues]
+        [Realtime] - [Log Streaming]
+        [Storage] - [Artifacts]
+        [Edge] - [Cron/Timers]
+    }
+    
+    package "Workers" {
+        [Orchestrator] - [State Machine + Scheduling]
+        [HTTP Executor] - [Robust HTTP with Retries/Backoff]
+    }
+    
+    [SvelteKit SSR/API] --> [Supabase] : Uses
+    [SvelteKit SSR/API] --> [Workers] : Uses
+    [Supabase] --> [Workers] : Triggers & Data Flow
 }
 
 package "Caching Strategy" {
-    [Cache Invalidation] as CacheInvalidation
-    [Cache Storage] as CacheStorage
-    [Cache Population] as CachePopulation
-    [Cache Retrieval] as CacheRetrieval
+    [Cache Component] - [Cache Invalidation]
+    [Cache Component] --> [Data + Queues] : Caches Data
+    [Cache Invalidation] --> [Data + Queues] : Invalidates Cache
+    [Cache Component] --> [Realtime] : Updates on Changes
+    [Cache Invalidation] --> [Realtime] : Triggers on Update/Delete
 }
 
-Supabase --> SvelteKit : Data & Queue Operations
-Supabase --> LiveLogs : Log Streaming
-SvelteKit --> Webhooks : Receives Webhooks
-SvelteKit --> DAGBuilder : CRUD Operations
-Orchestrator --> EventSourcing : Manages State & Scheduling
-HTTPExecutor --> Supabase : HTTP Requests with Retries
-RLS --> Supabase : Security Layer
-CacheInvalidation .down.> CacheStorage : Invalidates outdated cache
-CachePopulation .down.> CacheStorage : Populates with fresh data
-CacheRetrieval .down.> CacheStorage : Fetches data
-CacheStorage .right.> Supabase : Syncs with persistent storage
+[Cache Component] .up.> [SvelteKit SSR/API] : Integrates
+[Cache Component] .right.> [Orchestrator] : Caches Workflows
+[Cache Invalidation] .right.> [HTTP Executor] : Invalidates on HTTP Response
 
-note right of CacheStorage
-  Cache Strategy:
-  - In-memory caching for fast retrieval
-  - Persistent caching in Supabase for durability
-  - Cache invalidation on data change events
-end note
+note "Caching Strategy Implementation Steps" as N1
+note "1. Analysis\n2. Design\n3. Implementation\n4. Integration\n5. Testing\n6. Documentation\n7. Review" as N2
+N1 .. N2
 
 @enduml

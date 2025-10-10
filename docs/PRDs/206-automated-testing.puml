@@ -1,32 +1,31 @@
 @startuml
 !theme plain
 
-package "MeshHook CI/CD Pipeline" {
-    [Automated Testing] <<(T,orchid)>>
-    [Existing Codebase] <<(C,lightblue)>>
-    [Supabase] <<(D,orange)>>
-    [Documentation] <<(D,green)>>
-}
+title Automated Testing Workflow - CI/CD Process
 
-package "Supabase Services" {
-    [Postgres]
-    [Realtime]
-    [Storage]
-    [Edge]
-}
+actor Developer
+boundary "CI/CD Pipeline" as CICD
+control "Test Orchestrator" as Orchestrator
+database "Supabase\n(Postgres)" as Supabase
+entity "Existing Codebase" as Codebase
+collections "Test Suites" as Tests
+control "SvelteKit (SSR/API)" as SvelteKit
+control "Workers\n(Orchestrator & Executor)" as Workers
+cloud "External Services\n(Supabase Realtime, Storage)" as ExternalServices
 
-[Automated Testing] --> [Existing Codebase] : Integrates with
-[Automated Testing] --> [Supabase] : Utilizes
-[Automated Testing] --> [Documentation] : Updates
-[Supabase] --> [Postgres] : Uses
-[Supabase] --> [Realtime] : Uses
-[Supabase] --> [Storage] : Uses
-[Supabase] --> [Edge] : Uses
+Developer --> CICD : Pushes code
+CICD --> Orchestrator : Triggers automated tests
+Orchestrator --> Tests : Fetches test suites
+Tests --> Orchestrator : Returns test scenarios
+Orchestrator --> SvelteKit : Integrates for SSR/API testing
+Orchestrator --> Workers : Orchestrates state machine & scheduling
+Orchestrator --> Supabase : Uses for data & queues
+Orchestrator --> ExternalServices : Utilizes for logs & artifacts
+Orchestrator --> CICD : Reports test results
+CICD --> Developer : Feedback (pass/fail)
 
-note right of [Automated Testing] : Core Functionality\n- Write & run tests\n- Ensure all tests pass\n- Document test cases
-
-note right of [Supabase] : External Services\n- Data & queues\n- Log streaming\n- Artifact storage\n- Cron/timers
-
-note right of [Documentation] : Includes\n- Test scenarios\n- Edge cases\n- Public APIs and interfaces
+note right of CICD : Ensures all tests pass\nbefore merging
+note right of Supabase : No new data model changes\nrequired for this task
+note over ExternalServices : Includes live log streaming\nand artifact storage
 
 @enduml

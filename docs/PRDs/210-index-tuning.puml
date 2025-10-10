@@ -2,44 +2,48 @@
 !theme plain
 
 package "MeshHook System" {
-    [Webhook Intake] --> [Workflow CRUD API]
-    [Workflow CRUD API] --> [Publish Versions]
-    [Publish Versions] --> [Run Console]
-    [Run Console] --> [Supabase Realtime]
-    [Supabase Realtime] --> [Worker Orchestrator]
-    [Worker Orchestrator] --> [HTTP Executor]
-    [HTTP Executor] --> [Supabase: Postgres]
-    database "Supabase: Postgres" {
-        folder "Data + Queues" {
-        }
-        folder "schema.sql" {
-        }
+    [Webhook Intake] - [SvelteKit SSR/API]
+    [Workflow CRUD] - [SvelteKit SSR/API]
+    [Publish Versions] - [SvelteKit SSR/API]
+    [Run Console] - [SvelteKit SSR/API]
+    database "Supabase" {
+        [Postgres] - [Data + Queues]
+        [Realtime] - [Log Streaming]
+        [Storage] - [Artifacts]
+        [Edge] - [Cron/Timers]
     }
-    [Supabase: Postgres] --> [Data + Queues]
-    [Supabase: Postgres] --> [schema.sql]
-    [Data + Queues] ..> [Index Tuning] : triggers
-    [schema.sql] ..> [Index Tuning] : references
+    [SvelteKit SSR/API] --> [Supabase]
+    [Orchestrator Worker] --> [Supabase]
+    [HTTP Executor Worker] --> [Supabase]
+
+    package "Index Tuning Task" {
+        [Analysis] --> [Design]
+        [Design] --> [Implementation]
+        [Implementation] --> [Integration]
+        [Integration] --> [Testing]
+        [Testing] --> [Documentation]
+        [Documentation] --> [Review]
+        [Review] --> [Deployment]
+    }
+
+    [Analysis] .> [Existing Codebase]: Review
+    [Design] .> [Component Architecture]: Consider
+    [Implementation] .> [TDD Approach]: Follow
+    [Integration] .> [Existing Components]: Integrate With
+    [Testing] .> [Comprehensive Testing]: Perform
+    [Documentation] .> [API Docs]: Update
+    [Review] .> [Code Review]: Undergo
+    [Deployment] .> [CI/CD]: Pass Through
+
+    [SvelteKit SSR/API] ..> [Index Tuning Task]: Triggers
+    [Supabase] ..> [Index Tuning Task]: Utilizes
 }
 
-package "Index Tuning" {
-    [Index Analysis] --> [Design Indexes]
-    [Design Indexes] --> [Implement Indexes]
-    [Implement Indexes] --> [Integration Testing]
-    [Integration Testing] --> [Performance Testing]
-    [Performance Testing] --> [Documentation]
-    [Documentation] --> [Review]
-}
-
-[Worker Orchestrator] ..> [Index Tuning] : uses
-[HTTP Executor] ..> [Index Tuning] : uses
-[Supabase Realtime] ..> [Index Tuning] : uses
-
-note right of [Index Tuning]
-  Key Considerations:
-  - Maintain backward compatibility
-  - Use Postgres for durable storage
-  - Implement proper error handling and logging
-  - Consider rate limiting and resource constraints
+note right of [Index Tuning Task]
+  Task Objective: Index tuning
+  - Analyze and optimize database indexes
+  - Ensure sub-second response times
+  - Maintain system reliability and security
 end note
 
 @enduml

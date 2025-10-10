@@ -6,103 +6,107 @@
 
 ---
 
-# PRD: Demo Workflows for MeshHook
+# PRD: Demo Workflows
 
 **Issue:** [#221](https://github.com/profullstack/meshhook/issues/221)  
 **Milestone:** Phase 10: Polish & Launch  
 **Labels:** launch-prep, hacktoberfest  
-**Project Documentation:** [MeshHook Documentation](https://github.com/profullstack/meshhook)
+**Phase:** Phase 10  
+**Section:** Launch Prep
+
+---
 
 ## Overview
 
-As MeshHook approaches its launch phase, it's imperative to showcase its capabilities and ease of use to potential users and stakeholders. The objective of creating demo workflows is to provide tangible, interactive examples that highlight MeshHook's core features, including its intuitive visual DAG builder, webhook triggers with signature verification, and durable, replayable runs. These demos will serve as both educational tools and marketing assets to demonstrate the power and flexibility of MeshHook.
+The objective of this task is to create demo workflows to showcase MeshHook's capabilities, aligning with the project's vision of providing a visually simple, durable, webhook-first workflow engine. These demo workflows will serve as practical examples for potential users, demonstrating the ease of building, deploying, and monitoring workflows within MeshHook. By providing these demos, we aim to lower the entry barrier for new users, highlight key features, and encourage adoption.
 
-### Objectives
-
-- Create interactive demo workflows to showcase MeshHook's features.
-- Highlight the simplicity of the visual DAG builder and the robustness of the execution engine.
-- Provide clear, real-world use cases that potential users can relate to and explore.
+### Goals
+- Showcase MeshHook's core features through practical examples.
+- Highlight the simplicity of building workflows with the visual DAG builder.
+- Demonstrate the durability and reliability of workflow runs.
+- Provide a starting point for new users to build their own workflows.
 
 ## Requirements
 
 ### Functional Requirements
-
-1. Create at least three distinct demo workflows, each highlighting different aspects of MeshHook:
-   - **Data Transformation and Routing:** Utilize webhook triggers, `transform` nodes, and `http_call` nodes.
-   - **Error Handling and Retries:** Demonstrate the use of retries, backoff strategies, and dead-letter queues.
-   - **Multi-Tenant Security:** Showcase the multi-tenant RLS security model with an example of project-scoped secrets management.
-2. Implement a guided tour within the MeshHook UI to walk users through each demo workflow, explaining key features and steps.
-3. Ensure each demo workflow includes a predefined set of sample data that users can execute to see real-time results.
+1. **Demo Workflow Creation:** Design and implement a set of demo workflows that cover MeshHook's capabilities, including webhook triggers, visual DAG building, durable runs, and multi-tenant security.
+2. **Documentation and Guides:** Provide detailed documentation and user guides for each demo workflow, explaining the purpose, setup, and key concepts demonstrated.
+3. **Ease of Deployment:** Ensure demo workflows can be easily deployed by new users, with minimal setup required.
 
 ### Non-Functional Requirements
-
-- **Usability:** Demos must be easily accessible and executable from the MeshHook UI with minimal setup required from the user.
-- **Performance:** Demo workflows should execute within the expected sub-second response times for user-facing operations.
-- **Reliability:** Ensure demo workflows are robust and error-free to prevent any negative impact on user perception.
-- **Maintainability:** Code and configurations for demo workflows should be well-documented and structured for easy updates.
+- **Performance:** Demo workflows should perform efficiently, with response times showcasing the system's capability to handle workflows smoothly.
+- **Reliability:** Workflows should demonstrate MeshHook's error handling, retry mechanisms, and overall durability.
+- **Security:** Implement and highlight security best practices within the demo workflows, including webhook signature verification and secure handling of secrets.
 
 ## Technical Specifications
 
 ### Architecture Context
-
-- Utilize existing components as defined in the MeshHook architecture, including SvelteKit for the frontend, Supabase for backend services, and workers for orchestration and execution.
-- Demo workflows should be predefined in the system but allow users to clone and modify them for experimentation.
+The demo workflows will be built using the existing MeshHook architecture, employing:
+- **SvelteKit/Svelte 5** for the visual DAG builder.
+- **Supabase** for real-time database interactions, logging, and multi-tenant security.
+- **Event Sourcing** for durable, replayable runs.
 
 ### Implementation Approach
-
-1. **Design Demo Workflows:** Collaborate with the product and engineering teams to select and design demo workflows that best showcase MeshHook's capabilities.
-2. **Implement Workflows:** Using the visual DAG builder, create each demo workflow, ensuring to highlight different features in each scenario.
-3. **Develop Guided Tours:** Implement guided tours within the UI using a JavaScript library like Shepherd.js or intro.js, providing step-by-step walkthroughs of each demo.
-4. **Testing and Validation:** Thoroughly test each demo workflow and guided tour to ensure accuracy, performance, and reliability.
-5. **Documentation:** Update the project documentation to include information about the demo workflows and how users can access and interact with them.
+1. **Identify Key Use Cases:** Select a set of use cases that best demonstrate MeshHook's features.
+2. **Design Workflows:** For each use case, design a workflow that highlights MeshHook's capabilities.
+3. **Develop and Test:** Implement the workflows, ensuring they meet functional and non-functional requirements.
+4. **Documentation:** Write comprehensive guides and documentation for each workflow.
+5. **User Feedback Loop:** Gather initial feedback from a small group of users and refine the demos based on their input.
 
 ### Data Model
-
-No changes to the existing data model are required for this task. Demo workflows will utilize existing tables and structures.
+No new data model changes are required specifically for this task. Utilization of existing schemas will suffice for demo creation.
 
 ### API Endpoints
-
-No new API endpoints are required. Existing endpoints will support the creation and execution of demo workflows.
+No new API endpoints will be introduced. The demos will use existing endpoints for workflow creation, execution, and monitoring.
 
 ## Acceptance Criteria
-
-- [ ] At least three demo workflows are implemented and accessible through the MeshHook UI.
-- [ ] Guided tours for each demo workflow are implemented and provide clear, informative walkthroughs.
-- [ ] Demo workflows perform reliably, with execution times meeting the project's performance benchmarks.
-- [ ] Documentation is updated to include information on accessing and using demo workflows.
+- [ ] A set of demo workflows is created, covering key MeshHook features.
+- [ ] Documentation and guides for each demo workflow are completed and easy to follow.
+- [ ] Demos can be easily deployed by new users, with clear instructions provided.
+- [ ] Performance benchmarks meet the project's standards.
+- [ ] Security best practices are implemented and highlighted in the demos.
+- [ ] Feedback from initial user tests is positive, indicating the demos are helpful.
 
 ## Dependencies
 
-- Existing MeshHook infrastructure and services must be operational.
-- Access to Supabase services for real-time updates and database interactions.
+### Technical Dependencies
+- Access to a fully set up MeshHook environment.
+- Existing documentation and codebase for reference.
+
+### Prerequisite Tasks
+- Ensure the visual DAG builder and webhook features are fully operational.
+- Confirm that the documentation framework allows for easy addition of new guides.
 
 ## Implementation Notes
 
 ### Development Guidelines
-
-- Follow the existing coding standards and practices established for the MeshHook project.
-- Prioritize readability and maintainability, especially since these demos may serve as reference implementations for users.
+- Follow MeshHook's coding and documentation standards.
+- Use clear, descriptive naming for workflows and steps to enhance understanding.
 
 ### Testing Strategy
-
-- Implement unit and integration tests for any new logic introduced as part of the demo workflows.
-- Perform manual end-to-end testing of each demo workflow and guided tour to ensure a seamless user experience.
+- **Unit Tests:** Cover logic and utility functions used within the workflows.
+- **Integration Tests:** Ensure workflows integrate correctly with MeshHook's components.
+- **User Acceptance Testing:** Conduct tests with potential users to gather feedback on the usefulness and clarity of the demos.
 
 ### Security Considerations
-
-- Ensure that demo workflows and guided tours do not expose sensitive information or vulnerabilities.
-- Utilize project-scoped secrets and RLS policies as part of the multi-tenant security demo.
+- Adhere to MeshHook's security guidelines, especially for handling webhooks and managing secrets.
+- Ensure all demo workflows are designed with security best practices in mind.
 
 ### Monitoring & Observability
-
-- Incorporate logging and metrics collection for demo workflow executions to monitor performance and identify potential issues.
+- Incorporate logging and monitoring within the demo workflows to showcase real-time insights available through MeshHook.
 
 ## Related Documentation
+- [Main PRD](../PRD.md)
+- [Architecture Overview](../Architecture.md)
+- [Security Guidelines](../Security.md)
 
-- [MeshHook Project Documentation](https://github.com/profullstack/meshhook)
-- [MeshHook Security Guidelines](https://github.com/profullstack/meshhook/docs/Security.md)
-- [SvelteKit Documentation](https://kit.svelte.dev/)
-- [Supabase Documentation](https://supabase.com/docs)
+## Task Details
+**Original Task Description:** Create a set of demo workflows to showcase MeshHook's features and capabilities.
+
+**Full Issue Body:** This task involves the creation and documentation of demo workflows as part of the project's launch preparation phase.
+
+*This PRD was created in response to GitHub issue #221*  
+*Last updated: [Date]*
 
 ---
 

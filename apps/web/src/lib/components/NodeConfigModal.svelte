@@ -37,6 +37,7 @@
 		branch: {
 			fields: [
 				{ name: 'branches', label: 'Number of Branches', type: 'number', required: true, placeholder: '2', min: 2, max: 10 },
+				{ name: 'strategy', label: 'Branch Strategy', type: 'select', required: true, options: ['parallel', 'sequential'] },
 				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Branch description (e.g., "Broadcast to Discord and Slack")' }
 			]
 		},
@@ -48,7 +49,10 @@
 		},
 		webhook: {
 			fields: [
-				{ name: 'path', label: 'Webhook Path', type: 'text', required: true, placeholder: '/hooks/my-workflow' },
+				{ name: 'url', label: 'Webhook URL', type: 'text', required: true, placeholder: 'https://api.example.com/webhook' },
+				{ name: 'method', label: 'HTTP Method', type: 'select', required: true, options: ['POST', 'PUT', 'PATCH'] },
+				{ name: 'headers', label: 'Headers (JSON)', type: 'textarea', placeholder: '{"Content-Type": "application/json", "Authorization": "Bearer {{token}}"}' },
+				{ name: 'bodyTemplate', label: 'Body Template', type: 'textarea', required: true, placeholder: '{\n  "title": "{{title}}",\n  "content": "{{content}}",\n  "timestamp": "{{timestamp}}"\n}', rows: 8 },
 				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Webhook description' }
 			]
 		},
@@ -133,7 +137,7 @@
 							bind:value={config[field.name]}
 							placeholder={field.placeholder || ''}
 							required={field.required}
-							rows="4"
+							rows={field.rows || 4}
 						></textarea>
 					{:else if field.type === 'select'}
 						<select id={field.name} bind:value={config[field.name]} required={field.required}>

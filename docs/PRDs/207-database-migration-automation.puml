@@ -1,46 +1,31 @@
 @startuml
 !theme plain
 
-package "MeshHook CI/CD Pipeline" {
-    [CI/CD Tools] as CICD
-    [Supabase] as Supabase
-    [SvelteKit SSR/API] as SvelteKit
-    [Database Migration Automation] as Migration
-    [Existing Codebase] as Codebase
+package "Database Migration Automation" {
+    [Database Migration Service] as DMS
+    [Migration Scripts] as Scripts
+    [CI/CD Pipeline] as CICD
+    [Supabase Postgres] as Postgres
     [Test Suite] as Tests
+    [Schema.sql] as Schema
 }
 
-database "Postgres" as Postgres {
-    folder "schema.sql" {
-        [Tables]
-        [Indexes]
-        [RLS Policies]
-    }
-}
-
-node "External Services" {
+package "Existing System" {
     [Supabase Realtime] as Realtime
-    [Supabase Storage] as Storage
-    [Edge (cron/timers)] as Edge
+    [SvelteKit Application] as SvelteKit
+    [Orchestrator Worker] as Worker
 }
 
-[CI/CD Tools] --> Migration : triggers
-Migration --> [Tables] : creates/modifies
-Migration --> [Indexes] : creates
-Migration --> [RLS Policies] : defines
-Migration --> Tests : executes
-Tests --> [CI/CD Tools] : reports
-Codebase --> Migration : integrates
-SvelteKit --> Supabase : interacts
-Supabase --> Postgres : manages
-Realtime -up-> Supabase : streams logs
-Storage -up-> Supabase : stores artifacts
-Edge -up-> Supabase : schedules jobs
+CICD --> DMS : triggers
+DMS --> Scripts : uses
+Scripts --> Postgres : modifies
+DMS --> Tests : runs
+Tests --> CICD : reports
+CICD --> SvelteKit : deploys
+CICD --> Worker : deploys
+Postgres --> Schema : follows
+Postgres --> Realtime : streams updates
 
-note right of Migration : Core Implementation \n- Analysis \n- Design \n- Implementation \n- Integration \n- Testing \n- Documentation
-
-note right of Tests : Unit, Integration, \nE2E Tests
-
-note over Supabase, Postgres : Supabase Managed Services
+note right of DMS : Analyze, Design, Implement, \nIntegrate, Test, Document
 
 @enduml

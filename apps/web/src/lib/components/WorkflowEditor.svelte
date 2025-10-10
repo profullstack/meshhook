@@ -9,6 +9,25 @@
 	let reactFlowWrapper = $state(null);
 	let selectedNodeId = $state(null);
 
+	// Handle connection creation
+	function handleConnect(connection) {
+		const newEdge = {
+			id: `edge-${connection.source}-${connection.target}-${Date.now()}`,
+			source: connection.source,
+			target: connection.target,
+			sourceHandle: connection.sourceHandle,
+			targetHandle: connection.targetHandle,
+			type: 'smoothstep',
+			animated: true
+		};
+		
+		edges = [...edges, newEdge];
+		
+		if (onEdgesChange) {
+			onEdgesChange(edges);
+		}
+	}
+
 	// Handle drag over (required to enable drop)
 	function handleDragOver(event) {
 		event.preventDefault();
@@ -83,6 +102,7 @@
 		{nodes}
 		{edges}
 		fitView
+		onconnect={handleConnect}
 		defaultEdgeOptions={{ type: 'smoothstep', animated: true }}
 	>
 		<Background gap={12} size={1} />

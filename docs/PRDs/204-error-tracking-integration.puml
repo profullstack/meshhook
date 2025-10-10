@@ -2,37 +2,36 @@
 !theme plain
 
 package "MeshHook System" {
-    component [SvelteKit SSR/API] as SvelteKit
-    component [Supabase] {
-        database Postgres
-        node Realtime
-        cloud Storage
-        node Edge
-    }
-    component [Workers] {
-        component [Orchestrator] as Orchestrator
-        component [HTTP Executor] as Executor
-    }
+    [Webhook Intake] as Intake
+    [Workflow CRUD API] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
+    [Error Tracking] as ErrorTracking
 }
 
-package "Error Tracking Integration" {
-    [Error Tracking Service] as ErrorService
-    database "Error Logs DB" as ErrorDB
+package "Supabase" {
+    [Postgres] as Postgres
+    [Realtime] as Realtime
+    [Storage] as Storage
+    [Edge] as Edge
 }
 
-SvelteKit --> ErrorService : webhook errors
-SvelteKit --> Postgres : CRUD operations
-Postgres --> Realtime : stream logs
-Storage --> SvelteKit : serve artifacts
-Edge --> SvelteKit : handle cron/timers
-Orchestrator --> Postgres : state machine operations
-Executor --> SvelteKit : HTTP requests
+package "Workers" {
+    [Orchestrator] as Orchestrator
+    [HTTP Executor] as Executor
+}
 
-ErrorService --> ErrorDB : store errors
-Realtime --> ErrorService : stream errors for live monitoring
-Orchestrator --> ErrorService : report workflow errors
-Executor --> ErrorService : report HTTP errors
+Intake --> ErrorTracking : triggers on error
+CRUD --> ErrorTracking : triggers on error
+Publish --> ErrorTracking : triggers on error
+Console --> ErrorTracking : triggers on error
 
-note right of ErrorService : Integration Points\n- Webhook errors\n- Workflow errors\n- HTTP request errors
+ErrorTracking --> Postgres : logs errors
+ErrorTracking --> Realtime : streams error logs
+
+Orchestrator --> ErrorTracking : reports task failures
+Executor --> ErrorTracking : reports HTTP errors
+
+note right of ErrorTracking : Integrates with existing components\nto track and log errors
 
 @enduml

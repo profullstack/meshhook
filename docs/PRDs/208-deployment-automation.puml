@@ -1,40 +1,38 @@
 @startuml
-!theme amiga
+!theme plain
 
-package "MeshHook CI/CD Pipeline" {
+package "CI/CD Pipeline" {
     [Deployment Automation] as DA
-    [Supabase Postgres] as DB
-    [Supabase Realtime] as RT
-    [Supabase Storage] as ST
-    [SvelteKit SSR/API] as SV
-    [Orchestrator Worker] as OW
-    [HTTP Executor Worker] as HW
+    [Supabase] as Supabase
+    [Existing Codebase] as Codebase
+    database "Postgres DB" as Postgres
+    [SvelteKit SSR/API] as SvelteKit
+    [HTTP Executor Worker] as Executor
+    [Orchestrator Worker] as Orchestrator
 }
 
 package "External Services" {
-    [GitHub] as GH
-    [Docker Registry] as DR
+    [Supabase Realtime] as Realtime
+    [Supabase Storage] as Storage
+    [Edge Functions] as Edge
 }
 
-SV --> DA : Triggers\nDeployment
-DA --> OW : Schedule\nWorkflows
-OW --> HW : Execute\nHTTP Requests
-HW --> SV : Callback with\nResults
-DA --> DB : Update\nDeployment Status
-DB --> RT : Stream\nLogs
-SV --> RT : Publish\nVersions
-OW --> ST : Store\nArtifacts
-DA --> GH : Fetch Codebase
-GH --> DR : Push\nDocker Images
-DR --> DA : Notify\nDeployment Success
+Supabase -[hidden]-> Codebase
+Postgres -[hidden]-> Supabase
 
-note right of DA : Core Deployment\nAutomation Logic
-note right of OW : Manages State\n& Scheduling
-note right of HW : Executes External\nHTTP Calls with Retries
-note right of DB : Stores Workflow\n& Deployment Data
-note right of RT : Provides Live Logs\n& Updates
-note right of ST : Artifacts &\nVersioned Files Storage
-note right of GH : Source Code\nManagement
-note right of DR : Hosts Docker\nImages
+DA --> Codebase : Analyze & Integrate
+DA --> SvelteKit : Deploy
+DA --> Executor : Deploy
+DA --> Orchestrator : Deploy
+DA --> Postgres : Update Schema (if needed)
+DA --> Supabase : Utilize Services
+Supabase --> Realtime : Log Streaming
+Supabase --> Storage : Store Artifacts
+Supabase --> Edge : Schedule Jobs
+SvelteKit --> Postgres : CRUD Operations
+Executor --> Postgres : Update Job Status
+Orchestrator --> Postgres : Manage Workflows
+
+note right of DA : Implementation Steps\n1. Analysis\n2. Design\n3. Implementation\n4. Integration\n5. Testing\n6. Documentation\n7. Review
 
 @enduml
