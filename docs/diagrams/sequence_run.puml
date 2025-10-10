@@ -1,0 +1,30 @@
+@startuml
+title MeshHook — Sequence: Inbound Webhook -> Durable Run
+actor Caller as C
+participant "SvelteKit /api/hooks/:slug" as SK
+database "Postgres (Supabase)" as PG
+participant "Orchestrator" as ORCH
+participant "HTTP Executor" as HTTPX
+participant "External API" as EXT
+queue "pg-boss/pgmq" as Q
+
+C -> SK : POST /api/hooks/:slug (body, headers)
+SK -> SK : Verify signature (HMAC/JWT/provider)
+SK -> PG : INSERT workflow_runs (running)\nAPPEND event(run_created)
+SK -> Q : enqueue run:orchestrate {run_id}
+SK --> C : 202 Accepted
+
+ORCH -> Q : pull run:orchestrate
+ORCH -> PG : replay events (determine next node)
+ORCH -> Q : enqueue step:execute:{node}
+ORCH -> PG : append event(step_started)
+
+HTTPX -> Q : pull step:execute:{node}
+HTTPX -> EXT : HTTP request (idempotency key)
+EXT --> HTTPX : response (status/body/headers)
+HTTPX -> PG : append http_attempted + step_succeeded/failed
+HTTPX -> Q : if next, enqueue next step
+
+ORCH -> PG : on terminal node, mark run completed
+ORCH -> PG : append run_completed
+@enduml

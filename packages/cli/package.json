@@ -1,0 +1,12 @@
+{
+  "name": "@meshhook/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "mh": "bin/mh.js"
+  },
+  "dependencies": {
+    "kleur": "^4.1.5",
+    "minimist": "^1.2.8"
+  }
+}

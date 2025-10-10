@@ -1,0 +1,37 @@
+@startuml
+title MeshHook — High-Level Architecture
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+package "Browser (SvelteKit/Svelte 5)" {
+  [Workflow Designer] as Designer
+  [Run Console (Live Logs)] as LiveLogs
+}
+package "SvelteKit Server (SSR + API)" {
+  [Public API] as API
+  [Webhook Verifier] as Verifier
+}
+package "Supabase" {
+  [Postgres] as PG
+  [Realtime] as RT
+  [Storage] as ST
+  [Edge Functions] as EDGE
+}
+package "Workers (Stateless Node/Bun)" {
+  [Orchestrator] as ORCH
+  [HTTP Executor] as HTTPX
+}
+rectangle "External Services\n(3rd-Party APIs / Your Microservices)" as EXT
+
+Designer -down-> API : Save workflow / Publish version
+API -right-> PG : Insert definitions / events
+Verifier -down-> PG : Enqueue runs (pg-boss/pgmq)
+
+ORCH -down-> PG : Read/append events\nDequeue jobs
+ORCH -right-> RT : Stream run/step events
+HTTPX -down-> EXT : Outbound webhooks
+EXT -left-> Verifier : Inbound webhooks
+LiveLogs -left-> RT : Subscribe channels
+EDGE -down-> PG : Scheduled triggers (CRON)
+ST -right-> API : Artifacts (redacted payloads)
+@enduml

@@ -1,0 +1,49 @@
+@startuml
+title MeshHook — Data Model (Simplified)
+skinparam linetype ortho
+
+entity projects {
+  *id: uuid [PK]
+  owner: uuid
+  name: text
+  created_at: timestamptz
+}
+entity secrets {
+  *id: uuid [PK]
+  project_id: uuid [FK -> projects.id]
+  key: text
+  value_encrypted: bytea
+  created_at: timestamptz
+}
+entity workflow_definitions {
+  *id: uuid [PK]
+  project_id: uuid [FK -> projects.id]
+  slug: text
+  version: int
+  definition: jsonb
+  created_at: timestamptz
+  unique(project_id, slug, version)
+}
+entity workflow_runs {
+  *id: uuid [PK]
+  project_id: uuid [FK -> projects.id]
+  workflow_id: uuid [FK -> workflow_definitions.id]
+  status: text ('running'|'succeeded'|'failed'|'paused'|'canceled')
+  started_at: timestamptz
+  finished_at: timestamptz
+}
+entity workflow_events {
+  *id: bigserial [PK]
+  run_id: uuid [FK -> workflow_runs.id]
+  ts: timestamptz
+  type: text
+  payload: jsonb
+  partitioned by (ts)
+}
+
+projects ||--o{ secrets
+projects ||--o{ workflow_definitions
+projects ||--o{ workflow_runs
+workflow_definitions ||--o{ workflow_runs
+workflow_runs ||--o{ workflow_events
+@enduml

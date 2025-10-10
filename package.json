@@ -1,0 +1,17 @@
+{
+  "name": "@profullstack/meshhook",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "mh": "node packages/cli/bin/mh.js",
+    "postinstall": "echo \"✅ MeshHook workspace installed\"",
+    "format": "prettier -w .",
+    "setup": "node scripts/setup.js",
+    "db:migrate": "node scripts/db-migrate.js",
+    "start": "node workers/orchestrator.mjs"
+  },
+  "devDependencies": {
+    "inquirer": "^12.9.6",
+    "prettier": "^3.3.3"
+  }
+}
