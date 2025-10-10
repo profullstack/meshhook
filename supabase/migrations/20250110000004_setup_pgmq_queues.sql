@@ -11,6 +11,20 @@
 create extension if not exists pgmq cascade;
 
 -- ============================================================================
+-- ENSURE HELPER FUNCTION EXISTS
+-- ============================================================================
+
+-- Ensure the update_updated_at_column function exists in public schema
+-- (should be created in migration 1, but we ensure it here for safety)
+create or replace function public.update_updated_at_column()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+-- ============================================================================
 -- CREATE MAIN WORKFLOW JOBS QUEUE
 -- ============================================================================
 
@@ -32,7 +46,7 @@ select pgmq.create('workflow_jobs_dlq');
 -- ============================================================================
 
 -- Store queue configuration and metadata
-create table if not exists queue_config (
+create table if not exists public.queue_config (
   id uuid primary key default gen_random_uuid(),
   queue_name text not null unique,
   visibility_timeout_seconds int not null default 30,
@@ -46,12 +60,12 @@ create table if not exists queue_config (
 
 -- Add trigger to update updated_at timestamp
 create trigger update_queue_config_updated_at
-  before update on queue_config
+  before update on public.queue_config
   for each row
-  execute function update_updated_at_column();
+  execute function public.update_updated_at_column();
 
 -- Insert default configuration for workflow_jobs queue
-insert into queue_config (
+insert into public.queue_config (
   queue_name,
   visibility_timeout_seconds,
   max_retry_attempts,
@@ -68,7 +82,7 @@ insert into queue_config (
 ) on conflict (queue_name) do nothing;
 
 -- Insert configuration for DLQ
-insert into queue_config (
+insert into public.queue_config (
   queue_name,
   visibility_timeout_seconds,
   max_retry_attempts,
@@ -89,10 +103,10 @@ insert into queue_config (
 -- ============================================================================
 
 -- Track job processing history and retry attempts
-create table if not exists job_tracking (
+create table if not exists public.job_tracking (
   id uuid primary key default gen_random_uuid(),
   msg_id bigint not null,
-  run_id uuid not null references workflow_runs(id) on delete cascade,
+  run_id uuid not null references public.workflow_runs(id) on delete cascade,
   queue_name text not null,
   attempt int not null default 1,
   max_attempts int not null default 5,
@@ -108,24 +122,24 @@ create table if not exists job_tracking (
 );
 
 -- Add indices for job tracking queries
-create index if not exists idx_job_tracking_msg_id on job_tracking(msg_id);
-create index if not exists idx_job_tracking_run_id on job_tracking(run_id);
-create index if not exists idx_job_tracking_queue_name on job_tracking(queue_name);
-create index if not exists idx_job_tracking_enqueued_at on job_tracking(enqueued_at desc);
-create index if not exists idx_job_tracking_status on job_tracking(completed_at, failed_at, moved_to_dlq_at);
+create index if not exists idx_job_tracking_msg_id on public.job_tracking(msg_id);
+create index if not exists idx_job_tracking_run_id on public.job_tracking(run_id);
+create index if not exists idx_job_tracking_queue_name on public.job_tracking(queue_name);
+create index if not exists idx_job_tracking_enqueued_at on public.job_tracking(enqueued_at desc);
+create index if not exists idx_job_tracking_status on public.job_tracking(completed_at, failed_at, moved_to_dlq_at);
 
 -- Add trigger to update updated_at timestamp
 create trigger update_job_tracking_updated_at
-  before update on job_tracking
+  before update on public.job_tracking
   for each row
-  execute function update_updated_at_column();
+  execute function public.update_updated_at_column();
 
 -- ============================================================================
 -- HELPER FUNCTIONS
 -- ============================================================================
 
 -- Function to get queue metrics
-create or replace function get_queue_metrics(p_queue_name text)
+create or replace function public.get_queue_metrics(p_queue_name text)
 returns table (
   queue_name text,
   queue_length bigint,
@@ -144,7 +158,7 @@ end;
 $$ language plpgsql;
 
 -- Function to purge old archived messages
-create or replace function purge_old_queue_archives(p_days int default 30)
+create or replace function public.purge_old_queue_archives(p_days int default 30)
 returns bigint as $$
 declare
   v_deleted bigint;
@@ -159,7 +173,7 @@ end;
 $$ language plpgsql;
 
 -- Function to move job to DLQ
-create or replace function move_job_to_dlq(
+create or replace function public.move_job_to_dlq(
   p_msg_id bigint,
   p_message jsonb,
   p_error_message text default null
@@ -192,7 +206,7 @@ $$ language plpgsql;
 -- ============================================================================
 
 -- Create view for queue monitoring
-create or replace view queue_monitoring as
+create or replace view public.queue_monitoring as
 select
   'workflow_jobs' as queue_name,
   count(*) as pending_jobs,
@@ -218,7 +232,7 @@ from pgmq.q_workflow_jobs_dlq;
 -- ============================================================================
 
 -- Create view for job statistics
-create or replace view job_statistics as
+create or replace view public.job_statistics as
 select
   queue_name,
   count(*) as total_jobs,
@@ -229,20 +243,20 @@ select
   avg(extract(epoch from (completed_at - started_at))) filter (where completed_at is not null) as avg_processing_time_seconds,
   avg(attempt) as avg_attempts,
   max(attempt) as max_attempts_seen
-from job_tracking
+from public.job_tracking
 group by queue_name;
 
 -- ============================================================================
 -- COMMENTS
 -- ============================================================================
 
-comment on table queue_config is 'Configuration for PGMQ queues including retry and DLQ settings';
-comment on table job_tracking is 'Tracks job processing history, retry attempts, and failures';
-comment on function get_queue_metrics(text) is 'Returns current metrics for a specified queue';
-comment on function purge_old_queue_archives(int) is 'Purges archived queue messages older than specified days';
-comment on function move_job_to_dlq(bigint, jsonb, text) is 'Moves a failed job to the dead letter queue';
-comment on view queue_monitoring is 'Real-time monitoring view for queue status';
-comment on view job_statistics is 'Aggregated statistics for job processing';
+comment on table public.queue_config is 'Configuration for PGMQ queues including retry and DLQ settings';
+comment on table public.job_tracking is 'Tracks job processing history, retry attempts, and failures';
+comment on function public.get_queue_metrics(text) is 'Returns current metrics for a specified queue';
+comment on function public.purge_old_queue_archives(int) is 'Purges archived queue messages older than specified days';
+comment on function public.move_job_to_dlq(bigint, jsonb, text) is 'Moves a failed job to the dead letter queue';
+comment on view public.queue_monitoring is 'Real-time monitoring view for queue status';
+comment on view public.job_statistics is 'Aggregated statistics for job processing';
 
 -- ============================================================================
 -- GRANTS (if needed for specific roles)
