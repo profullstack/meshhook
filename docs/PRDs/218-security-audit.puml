@@ -1,28 +1,24 @@
 @startuml
 !theme plain
 
-title Security Audit Process
+title Security Audit Process Flow
 
-actor Auditor
+actor Auditor as "Security Auditor"
 participant "Security Guidelines" as Guidelines
 participant "Codebase" as Codebase
-database "Supabase" as Supabase
-participant "CI/CD Pipeline" as CICD
-participant "Monitoring & Observability" as Monitoring
+participant "Database\nSchema" as DBSchema
+participant "Supabase\nServices" as Supabase
+participant "Test Suites" as Tests
+database "schema.sql" as SchemaSQL
 
-Auditor -> Guidelines : Review
-Auditor -> Codebase : Analyze\nCode & Integrations
-Codebase -> Supabase : Validate\nData Handling
-Codebase -> CICD : Check\nTesting & Deployment
-CICD -> Monitoring : Verify\nLogging & Metrics
-Monitoring -> Auditor : Provide\nMetrics & Logs
-
-note right of Supabase : Includes Postgres,\nRealtime, Storage
-
-note over CICD : Ensures\n- All tests passing\n- No linting errors
-
-note over Monitoring : Tracks\n- Response times\n- Error rates\n- Critical failures
-
-Auditor -> Auditor : Evaluate\nSecurity & Performance
+Auditor -> Codebase : Review Codebase\nfor Security Practices
+Codebase -> Guidelines : Validate Against\nSecurity Guidelines
+Auditor -> DBSchema : Review Database\nSchema Changes
+DBSchema -> SchemaSQL : Check for\nSchema Updates
+DBSchema --> Auditor : Report on\nDatabase Security
+Auditor -> Supabase : Verify Integration with\nSupabase Services
+Supabase --> Auditor : Validate Service\nConfigurations
+Auditor -> Tests : Run Security\nTest Suites
+Tests --> Auditor : Report Test\nResults
 
 @enduml

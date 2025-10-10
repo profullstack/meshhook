@@ -1,51 +1,48 @@
 @startuml
 !theme plain
 
-title Loading States Implementation - Sequence Diagram
+title MeshHook Project - Loading States Implementation
 
-actor User
-participant "UI: SvelteKit" as UI
-participant "API Server" as API
-database "Supabase Postgres" as DB
-participant "Realtime Service" as Realtime
-participant "Worker: Orchestrator" as Orchestrator
-participant "Worker: HTTP Executor" as Executor
+package "MeshHook System" {
+    [Webhook Intake] as Webhooks
+    [Workflow CRUD API] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
+    [Event Sourcing] as EventSourcing
+    [Live Logs] as Logs
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as Executor
+    database "Supabase" {
+        [Postgres] as DB
+        [Realtime] as Realtime
+        [Storage] as Storage
+        [Edge Functions] as Edge
+    }
+}
 
-== User Interacts with UI ==
-User -> UI: Request page/action
-activate UI
+package "UX Improvement: Loading States" {
+    [Loading Component] as Loading
+    [UI/UX Framework] as UIUX
+    [State Management] as State
+    [Error Handling] as ErrorHandling
+}
 
-UI -> API: Call endpoint
-activate API
+Webhooks --> Loading : triggers loading state
+CRUD --> Loading : triggers loading state
+Publish --> Loading : triggers loading state
+Console --> Loading : triggers loading state
+Loading --> UIUX : displays loading indicators
+State --> UIUX : updates UI based on state
+EventSourcing --> State : updates state
+Logs --> State : updates state with logs
+DB --> State : fetches/stores state
+Realtime --> State : live state updates
+Orchestrator --> State : manages workflow states
+Executor --> State : updates task state
+ErrorHandling --> UIUX : displays errors
 
-API -> DB: Query data
-activate DB
-DB --> API: Return data
-deactivate DB
-
-API --> UI: Response with loading state
-deactivate API
-
-UI -> UI: Render loading state
-deactivate UI
-
-== Background Processing ==
-UI -> Orchestrator: Trigger process
-activate Orchestrator
-
-Orchestrator -> Executor: Execute task
-activate Executor
-Executor -> DB: Update task state
-activate DB
-DB --> Executor: Confirm update
-deactivate DB
-
-Executor --> Realtime: Push update
-activate Realtime
-Realtime --> UI: Stream update
-deactivate Executor
-deactivate Realtime
-
-UI -> UI: Update UI with final state
+note right of Loading : Handles visual\nfeedback for async operations
+note right of State : Centralized state\nmanagement for UI updates
+note right of ErrorHandling : Unified error\nhandling and display
 
 @enduml

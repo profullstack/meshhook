@@ -1,70 +1,51 @@
 @startuml
-!theme cerulean
+!theme plain
+
+title Mobile Responsiveness Implementation - MeshHook Project
 
 package "MeshHook System" {
-    [API Gateway] - [SvelteKit SSR/API]
-    [SvelteKit SSR/API] - [Supabase]
-    [SvelteKit SSR/API] - [Workers]
-    [Supabase] --> [Postgres]
-    [Supabase] --> [Realtime]
-    [Supabase] --> [Storage]
-    [Supabase] --> [Edge]
-    [Workers] --> [Orchestrator]
-    [Workers] --> [HTTP Executor]
-
-    package "Mobile Responsiveness Task" {
-        [Analysis] --> [Design]
-        [Design] --> [Implementation]
-        [Implementation] --> [Integration]
-        [Integration] --> [Testing]
-        [Testing] --> [Documentation]
-        [Documentation] --> [Review]
-        [Review] --> [Deployment]
-
-        [SvelteKit SSR/API] --> [Analysis]
-        [Integration] --> [SvelteKit SSR/API]
-        [Deployment] --> [SvelteKit SSR/API]
-    }
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase] as Supabase
+    [Workers] as Workers
+    database "Postgres" as Postgres
 }
 
-[Supabase] ..> [External Services] : Uses
-[API Gateway] ..> [External Clients] : Exposes
-[Postgres] ..> [Database Schema] : Implements
-[Deployment] ..> [CI/CD Pipeline] : Triggers
+cloud {
+    [External Services] as Externals
+}
 
-note right of [Analysis]
-  Review existing codebase
-  Identify integration points
-end note
+package "Mobile Responsiveness Feature" {
+    [Analysis] as Analysis
+    [Design] as Design
+    [Implementation] as Implementation
+    [Integration] as Integration
+    [Testing] as Testing
+    [Documentation] as Documentation
+    [Review] as Review
+}
 
-note right of [Design]
-  Consider data structures, API contracts,
-  component architecture, and error handling
-end note
+SvelteKit --> Analysis : Review & Identify\nIntegration Points
+Analysis --> Design : Detail Technical Design
+Design --> Implementation : Implement Code\n(TDD Approach)
+Implementation --> Integration : Integrate with\nExisting Components
+Integration --> Testing : Comprehensive Testing\n(Unit, Integration, E2E)
+Testing --> Documentation : Update Documentation
+Documentation --> Review : Code Review &\nFeedback Incorporation
+Review --> [Deployment] : Merge to Main &\nCI/CD
 
-note right of [Implementation]
-  Follow TDD approach
-end note
-
-note right of [Integration]
-  Ensure seamless integration with existing components
-end note
-
-note right of [Testing]
-  Unit, Integration, E2E tests
-end note
-
-note right of [Documentation]
-  Update code comments, README, API docs
-end note
-
-note right of [Review]
-  Code review and feedback incorporation
-end note
+[Deployment] .down.> SvelteKit : Deploy Updates
+Supabase -right-> [Supabase Realtime] : Log Streaming
+Supabase -right-> [Postgres] : Data Storage
+Supabase -right-> [Storage] : Artifacts
+Supabase -right-> [Edge] : Cron/Timers
+Workers --> Postgres : State Management\n& Scheduling
+Externals --> Supabase : External Data &\nServices Integration
 
 note right of [Deployment]
-  Merge to main branch
-  Pass all CI/CD checks
+  Ready for production
+  - All CI/CD checks passing
+  - Documentation complete
+  - Security & Performance verified
 end note
 
 @enduml

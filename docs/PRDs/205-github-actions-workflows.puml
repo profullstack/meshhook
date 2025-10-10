@@ -1,39 +1,34 @@
 @startuml
-
 !theme plain
 
 title GitHub Actions Workflows for MeshHook Project
 
 actor Developer as dev
-participant "GitHub Actions" as GH
+boundary GitHub as GH
+control "GitHub Actions" as GHA
 database "Supabase Postgres" as DB
-participant "Supabase Realtime" as RT
-participant "SvelteKit SSR/API" as SK
-participant "Workers\nOrchestrator & HTTP Executor" as Workers
+database "Supabase Realtime" as RT
+database "Supabase Storage" as Storage
+control "SvelteKit SSR/API" as SSR
+control "Orchestrator Worker" as Orch
+control "HTTP Executor Worker" as HTTPExec
 
-dev -> GH : Push code changes
-GH -> GH : Trigger workflow
-GH -> SK : Webhook intake
-SK -> DB : Update workflow run details
-DB -> RT : Notify run update
-RT --> dev : Stream live logs
+dev --> GH : Push code
+GH --> GHA : Trigger workflow
+GHA --> SSR : Deploy updates
+GHA --> DB : Run migrations
+GHA --> Orch : Deploy new\norchestrator version
+GHA --> HTTPExec : Deploy new\nHTTP executor version
+SSR --> DB : CRUD operations
+SSR --> RT : Log streaming
+Orch --> DB : Update state
+Orch --> HTTPExec : Dispatch tasks
+HTTPExec --> DB : Update task result
+DB --> RT : Update notifications
 
-group Integration with existing components
-    GH -> Workers : Execute tasks
-    Workers -> DB : Update task state
-    Workers -> SK : Callback with results
-end
-
-group Error Handling
-    Workers -> GH : Report failure
-    GH -> SK : Trigger error workflow
-    SK -> DB : Log error details
-end
-
-group Documentation Update
-    dev -> GH : Update docs
-    GH -> SK : Trigger documentation build
-    SK --> dev : Notify build success
-end
+note right of GHA : CI/CD Pipeline
+note right of SSR : Webhook intake\nWorkflow management
+note left of Orch : Workflow execution
+note left of HTTPExec : HTTP tasks\nwith retries
 
 @enduml

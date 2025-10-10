@@ -1,61 +1,42 @@
 @startuml
-!theme plain
+!define RECTANGLE class
 
-title Queue Health Monitoring System Architecture
-
-package "MeshHook System" {
-    [Webhook Intake] as WI
-    [Workflow CRUD API] as WCA
-    [Publish Versions] as PV
-    [Run Console] as RC
-    [Supabase Realtime] as SR
-    [Postgres DB] as PDB
-    [Storage] as S
-    [Edge (cron/timers)] as E
+RECTANGLE Supabase <<External Service>> {
+    Database: Postgres
+    Realtime: Log Streaming
+    Storage: Artifacts
+    Edge: Cron/Timers
 }
 
-package "Workers" {
-    [Orchestrator] as O
-    [HTTP Executor] as HE
+RECTANGLE SvelteKit <<Web>> {
+    Webhook Intake
+    Workflow CRUD
+    Publish Versions
+    Run Console
 }
 
-package "Monitoring" {
-    [Queue Health Monitor] as QHM
-    [Alerting System] as AS
-    [Metrics Collector] as MC
+RECTANGLE Workers <<Service>> {
+    Orchestrator: State Machine + Scheduling
+    HTTPExecutor: Robust HTTP with Retries/Backoff
 }
 
-database "Supabase" {
-    [Postgres (data + queues)] as PDQ
-    [Realtime (log streaming)] as RLS
-    [Storage (artifacts)] as SA
-    [Edge (cron/timers)] as ECT
+RECTANGLE Monitoring <<Monitor>> {
+    Queue Health Monitoring
 }
 
-cloud {
-    [External Services] as ES
-}
+database "Postgres (Queues)" as Queues
 
-WI --> PDQ : Uses
-WCA --> PDQ : Uses
-PV --> PDQ : Uses
-RC --> PDQ : Uses
-SR <--> RLS : Sync
-PDB --> PDQ : Data Storage
-S --> SA : Stores Artifacts
-E --> ECT : Manages Timers
+Supabase -down-> Queues : Uses
+SvelteKit -right-> Supabase : Interacts
+Workers -left-> Supabase : Interacts
+Monitoring -down-> Queues : Monitors
 
-O --> PDQ : Manages State & Scheduling
-HE --> PDQ : Executes HTTP Calls
-O .right.> QHM : Reports Health
-HE .right.> QHM : Reports Health
+note right of Monitoring : Key Metrics\n- Response Times\n- Error Rates
 
-QHM --> PDQ : Monitors & Logs
-QHM --> MC : Collects Metrics
-QHM --> AS : Triggers Alerts
-MC --> AS : Sends Metrics
-AS --> ES : Sends Notifications
+note right of SvelteKit : SvelteKit (SSR/API)\nFor UI and API Management
 
-note right of QHM : Monitors queue health\nand triggers alerts on anomalies
+note left of Workers : Workers for\nBackground Processing
+
+note over Supabase : Supabase for\nData Management and Realtime Logs
 
 @enduml

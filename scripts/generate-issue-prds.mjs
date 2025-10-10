@@ -11,7 +11,8 @@
  * - Exports diagrams to PNG format (requires plantuml installed)
  * - Saves PRDs to docs/PRDs/{issue-number}-{title}.md
  * - Saves diagrams to docs/PRDs/{issue-number}-{title}.puml and .png
- * - Updates issue bodies with PRD content and links
+ * - REPLACES entire issue body with PRD content and links to all generated files
+ * - Embeds PNG diagrams directly in issue body
  * - Supports --dry-run mode for preview
  * - Can add labels to issues
  *
@@ -28,8 +29,11 @@
  *   --dry-run           Preview PRDs without saving or updating issues
  *   --use-ai            Use GPT-4 to generate comprehensive PRDs (requires OPENAI_API_KEY)
  *   --diagrams          Generate PlantUML diagrams for each issue
- *   --force             Regenerate PRDs even if they already exist (updates files and issue bodies)
+ *   --force             Regenerate PRDs even if they already exist (replaces files and issue bodies)
  *   --labels <labels>   Comma-separated list of labels to add to all issues
+ *
+ * Note: When using --force, the ENTIRE issue body will be replaced with PRD content.
+ *       Original issue content is preserved in the generated PRD markdown file.
  *
  * Examples:
  *   node scripts/generate-issue-prds.mjs --dry-run
@@ -674,11 +678,72 @@ async function addLabelsToIssue(repo, issueNumber, labels, dryRun = false) {
   }
 }
 
-// Update issue body with PRD content and link
+// Collect all generated files for an issue
+function collectGeneratedFiles(issueNumber, issueTitle) {
+  const sanitizedTitle = sanitizeFilename(issueTitle);
+  const baseName = `${issueNumber}-${sanitizedTitle}`;
+  const files = [];
+  
+  // Check for markdown PRD
+  const mdPath = join(PRDS_DIR, `${baseName}.md`);
+  if (existsSync(mdPath)) {
+    files.push({ path: mdPath, type: 'md', name: `${baseName}.md` });
+  }
+  
+  // Check for PlantUML diagram
+  const pumlPath = join(PRDS_DIR, `${baseName}.puml`);
+  if (existsSync(pumlPath)) {
+    files.push({ path: pumlPath, type: 'puml', name: `${baseName}.puml` });
+  }
+  
+  // Check for PNG diagram
+  const pngPath = join(PRDS_DIR, `${baseName}.png`);
+  if (existsSync(pngPath)) {
+    files.push({ path: pngPath, type: 'png', name: `${baseName}.png` });
+  }
+  
+  return files;
+}
+
+// Update issue body with PRD content and links to all generated files
 async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdContent, defaultBranch, dryRun = false, force = false) {
   const sanitizedTitle = sanitizeFilename(issueTitle);
-  const prdFilename = `${issueNumber}-${sanitizedTitle}.md`;
-  const prdLink = `\n\n---\n\n## 📋 Product Requirements Document\n\n**Full PRD:** [docs/PRDs/${prdFilename}](https://github.com/${repo}/blob/${defaultBranch}/docs/PRDs/${prdFilename})\n\n<details>\n<summary>View PRD Content</summary>\n\n${prdContent}\n\n</details>`;
+  const baseName = `${issueNumber}-${sanitizedTitle}`;
+  
+  // Collect all generated files
+  const generatedFiles = collectGeneratedFiles(issueNumber, issueTitle);
+  
+  // Build file links section
+  let fileLinksSection = '';
+  if (generatedFiles.length > 0) {
+    fileLinksSection = '\n\n### 📎 Generated Documentation\n\n';
+    
+    for (const file of generatedFiles) {
+      const fileUrl = `https://github.com/${repo}/blob/${defaultBranch}/docs/PRDs/${file.name}`;
+      
+      if (file.type === 'md') {
+        fileLinksSection += `- 📄 **PRD Document:** [${file.name}](${fileUrl})\n`;
+      } else if (file.type === 'puml') {
+        fileLinksSection += `- 🎨 **PlantUML Diagram:** [${file.name}](${fileUrl})\n`;
+      } else if (file.type === 'png') {
+        fileLinksSection += `- 🖼️ **Diagram Image:** [${file.name}](${fileUrl})\n`;
+        // Embed the PNG image directly in the issue
+        fileLinksSection += `\n![Diagram](${fileUrl}?raw=true)\n`;
+      }
+    }
+  }
+  
+  // Build the new issue body - REPLACE entire body with PRD content
+  const newBody = `# 📋 Product Requirements Document
+
+${prdContent}
+
+${fileLinksSection}
+
+---
+
+*This issue body was auto-generated from the PRD. Original issue content is preserved in the PRD document.*
+*Last updated: ${new Date().toISOString().split("T")[0]}*`;
 
   // Check if PRD section already exists (skip unless force is true)
   if (hasPRDSection(originalBody) && !force) {
@@ -686,19 +751,9 @@ async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdC
     return true; // Return true since no update is needed
   }
 
-  let newBody;
-  if (hasPRDSection(originalBody) && force) {
-    // Replace existing PRD section with new one
-    const prdSectionRegex = /\n\n---\n\n## 📋 Product Requirements Document[\s\S]*?(?=\n\n---|\n\n##|$)/;
-    newBody = originalBody.replace(prdSectionRegex, prdLink);
-    console.log(`  🔄 Updating existing PRD section in issue body...`);
-  } else {
-    // Append PRD section to original body
-    newBody = (originalBody || "") + prdLink;
-  }
-
   if (dryRun) {
-    console.log(`  [DRY RUN] Would ${force && hasPRDSection(originalBody) ? 'update' : 'append'} PRD section to issue #${issueNumber}`);
+    console.log(`  [DRY RUN] Would replace entire issue body with PRD content for issue #${issueNumber}`);
+    console.log(`  [DRY RUN] Generated files to include: ${generatedFiles.map(f => f.name).join(', ')}`);
     return true;
   }
 
@@ -711,6 +766,7 @@ async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdC
       .replace(/\$/g, "\\$");
 
     gh(`api repos/${repo}/issues/${issueNumber} -f body="${escapedBody}"`);
+    console.log(`  ✓ Replaced issue body with PRD content`);
     return true;
   } catch (error) {
     console.error(`  ✗ Failed to update issue #${issueNumber}: ${error.message}`);
@@ -893,7 +949,7 @@ async function generateIssuePRDs(args) {
       );
 
       if (updated) {
-        console.log(`  ✓ Appended PRD section to issue #${issue.number}`);
+        console.log(`  ✓ Replaced issue body with PRD content`);
       } else {
         errorCount++;
       }

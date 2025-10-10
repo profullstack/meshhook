@@ -12,102 +12,103 @@
 **Milestone:** Phase 10: Polish & Launch  
 **Labels:** ux-improvements, hacktoberfest  
 **Phase:** Phase 10  
-**Section:** UX Improvements  
+**Section:** UX Improvements
+
+---
 
 ## Overview
 
-This task aims to enhance the MeshHook user experience by introducing keyboard shortcuts, enabling users to perform common actions more efficiently. This feature aligns with MeshHook's goal of delivering an intuitive and efficient workflow engine by reducing the reliance on point-and-click interactions, thereby speeding up workflow design, execution monitoring, and general navigation within the platform.
+The inclusion of keyboard shortcuts is aimed at enhancing the user experience by enabling faster and more efficient navigation and interaction within the MeshHook platform. This feature is aligned with our goal of delivering a user-friendly, visually simple, and efficient workflow engine. Keyboard shortcuts will provide power users a way to streamline their workflow, making it easier to build, manage, and execute workflows with minimal reliance on mouse interactions.
 
-**Objective:** Implement keyboard shortcuts to improve user experience and productivity.
+This feature will be integrated into the existing MeshHook architecture, utilizing the SvelteKit framework for UI enhancements and ensuring compatibility with our Postgres-native event sourcing model for deterministic and durable runs.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. **Discoverability:** Users should be able to view a list of available keyboard shortcuts within the application.
-2. **Common Actions:** Implement shortcuts for the following actions:
-   - `Ctrl + S`: Save current workflow
-   - `Ctrl + Z`: Undo last action in the workflow editor
-   - `Ctrl + Shift + Z`: Redo last undone action
-   - `Ctrl + F`: Focus on the search/filter input field
-   - `Ctrl + P`: Toggle the preview of the current workflow
-   - `Esc`: Close any open modal or dropdown menu
-3. **Customization (Stretch Goal):** Allow users to customize keyboard shortcuts.
-4. **Accessibility:** Ensure keyboard shortcuts do not conflict with screen readers or other accessibility tools.
+1. **Keyboard Shortcut Design:** Define a comprehensive set of keyboard shortcuts for critical actions within the MeshHook platform, including but not limited to:
+   - Creating, duplicating, and deleting nodes
+   - Initiating a test run of the current workflow
+   - Navigating between different sections of the UI (e.g., workflow builder, logs view, settings)
+   - Saving changes to workflows
+2. **Shortcut Overlay/Help:** Implement an overlay or help section accessible via a keyboard shortcut (e.g., `?`) that lists all available keyboard shortcuts.
+3. **Conflict Management:** Ensure that keyboard shortcuts do not conflict with browser defaults or accessibility features.
+4. **Customization (Stretch Goal):** Allow users to customize keyboard shortcuts, including the ability to disable them.
 
 ### Non-Functional Requirements
 
-- **Performance:** Keyboard shortcuts should respond instantly, with no perceptible delay to the user.
-- **Compatibility:** Shortcuts should work across the latest versions of major browsers (Chrome, Firefox, Safari, Edge).
-- **Usability:** Shortcuts must not interfere with standard browser or operating system shortcuts.
+- **Performance:** Keyboard shortcuts should respond in real-time without causing noticeable delays in the UI.
+- **Accessibility:** Ensure keyboard shortcuts do not hinder the platform's accessibility, providing alternative navigation options for users who rely on assistive technologies.
+- **Usability:** Keyboard shortcuts should be intuitive and aligned with common patterns used in similar platforms to minimize the learning curve.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **Frontend:** SvelteKit/Svelte 5 will be used for implementing the UI components needed to display and manage keyboard shortcuts.
-- **Backend:** No backend changes are necessary for the initial implementation of static keyboard shortcuts. Customization features may require backend support for storing user preferences.
+- **Frontend:** SvelteKit/Svelte 5 for the UI implementation, including the visual DAG builder and settings UI.
+- **Backend:** Supabase for real-time updates and PostgreSQL for data persistence.
+- **Existing Components:** This feature will integrate with existing UI components and data models without necessitating significant changes.
 
 ### Implementation Approach
 
-1. **Analysis & Design:**
-   - Identify common actions within MeshHook that can benefit from keyboard shortcuts.
-   - Design a modal or dedicated settings page for displaying available shortcuts.
-2. **Frontend Implementation:**
-   - Use Svelte's global event handlers to listen for keyboard events.
-   - Implement a keyboard shortcut manager as a Svelte store to handle the registration and execution of shortcuts.
-   - Create a UI component to display shortcuts to the user.
-3. **Testing & Documentation:**
-   - Unit tests for the shortcut manager logic.
-   - Document how to use and, if applicable, customize shortcuts within the user guide.
+1. **Analysis:** Review current UI components and workflows to identify key actions for shortcut implementation.
+2. **Design:** Draft a keyboard shortcut scheme, considering common conventions and user expectations. Prepare mockups for the shortcut overlay/help screen.
+3. **Implementation:**
+   - Add keyboard event listeners in the SvelteKit frontend for the defined shortcuts.
+   - Develop the UI component for displaying keyboard shortcuts.
+   - Implement customization options for shortcuts, if feasible within the project timeline.
+4. **Testing:** Include unit and integration tests to cover new functionality. Test for accessibility and browser compatibility.
+5. **Documentation:** Update the user guide and online help documentation to include a section on keyboard shortcuts.
 
-### Data Model Changes
+### Data Model
 
-- No data model changes required for the initial implementation of static shortcuts.
-- For customization (stretch goal): a new table or JSON column in an existing table may be needed to store user preferences.
+No changes to the data model are anticipated for this feature. However, if customization of keyboard shortcuts is implemented, a new table or extension of an existing table may be required to store user preferences.
 
 ### API Endpoints
 
-- No new API endpoints are required for the initial implementation.
-- For customization (stretch goal): endpoints for fetching and updating user preferences may be needed.
+No new API endpoints are required for this feature.
 
 ## Acceptance Criteria
 
-- [ ] All the listed common actions have keyboard shortcuts implemented.
-- [ ] A UI component for displaying available keyboard shortcuts exists and is easily accessible.
-- [ ] Keyboard shortcuts do not interfere with browser/OS defaults or accessibility tools.
-- [ ] Documentation updated with a section on using keyboard shortcuts within MeshHook.
-- [ ] Unit tests cover the keyboard shortcut manager logic.
+- [ ] A predefined set of keyboard shortcuts for essential actions is implemented and functional.
+- [ ] A UI component for displaying available keyboard shortcuts is accessible and informative.
+- [ ] Keyboard shortcuts do not interfere with browser defaults or accessibility features.
+- [ ] Documentation is updated to include information on keyboard shortcuts.
+- [ ] (Stretch) Users can customize keyboard shortcuts according to their preferences.
 
 ## Dependencies
 
-- SvelteKit/Svelte 5 for frontend development.
-- Existing user settings management, if customization is pursued.
+- SvelteKit and existing frontend infrastructure for implementing the UI changes.
+- Supabase for any real-time updates if necessary for displaying or updating keyboard shortcuts dynamically.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-- Follow the existing project structure and coding conventions.
-- Ensure keyboard shortcuts are configurable to some degree to avoid conflicts with global shortcuts.
+- Follow the existing coding standards for JavaScript/TypeScript and Svelte/SvelteKit.
+- Ensure that the implementation is modular and reusable where possible.
+- Prioritize accessibility and internationalization in design and development.
 
 ### Testing Strategy
 
-- **Unit Tests:** For the shortcut manager and any utility functions handling keyboard events.
-- **Manual Testing:** Ensure shortcuts work as expected across different browsers and do not conflict with accessibility tools.
+- **Unit Tests:** For all new logic related to keyboard event handling and shortcut display.
+- **Integration Tests:** To ensure keyboard shortcuts integrate seamlessly with existing functionalities.
+- **Accessibility Testing:** Ensure compatibility with screen readers and adherence to WCAG guidelines.
 
 ### Security Considerations
 
-- Ensure that keyboard shortcuts do not expose any security vulnerabilities, such as allowing unauthorized actions without proper authentication.
+No specific security implications are anticipated for this feature. However, standard security practices should be followed during development.
 
 ### Monitoring & Observability
 
-- Monitor the usage of keyboard shortcuts if feasible to gather data for potential UX improvements.
+- Monitor user engagement with the keyboard shortcuts feature through analytics to inform future enhancements.
+- Log errors related to keyboard shortcut functionality for ongoing improvement.
 
 ## Related Documentation
 
-- [Svelte Event Handlers](https://svelte.dev/docs#template-syntax-element-directives-on-eventname)
-- [User Guide](../UserGuide.md) for documenting the feature for end-users.
+- Main PRD: [MeshHook — PRD](../PRD.md)
+- Architecture Overview: [Architecture](../Architecture.md)
+- Security Guidelines: [Security & Multi-Tenancy](../Security.md)
 
 ---
 

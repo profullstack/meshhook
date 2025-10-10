@@ -8,100 +8,92 @@
 
 # PRD: Caching Strategy
 
-**Issue:** [#211](https://github.com/profullstack/meshhook/issues/211)  
-**Milestone:** Phase 10: Polish & Launch  
-**Labels:** performance-optimization, hacktoberfest  
-**Phase:** Phase 10  
-**Section:** Performance Optimization
+## Overview
 
----
-
-## Overview and Objectives
-
-This PRD outlines the approach for implementing a caching strategy within the MeshHook project. The primary objective of this caching strategy is to enhance the performance of the MeshHook workflow engine by reducing database read operations and improving response times for frequently accessed data. This aligns with the project's goal of maintaining sub-second response times for user-facing operations and supports the overall performance optimization efforts in Phase 10.
-
-**Key Objectives:**
-- Reduce latency and improve the efficiency of workflow execution.
-- Decrease the load on the database by minimizing redundant data fetch operations.
-- Ensure cache consistency and accuracy of the data served.
+The objective of this task is to design and implement a caching strategy for MeshHook to improve the performance and efficiency of our webhook-first, deterministic, Postgres-native workflow engine. This strategy should align with MeshHook's core features such as webhook triggers, visual DAG builder, durable runs, live logs, and multi-tenant security while optimizing response times and reducing database load.
 
 ## Functional Requirements
 
-1. **Cache Implementation:** Introduce caching for frequently accessed data, such as workflow definitions, webhook configurations, and user session information.
-2. **Cache Invalidation:** Implement a strategy for invalidating cached data when the underlying data changes, ensuring consistency.
-3. **Cache Configuration:** Allow configurable cache settings, including TTL (Time To Live) values for different types of data.
-4. **Fallback Mechanism:** Ensure a fallback mechanism to retrieve data from the database in case of cache misses.
+1. **Caching Mechanism**: Implement a caching mechanism that reduces repetitive database queries, especially for frequently accessed data such as workflow definitions, node configurations, and execution states.
+2. **Invalidation Strategy**: Design and implement an invalidation strategy to ensure data consistency between the cache and the database. This must handle updates, deletions, and insertions.
+3. **Configuration and Management**: Provide mechanisms for configuring cache parameters (e.g., size, eviction policies, TTL) and for managing the cache (e.g., manual invalidation, monitoring usage).
+4. **Integration**: Seamlessly integrate the caching strategy with existing components, ensuring that all data flows respect the new cache layer without introducing breaking changes.
 
 ## Non-Functional Requirements
 
-- **Performance:** The caching strategy should significantly reduce data retrieval times and database load, contributing to overall system performance.
-- **Reliability:** Implement robust error handling to manage cache failures gracefully, ensuring system reliability.
-- **Security:** Ensure that cached data respects the project's multi-tenant RLS security model, preventing data leaks between tenants.
-- **Maintainability:** Leverage existing technologies and follow project conventions for easy maintenance and extensibility of the caching mechanism.
+- **Performance**: Ensure that the caching strategy significantly reduces response times for user-facing operations and decreases database load without introducing memory bloat.
+- **Reliability**: The caching mechanism must guarantee data consistency and support fallback mechanisms to handle cache misses or failures gracefully.
+- **Security**: Caching should not introduce new security vulnerabilities, especially in the context of multi-tenancy and sensitive data (e.g., secrets).
+- **Maintainability**: Implement the caching strategy in a way that is easy to understand, monitor, and extend by other developers.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-MeshHook leverages SvelteKit for its SSR/API layer and Supabase for backend services including Postgres, Realtime, and Storage. The caching strategy must integrate seamlessly into this architecture, enhancing performance without compromising the system's integrity or security.
+MeshHook is built using SvelteKit for SSR/API interactions, with Supabase (Postgres) as the backend for data storage and queues, and worker processes for orchestration and HTTP execution. The caching strategy should be integrated such that it complements this existing architecture, particularly focusing on the interaction with Postgres and how data is fetched and mutated by the application's various components.
 
 ### Implementation Approach
 
-1. **Evaluation:** Identify the most frequently accessed data entities that would benefit from caching.
-2. **Technology Selection:** Choose an appropriate caching technology (e.g., Redis, Memcached) that integrates well with the current stack.
-3. **Design:** Develop a caching layer that interfaces between the application logic and data storage, implementing cache set, get, and invalidate operations.
-4. **Integration:** Integrate the caching layer with existing components, ensuring that data retrieval operations first check the cache before falling back to the database.
-5. **Testing and Optimization:** Perform thorough testing to ensure the effectiveness of the caching strategy and optimize configuration parameters for best performance.
+1. **Analysis**: Evaluate the current system to identify high-impact areas for caching (e.g., webhook processing, workflow execution).
+2. **Design**:
+   - Select appropriate caching technology (in-memory vs. distributed cache) based on system requirements and deployment scenarios.
+   - Define cache keys and structure for different types of data.
+   - Design the invalidation logic to ensure data consistency.
+3. **Implementation**:
+   - Integrate caching library/framework with the existing codebase.
+   - Implement caching logic for identified high-impact areas.
+   - Ensure that the invalidation strategy is properly applied across data mutations.
+4. **Testing**: Write tests to verify both the performance improvements and the data consistency between cache and database.
+5. **Monitoring**: Implement monitoring for cache hit rates, load, and evictions to inform future tuning.
 
 ### Data Model
 
-No direct changes to the existing data model are required for the implementation of a caching strategy. However, monitoring and logging tables for cache hits, misses, and performance metrics may be introduced as needed.
+No direct changes to the data model are anticipated for this task. However, monitoring and logging tables for cache operations may be introduced if necessary for observability and troubleshooting.
 
 ### API Endpoints
 
-No new API endpoints are required. Existing endpoints will be modified to utilize the caching layer for data retrieval.
+No new API endpoints are required for this task. Existing endpoints may see performance improvements as a result of the caching strategy.
 
 ## Acceptance Criteria
 
-- [ ] Caching layer implemented and integrated with existing components.
-- [ ] Configuration options for TTL and other cache parameters are exposed and documented.
-- [ ] Cache invalidation strategy implemented ensuring data consistency.
-- [ ] Fallback mechanism in place for handling cache misses.
-- [ ] Performance benchmarks indicate a significant reduction in database read operations and improved response times.
-- [ ] No regression in security, specifically in tenant data isolation.
-- [ ] Documentation updated to include details of the caching strategy, configuration, and operation.
+- [ ] Caching mechanism implemented and integrated with existing components.
+- [ ] Invalidation strategy in place ensuring data consistency.
+- [ ] Configuration and management tools for the cache are provided.
+- [ ] Performance improvements documented and verified through testing.
+- [ ] No security vulnerabilities introduced by caching strategy.
+- [ ] Documentation updated to include caching strategy details and usage.
+- [ ] All new code is well-tested and follows existing coding standards.
 
-## Dependencies and Prerequisites
+## Dependencies
 
-- Selection and setup of caching technology (e.g., Redis, Memcached).
-- Review and understanding of existing data access patterns within MeshHook.
+- Decision on caching technology (in-memory vs. distributed).
+- Existing system architecture and component design.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-- Adhere to the project's coding standards and best practices.
-- Ensure that all interactions with the cache are abstracted behind a well-defined interface to allow for future changes in caching technology.
+- Follow existing project patterns for modularity and readability.
+- Ensure all cached data handling respects multi-tenant security models.
+- Use environment variables for configurable parameters to ease deployment and scaling.
 
 ### Testing Strategy
 
-- **Unit Tests:** Cover the caching layer logic including set, get, and invalidate operations.
-- **Integration Tests:** Test the integration of the caching layer with existing components, verifying that data retrieval follows the cache-first approach.
-- **Performance Tests:** Benchmark system performance with and without the caching layer to quantify the improvements.
+- **Unit Tests**: Cover new caching logic and invalidation mechanisms.
+- **Integration Tests**: Test caching integration points with existing system components.
+- **Performance Tests**: Compare key workflows with and without caching to document improvements.
 
 ### Security Considerations
 
-- Ensure cached data is scoped and isolated per tenant, respecting the RLS model.
-- Secure the caching infrastructure against unauthorized access.
+- Ensure cached data is scoped correctly to avoid data leaks between tenants.
+- Consider encryption for sensitive data in cache, if using a distributed cache solution.
 
 ### Monitoring & Observability
 
-- Implement monitoring for cache hits, misses, and related performance metrics.
-- Set up alerts for critical cache-related failures or significant drops in cache hit rates.
+- Implement metrics for cache hit/miss ratios, load, and memory usage.
+- Use logging to capture cache invalidation and error events for troubleshooting.
 
----
-
-*This PRD outlines the approach for enhancing the MeshHook project with a robust caching strategy, aiming to improve performance, reduce database load, and maintain high standards of reliability and security.*
+By addressing these requirements and considerations, the caching strategy for MeshHook should enhance system performance, maintain data consistency, and integrate seamlessly with the existing architecture and workflows.
 
 ---
 
