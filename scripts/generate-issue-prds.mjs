@@ -61,6 +61,17 @@ function getRepo() {
   }
 }
 
+// Get default branch name
+function getDefaultBranch(repo) {
+  try {
+    const branch = gh(`api repos/${repo} --jq '.default_branch'`);
+    return branch || "main";
+  } catch (error) {
+    console.warn("⚠️  Could not detect default branch, using 'main'");
+    return "main";
+  }
+}
+
 // Recursively read all files from a directory
 function readAllFilesRecursive(dir, fileList = []) {
   const files = readdirSync(dir);
@@ -598,10 +609,10 @@ async function addLabelsToIssue(repo, issueNumber, labels, dryRun = false) {
 }
 
 // Update issue body with PRD content and link
-async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdContent, dryRun = false) {
+async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdContent, defaultBranch, dryRun = false) {
   const sanitizedTitle = sanitizeFilename(issueTitle);
   const prdFilename = `${issueNumber}-${sanitizedTitle}.md`;
-  const prdLink = `\n\n---\n\n## 📋 Product Requirements Document\n\n**Full PRD:** [docs/PRDs/${prdFilename}](https://github.com/${repo}/blob/main/docs/PRDs/${prdFilename})\n\n<details>\n<summary>View PRD Content</summary>\n\n${prdContent}\n\n</details>`;
+  const prdLink = `\n\n---\n\n## 📋 Product Requirements Document\n\n**Full PRD:** [docs/PRDs/${prdFilename}](https://github.com/${repo}/blob/${defaultBranch}/docs/PRDs/${prdFilename})\n\n<details>\n<summary>View PRD Content</summary>\n\n${prdContent}\n\n</details>`;
 
   // Check if PRD section already exists
   if (hasPRDSection(originalBody)) {
@@ -660,6 +671,9 @@ async function generateIssuePRDs(args) {
 
   const repo = getRepo();
   console.log(`📦 Repository: ${repo}`);
+  
+  const defaultBranch = getDefaultBranch(repo);
+  console.log(`🌿 Default branch: ${defaultBranch}`);
 
   if (dryRun) {
     console.log("🔍 DRY RUN MODE - No changes will be made");
@@ -718,6 +732,7 @@ async function generateIssuePRDs(args) {
         issue.title,
         issue.body,
         prdContent,
+        defaultBranch,
         dryRun
       );
 
