@@ -12,6 +12,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@meshhook/shared": "workspace:*",
     "@supabase/supabase-js": "^2.45.1",
     "@supabase/ssr": "^0.5.2",
     "jmespath": "^0.16.0",

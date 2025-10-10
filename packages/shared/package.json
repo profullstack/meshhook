@@ -1,0 +1,13 @@
+{
+  "name": "@meshhook/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./lib/db.js": "./lib/db.js",
+    "./lib/queue.js": "./lib/queue.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "pg": "^8.16.3"
+  }
+}

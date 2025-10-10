@@ -6,10 +6,51 @@
 	"/api/hooks/[slug]": [
 		"src/routes/api/hooks/[slug]/+server.js"
 	],
+	"/api/runs": [
+		"src/routes/api/runs/+server.js"
+	],
+	"/api/secrets": [
+		"src/routes/api/secrets/+server.js"
+	],
+	"/api/secrets/[id]": [
+		"src/routes/api/secrets/[id]/+server.js"
+	],
+	"/api/workflows": [
+		"src/routes/api/workflows/+server.js"
+	],
+	"/api/workflows/[id]": [
+		"src/routes/api/workflows/[id]/+server.js"
+	],
+	"/api/workflows/[id]/versions": [
+		"src/routes/api/workflows/[id]/versions/+server.js"
+	],
 	"/auth/login": [
 		"src/routes/+layout.server.js"
 	],
 	"/auth/logout": [
 		"src/routes/auth/logout/+server.js"
+	],
+	"/runs": [
+		"src/routes/runs/+page.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/runs/[id]": [
+		"src/routes/runs/[id]/+page.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/secrets": [
+		"src/routes/secrets/+page.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/workflows/index": [
+		"src/routes/workflows/index/+page.server.js",
+		"src/routes/+layout.server.js"
+	],
+	"/workflows/new": [
+		"src/routes/+layout.server.js"
+	],
+	"/workflows/[id]/edit": [
+		"src/routes/workflows/[id]/edit/+page.server.js",
+		"src/routes/+layout.server.js"
 	]
 }
