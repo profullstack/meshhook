@@ -1,29 +1,33 @@
 @startuml
 !theme plain
 
-title MeshHook Documentation Review Process
+title Documentation Review Process for MeshHook
 
 actor Developer as dev
-actor Reviewer
-database GitHub as git
-cloud "MeshHook Platform" as meshhook
-rectangle "Documentation\nTools & Platforms" as tools
-rectangle "Markdown\nEditor" as markdown
-rectangle "Documentation\nRepository" as docsRepo
+actor Reviewer as rev
+database Codebase as code
+cloud "Documentation Tools\n& Platforms" as tools
+rectangle "MeshHook\nSystem" as system {
+  component "API Documentation" as apidoc
+  component "Security Documentation" as secdoc
+  component "Architectural Documentation" as arcdoc
+  component "Operational Documentation" as opdoc
+}
 
-dev --> meshhook : Audit Current Features
-dev --> meshhook : Verify Architectural Details
-dev --> git : Access Codebase & Docs
-dev --> tools : Use Documentation Tools
-tools --> markdown : Create/Update Docs
-markdown --> docsRepo : Update Documentation
-docsRepo --> Reviewer : Review Updated Docs
-Reviewer --> docsRepo : Provide Feedback
-docsRepo --> git : Publish Documentation
+dev -> code : Audit & Inventory
+code -> apidoc : Identify Gaps
+code -> secdoc : Identify Gaps
+code -> arcdoc : Identify Gaps
+code -> opdoc : Identify Gaps
 
-meshhook .> git : Reflects Current State
-meshhook .> tools : Based on Architecture & Features
-tools .> markdown : Utilize for Documentation
-markdown .> Reviewer : Ensure Clarity & Accuracy
+apidoc -> tools : Update Documentation
+secdoc -> tools : Update Documentation
+arcdoc -> tools : Update Documentation
+opdoc -> tools : Update Documentation
+
+tools -> rev : Submit for Review
+rev -> tools : Validate & Approve
+
+tools --> system : Publish Documentation
 
 @enduml

@@ -1,24 +1,60 @@
 @startuml
 !theme plain
 
-title MeshHook Demo Workflows
+title MeshHook Demo Workflows Architecture
 
-actor User as user
-participant "SvelteKit\nVisual Builder" as builder
-database "Supabase\nRealtime DB" as supabase
-participant "MeshHook\nWorkflow Engine" as engine
-cloud "Webhook Sources" as webhooks
-queue "Live Logs" as logs
+package "MeshHook Core" {
+    [Visual DAG Builder] #LightBlue
+    [Workflow Engine] #LightBlue
+    database "Postgres DB" #LightYellow
+    [Supabase Realtime] #LightGreen
+    [API Gateway] #LightBlue
+}
 
-user -> builder : Design Workflow
-builder -> engine : Deploy Workflow
-user -> engine : Import Workflow
-engine -> supabase : Fetch Data
-supabase --> engine : Data for Conditions
-webhooks -> engine : Trigger Workflow\nwith Signature
-engine -> logs : Write Execution Logs
-logs --> user : View Logs in Realtime
-engine -> supabase : Update Workflow State
-supabase --> user : Push Updates via Realtime
+package "Demo Workflows" {
+    [Demo Workflow 1\nAPI Data Aggregation] #Pink
+    [Demo Workflow 2\nAutomated Notification System] #Pink
+    [Demo Workflow 3\nConditional Multi-Step Process] #Pink
+}
+
+cloud {
+    [External APIs] #Silver
+}
+
+[Demo Workflow 1\nAPI Data Aggregation] -down-> [External APIs] : Fetches data
+[Demo Workflow 2\nAutomated Notification System] -down-> [External APIs] : Sends notifications
+[Demo Workflow 3\nConditional Multi-Step Process] -down-> [External APIs] : Interacts based on conditions
+
+[Demo Workflow 1\nAPI Data Aggregation] -right-> [Visual DAG Builder] : Uses
+[Demo Workflow 2\nAutomated Notification System] -right-> [Visual DAG Builder] : Uses
+[Demo Workflow 3\nConditional Multi-Step Process] -right-> [Visual DAG Builder] : Uses
+
+[Visual DAG Builder] -down-> [Workflow Engine] : Defines workflows
+[Workflow Engine] -down-> [Postgres DB] : Stores state
+[Workflow Engine] -down-> [Supabase Realtime] : Updates in real-time
+
+[API Gateway] -left-> [Demo Workflow 1\nAPI Data Aggregation] : Triggers
+[API Gateway] -left-> [Demo Workflow 2\nAutomated Notification System] : Triggers
+[API Gateway] -left-> [Demo Workflow 3\nConditional Multi-Step Process] : Triggers
+
+note right of [API Gateway]
+    Secure webhook triggers
+    with signature verification
+end note
+
+note right of [Visual DAG Builder]
+    SvelteKit-based visual
+    workflow creation
+end note
+
+note right of [Supabase Realtime]
+    Real-time monitoring and
+    live logs
+end note
+
+note right of [Demo Workflows]
+    Showcases MeshHook's
+    core functionalities
+end note
 
 @enduml

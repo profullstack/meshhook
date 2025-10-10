@@ -138,26 +138,36 @@ function calculatePositions(nodes, layers) {
 	const nodeMap = new Map(nodes.map(node => [node.id, node]));
 	const sortedLayers = Array.from(layers.keys()).sort((a, b) => a - b);
 
-	sortedLayers.forEach((layerNum, layerIndex) => {
+	// Create new array with new node objects to trigger Svelte reactivity
+	const updatedNodes = nodes.map(node => {
+		const layerNum = Array.from(layers.entries()).find(([_, nodeIds]) =>
+			nodeIds.includes(node.id)
+		)?.[0];
+		
+		if (layerNum === undefined) {
+			return { ...node };
+		}
+
 		const nodesInLayer = layers.get(layerNum);
+		const layerIndex = sortedLayers.indexOf(layerNum);
+		const indexInLayer = nodesInLayer.indexOf(node.id);
 		const layerHeight = nodesInLayer.length;
 
-		nodesInLayer.forEach((nodeId, index) => {
-			const node = nodeMap.get(nodeId);
-			if (node) {
-				// Calculate vertical position to center nodes in the layer
-				const totalHeight = (layerHeight - 1) * VERTICAL_SPACING;
-				const startY = START_Y - (totalHeight / 2);
+		// Calculate vertical position to center nodes in the layer
+		const totalHeight = (layerHeight - 1) * VERTICAL_SPACING;
+		const startY = START_Y - (totalHeight / 2);
 
-				node.position = {
-					x: START_X + (layerIndex * HORIZONTAL_SPACING),
-					y: startY + (index * VERTICAL_SPACING)
-				};
+		// Return new node object with updated position
+		return {
+			...node,
+			position: {
+				x: START_X + (layerIndex * HORIZONTAL_SPACING),
+				y: startY + (indexInLayer * VERTICAL_SPACING)
 			}
-		});
+		};
 	});
 
-	return nodes;
+	return updatedNodes;
 }
 
 /**

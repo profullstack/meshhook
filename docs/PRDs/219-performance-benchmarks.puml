@@ -1,29 +1,70 @@
 @startuml
 !theme plain
 
-title MeshHook Performance Benchmarks Integration
+title Performance Benchmarks for MeshHook
 
-actor Developer
-boundary CI_CD "CI/CD Pipeline"
-control "Benchmark\nScripts" as Benchmarks
-database "Supabase\n(Postgres)" as Supabase
-entity "Existing\nAPI Endpoints" as APIs
-collections "MeshHook\nCodebase" as Codebase
-node "Worker\nOrchestration" as Workers
+package "MeshHook System" {
+    [Webhook Trigger] - [Visual DAG Builder]
+    [Visual DAG Builder] - [Workflow Execution]
+    [Workflow Execution] - [Live Logs Delivery]
+    [Workflow Execution] - [Multi-tenant RLS Security]
+    [Multi-tenant RLS Security] .> [Database]: <<use>>
+}
 
-Developer --> Codebase : Reviews & Identifies\nPerformance Points
-Developer --> Benchmarks : Develops & Integrates
-Benchmarks ..> Supabase : Measures Performance\nAgainst Database
-Benchmarks ..> APIs : Measures API\nPerformance
-Benchmarks ..> Workers : Measures Worker\nEfficiency
-Codebase --> Supabase : Utilizes for\nData Storage & Queue Mgmt
-Codebase --> APIs : Defines & Consumes
-Codebase --> Workers : Utilizes for Task\nExecution & Orchestration
-Supabase --> APIs : Triggers via\nRealtime Updates
-Workers --> Supabase : Updates & Queries\nData
-Benchmarks --> CI_CD : Integrated for\nAutomated Testing
-CI_CD --> Developer : Alerts on\nRegression Detection
+package "Benchmarking Suite" {
+    [Benchmark Development]
+    [Automation & Integration]
+    [Metric Collection & Analysis]
+    [Baseline Metrics & Regression Detection]
 
-note right of Benchmarks : Automates Performance\nBenchmarking & Analysis
+    [Benchmark Development] --> [Benchmark Execution]
+    [Benchmark Execution] --> [Data Analysis and Optimization]
+    [Data Analysis and Optimization] --> [Integration and Automation]
+    [Integration and Automation] --> [Documentation]
+}
+
+[Benchmark Development] ..> [Webhook Trigger] : benchmarks
+[Benchmark Development] ..> [Visual DAG Builder] : benchmarks
+[Benchmark Development] ..> [Workflow Execution] : benchmarks
+[Benchmark Development] ..> [Live Logs Delivery] : benchmarks
+[Benchmark Development] ..> [Multi-tenant RLS Security] : benchmarks
+
+database "Supabase (Postgres)" as DB {
+    [Database] <-- [Multi-tenant RLS Security]
+}
+
+[Automation & Integration] ..> [CI/CD Pipeline] : integrates
+[CI/CD Pipeline] ..> [MeshHook System] : deploys
+
+cloud "CI/CD Pipeline" {
+    [CI/CD Pipeline]
+}
+
+[CI/CD Pipeline] - [Benchmarking Suite]
+
+note right of [Benchmark Development]
+  Create and execute benchmarks to measure:
+  - Webhook processing time
+  - DAG builder responsiveness
+  - Workflow execution time
+  - Live logs delivery latency
+  - RLS security performance
+end note
+
+note right of [Automation & Integration]
+  Integrate benchmarking into the CI/CD pipeline for continuous performance validation.
+end note
+
+note right of [Metric Collection & Analysis]
+  Collect and analyze key performance metrics to identify bottlenecks and optimization opportunities.
+end note
+
+note right of [Baseline Metrics & Regression Detection]
+  Establish performance baselines and detect performance regressions in future updates.
+end note
+
+note right of [Documentation]
+  Document benchmarking approach, tools, findings, and identified optimizations.
+end note
 
 @enduml

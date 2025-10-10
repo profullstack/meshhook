@@ -1,67 +1,72 @@
 @startuml
-!theme plain
+!define RECTANGLE class
 
-title Marketing Site Development for MeshHook
-
-package "Marketing Site" {
-    [Content Strategy] as CS
-    [Responsive Web Design] as RWD
-    [SEO Optimization] as SEO
-    [Lead Capture Form] as LCF
-    [Social Proof] as SP
+RECTANGLE Content_Strategy_Development {
+    +Develop content strategy
+    +Create detailed pages
+    +Craft use case guides
 }
 
-package "Technical Specifications" {
-    [SvelteKit] as SK
-    [Vercel/Netlify] as VN
-    [Google Analytics] as GA
+RECTANGLE Responsive_Design {
+    +Mobile-first strategy
+    +Cross-device compatibility
 }
 
-database "MeshHook DB" as DB {
-    frame "Content" {
-        [Product Info]
-        [Testimonials]
-        [Case Studies]
-    }
+RECTANGLE SEO_Optimization {
+    +Implement SEO best practices
+    +Technical optimizations
+    +Content strategies
 }
 
-cloud {
-    [User] as U
+RECTANGLE Lead_Generation {
+    +Contact form
+    +Newsletter sign-up
 }
 
-User --> CS : Views content
-User --> RWD : Accesses via various devices
-User --> SEO : Finds site through search engines
-User --> LCF : Submits inquiries
-User --> SP : Reads reviews and case studies
+RECTANGLE Analytics_Integration {
+    +Integrate analytical tools
+    +Monitor traffic and engagement
+}
 
-CS --> SK : Content managed by
-RWD --> SK : Design implemented with
-SEO --> SK : SEO strategies applied
-LCF --> SK : Form built with
-SP --> SK : Showcased via
+RECTANGLE Performance {
+    +90+ Google PageSpeed score
+}
 
-SK --> VN : Deployed on
-VN --> GA : Monitored by
+RECTANGLE Reliability {
+    +99.9% uptime
+}
 
-DB --> CS : Provides content
-DB --> SP : Provides testimonials and case studies
+RECTANGLE Security {
+    +Web security best practices
+}
 
-note right of GA
-  Analytics & SEO are crucial for
-  understanding user behavior and
-  improving search rankings.
-end note
+RECTANGLE Scalability {
+    +Accommodate content and traffic growth
+}
 
-note right of VN
-  Deployment platforms like Vercel
-  or Netlify offer global CDN, SSL,
-  and easy deployment processes.
-end note
+RECTANGLE Frontend_Framework {
+    +SvelteKit
+}
 
-note right of SK
-  SvelteKit offers server-side rendering
-  (SSR) for a performant, SEO-friendly site.
-end note
+RECTANGLE Hosting_Deployment {
+    +Vercel or Netlify
+}
+
+RECTANGLE SEO_Analytics {
+    +Google Analytics
+}
+
+Content_Strategy_Development --> Responsive_Design
+Responsive_Design --> SEO_Optimization
+SEO_Optimization --> Lead_Generation
+Lead_Generation --> Analytics_Integration
+Analytics_Integration --> Performance
+Performance --> Reliability
+Reliability --> Security
+Security --> Scalability
+
+Scalability --> Frontend_Framework
+Frontend_Framework --> Hosting_Deployment
+Hosting_Deployment --> SEO_Analytics
 
 @enduml

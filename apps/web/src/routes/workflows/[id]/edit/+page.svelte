@@ -112,16 +112,18 @@
 		}
 
 		try {
+			console.log('Organizing canvas with', nodes.length, 'nodes and', edges.length, 'edges');
+			
 			// Organize the nodes using the layout algorithm
+			// This returns new node objects with updated positions
 			const organizedNodes = organizeCanvas(nodes, edges);
 			
-			// Update the nodes with new positions
-			nodes = organizedNodes;
+			console.log('Canvas organized successfully. Sample positions:',
+				organizedNodes.slice(0, 3).map(n => ({ id: n.id, x: n.position.x, y: n.position.y }))
+			);
 			
-			// Trigger the change handler
-			if (handleNodesChange) {
-				handleNodesChange(nodes);
-			}
+			// Update nodes - this triggers Svelte reactivity
+			nodes = organizedNodes;
 		} catch (error) {
 			console.error('Error organizing canvas:', error);
 			alert('Failed to organize canvas');
