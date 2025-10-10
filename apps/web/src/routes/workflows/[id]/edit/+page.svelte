@@ -4,6 +4,7 @@
 	import NodeConfigModal from '$lib/components/NodeConfigModal.svelte';
 	import ValidationPanel from '$lib/components/ValidationPanel.svelte';
 	import { validateWorkflow } from '$lib/utils/workflow-validator.js';
+	import { organizeCanvas } from '$lib/utils/layout-organizer.js';
 	import { goto } from '$app/navigation';
 
 	let { data } = $props();
@@ -102,6 +103,30 @@
 			saveWorkflow(true);
 		}
 	}
+
+	// Handle organize canvas
+	function handleOrganizeCanvas() {
+		if (nodes.length === 0) {
+			alert('No nodes to organize');
+			return;
+		}
+
+		try {
+			// Organize the nodes using the layout algorithm
+			const organizedNodes = organizeCanvas(nodes, edges);
+			
+			// Update the nodes with new positions
+			nodes = organizedNodes;
+			
+			// Trigger the change handler
+			if (handleNodesChange) {
+				handleNodesChange(nodes);
+			}
+		} catch (error) {
+			console.error('Error organizing canvas:', error);
+			alert('Failed to organize canvas');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -126,6 +151,14 @@
 				</div>
 			</div>
 			<div class="header-actions">
+				<button
+					class="btn-organize"
+					onclick={handleOrganizeCanvas}
+					disabled={nodes.length === 0}
+					title="Auto-organize nodes in a hierarchical layout"
+				>
+					🎯 Organize Canvas
+				</button>
 				<button class="btn-secondary" onclick={() => saveWorkflow(false)} disabled={saving}>
 					{saving ? 'Saving...' : 'Save Draft'}
 				</button>
@@ -280,6 +313,16 @@
 
 	.btn-secondary:hover:not(:disabled) {
 		background: #f5f5f5;
+	}
+
+	.btn-organize {
+		background: #8b5cf6;
+		color: white;
+		border: none;
+	}
+
+	.btn-organize:hover:not(:disabled) {
+		background: #7c3aed;
 	}
 
 	button:disabled {

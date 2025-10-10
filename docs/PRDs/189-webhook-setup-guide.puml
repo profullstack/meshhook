@@ -1,0 +1,35 @@
+@startuml
+!define RECTANGLE class
+!define DATABASE entity
+
+title Webhook Setup Guide - Workflow
+
+actor User as user
+RECTANGLE "Webhook Service" as webhookService
+RECTANGLE "SvelteKit SSR/API" as svelteKit
+DATABASE "Supabase Postgres" as supabasePostgres
+RECTANGLE "Supabase Realtime" as supabaseRealtime
+RECTANGLE "HTTP Executor Worker" as httpExecutor
+RECTANGLE "Orchestrator Worker" as orchestrator
+
+user -> webhookService : Requests webhook setup
+webhookService -> svelteKit : Validates request\nand creates webhook config
+svelteKit -> supabasePostgres : Stores webhook config
+supabasePostgres --> svelteKit : Returns success confirmation
+svelteKit -> supabaseRealtime : Triggers webhook config update notification
+svelteKit --> user : Returns webhook setup success
+
+group Triggering Webhook
+    user -> webhookService : Triggers webhook with payload
+    webhookService -> httpExecutor : Sends payload for processing
+    httpExecutor -> orchestrator : Initiates workflow based on webhook
+    orchestrator -> supabasePostgres : Updates workflow state
+    supabasePostgres --> orchestrator : Confirms state update
+    orchestrator -> supabaseRealtime : Streams workflow logs
+end
+
+note right of orchestrator : Orchestrator manages\nworkflow execution and scheduling
+
+note over supabasePostgres : Uses existing data model\nNo schema changes required
+
+@enduml

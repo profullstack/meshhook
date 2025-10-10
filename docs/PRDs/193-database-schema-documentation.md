@@ -1,161 +1,100 @@
 # PRD: Database schema documentation
 
+**Issue:** [#193](https://github.com/profullstack/meshhook/issues/193)
+**Milestone:** Phase 8: Documentation
+**Labels:** developer-documentation, hacktoberfest
+
+---
+
+# PRD: Database Schema Documentation
+
 **Issue:** [#193](https://github.com/profullstack/meshhook/issues/193)  
 **Milestone:** Phase 8: Documentation  
-**Labels:** developer-documentation  
+**Labels:** developer-documentation, hacktoberfest  
 **Phase:** Phase 8  
-**Section:** Developer Documentation
+**Section:** Developer Documentation  
 
 ---
 
 ## Overview
 
-This task is part of Phase 8 in the Developer Documentation section of the MeshHook project. 
+The purpose of this task is to create comprehensive documentation for the MeshHook project's database schema. This documentation is crucial for enabling developers to understand the project's data model, contributing to better development, integration, and maintenance processes. Given MeshHook's commitment to providing a webhook-first, deterministic, Postgres-native workflow engine, the database schema forms the backbone of the application, making its documentation vital for the project's success.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
-
-**Task Objective:** Database schema documentation
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+This task aligns with MeshHook's goals by ensuring that the project's infrastructure is transparent and accessible, thereby facilitating future enhancements and integrations. It supports core functionalities such as webhook triggers, visual DAG building, durable runs, live logs, and multi-tenant security by providing a clear understanding of how data is structured and managed.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Database schema documentation"
-2. Design database schema following normalization principles
-3. Implement RLS policies for multi-tenant security
-4. Create necessary indexes for query performance
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Comprehensive Schema Documentation:** Document all database tables, columns, data types, constraints, indexes, and relationships.
+2. **Normalization and RLS Policies:** Documentation must include normalization details and row-level security (RLS) policies to ensure multi-tenant security.
+3. **Indexing and Performance:** Include documentation on indexing strategies for query optimization and performance enhancement.
+4. **Versioning:** Manage schema documentation in version control with clear versioning for tracking changes over time.
+5. **Integration Guidelines:** Provide guidelines for integrating new tables or modifying existing ones within the current schema.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Accuracy:** Ensure that the documentation precisely reflects the current state of the database schema.
+- **Usability:** Documentation should be clear, well-structured, and easy to navigate for developers and new contributors.
+- **Maintainability:** The documentation process should be easily repeatable, allowing for updates as the schema evolves.
+- **Accessibility:** Host the documentation in a location accessible to all project contributors, with considerations for different roles and permissions.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a Postgres database managed by Supabase, which includes data storage, queues, and real-time log streaming. The database schema is central to the orchestration of workflows, handling webhook triggers, storing workflow definitions, and managing execution logs.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Review Existing Schema:** Begin by reviewing the current `schema.sql` file and any related migrations to understand the existing database structure.
+2. **Tool Selection:** Choose tools for generating schema documentation. Options include automated database documentation tools or manual documentation approaches, depending on the project's needs and the complexity of the schema.
+3. **Generate Initial Documentation:** Use the selected tool or process to create the initial version of the schema documentation. This should include tables, columns, data types, constraints, relationships, indexes, and RLS policies.
+4. **Review and Revise:** Review the generated documentation for accuracy, completeness, and clarity. Make necessary revisions to ensure it meets the project's standards and requirements.
+5. **Publish Documentation:** Finalize the documentation and publish it in an accessible location, such as the project's GitHub wiki or a dedicated documentation site. Ensure it is linked from the main project documentation for easy access.
+6. **Update Process:** Establish a process for updating the documentation when the database schema changes, integrating this process into the project's workflow to ensure ongoing accuracy.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+Not applicable for this task, as it focuses on documenting the existing schema rather than modifying it.
 
-### Data Model
+### API Endpoints
 
-Define the data model including:
-
-- **Tables:** List all new or modified tables
-- **Columns:** Specify column names, types, and constraints
-- **Relationships:** Define foreign keys and relationships
-- **Indexes:** Identify columns that need indexing
-- **RLS Policies:** Define row-level security policies
-
-Refer to `schema.sql` for existing schema and follow established patterns.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+Not applicable for this task.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- [ ] Database schema documentation is complete, including tables, columns, data types, constraints, relationships, indexes, and RLS policies.
+- [ ] Documentation is reviewed for accuracy and clarity.
+- [ ] Documentation is published in an accessible location and linked from the main project documentation.
+- [ ] A process for updating the documentation is established and documented.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+## Dependencies and Prerequisites
 
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the current database schema (`schema.sql` and any migration files).
+- Selection of a documentation tool or approach suitable for the project's needs.
+- Access to a platform for hosting the documentation (e.g., GitHub wiki, dedicated documentation site).
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Ensure that the documentation process is in line with the project's coding standards and best practices.
+- Use clear, concise language and provide examples where applicable to enhance understanding.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Validate the accuracy of the documentation by cross-referencing with the actual database schema.
+- Conduct peer reviews of the documentation to ensure clarity and completeness.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure that RLS policies and any other security-related aspects of the schema are thoroughly documented.
+- Be mindful of not including any sensitive information or credentials in the documentation.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+Not directly applicable to this task, but ensure that any aspects of the schema related to logging, metrics, and monitoring are accurately documented.
 
 ## Related Documentation
 
@@ -164,21 +103,7 @@ No new API endpoints required for this task.
 - [Security Guidelines](../Security.md)
 - [Operations Guide](../Operations.md)
 
-## Task Details
-
-**Original Task Description:**
-Database schema documentation
-
-**Full Issue Body:**
-**Phase:** Phase 8
-**Section:** Developer Documentation
-
-**Task:** Database schema documentation
-
----
-_Auto-generated from TODO.md_
-
 ---
 
-*This PRD was auto-generated from GitHub issue #193*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #193*
+*Generated: 2025-10-10*

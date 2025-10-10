@@ -1,176 +1,122 @@
 # PRD: Webhook setup guide
 
+**Issue:** [#189](https://github.com/profullstack/meshhook/issues/189)
+**Milestone:** Phase 8: Documentation
+**Labels:** user-documentation, hacktoberfest
+
+---
+
+# PRD: Webhook Setup Guide
+
 **Issue:** [#189](https://github.com/profullstack/meshhook/issues/189)  
 **Milestone:** Phase 8: Documentation  
 **Labels:** user-documentation  
 **Phase:** Phase 8  
-**Section:** User Documentation
+**Section:** User Documentation  
+**Full PRD:** [docs/PRDs/189-webhook-setup-guide.md](https://github.com/profullstack/meshhook/blob/main/docs/PRDs/189-webhook-setup-guide.md)
 
 ---
 
-## Overview
+## 1. Overview
 
-This task is part of Phase 8 in the User Documentation section of the MeshHook project. 
+The objective of this task is to develop a comprehensive webhook setup guide for MeshHook users, aligning with the project's core functionalities such as webhook triggers with signature verification, durable, replayable runs, and multi-tenant RLS security. This document serves as a foundational component of user documentation, aiming to enhance user experience by providing clear, actionable instructions for setting up and managing webhooks effectively.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Purpose
 
-**Task Objective:** Webhook setup guide
+- To facilitate users in seamlessly integrating MeshHook's webhook functionality into their workflows.
+- To ensure users can leverage webhook triggers with signature verification confidently.
+- To embody MeshHook's principles of simplicity, durability, and security in user documentation.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## 2. Functional Requirements
 
-## Requirements
+1. **Content Creation:** Develop a detailed, step-by-step webhook setup guide covering:
+   - Introduction to webhook concepts within MeshHook.
+   - Instructions for creating and configuring webhook triggers.
+   - Guidance on signature verification setup and best practices.
+2. **Visual Aids:** Include screenshots and diagrams to illustrate the setup process and configurations.
+3. **Example Use Cases:** Provide practical examples of webhook use cases in common scenarios.
+4. **Security Best Practices:** Outline security considerations for webhook setup, focusing on signature verification.
+5. **Troubleshooting Section:** Address common issues and their resolutions.
+6. **Feedback Mechanism:** Incorporate a method for readers to provide feedback on the documentation.
 
-### Functional Requirements
+## 3. Non-Functional Requirements
 
-1. Implement the core functionality described in the task: "Webhook setup guide"
-2. Create reusable Svelte 5 components
-3. Implement responsive design for mobile and desktop
-4. Follow project UI/UX patterns and styling
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+- **Usability:** Ensure the guide is user-friendly, employing clear, concise language accessible to both technical and non-technical users.
+- **Accessibility:** Adhere to web accessibility standards to ensure the guide is usable by people with disabilities.
+- **Maintainability:** Write the guide in a modular fashion to facilitate easy updates as the project evolves.
 
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
-
-## Technical Specifications
+## 4. Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+The guide will be integrated into the existing SvelteKit-based user documentation system, utilizing Markdown for content management and deployment via the project's static site generation pipeline.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Content Drafting:** Collaborate with the development team to outline the scope and details of webhook functionalities.
+2. **Visual Content Creation:** Design and capture screenshots/diagrams using tools that align with MeshHook's visual identity guidelines.
+3. **Documentation Writing:** Author the guide in Markdown, incorporating visual content and example code snippets where applicable.
+4. **Review and Iteration:** Conduct internal reviews with the project team for technical accuracy and user-friendliness.
+5. **Deployment:** Integrate the final guide into the MeshHook documentation site, following the project's content deployment workflows.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+Not applicable for this task as it focuses on documentation without altering the data model.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+Not applicable as this task does not involve API endpoint creation or modification.
 
-## Acceptance Criteria
+## 5. Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- [ ] Webhook setup guide is comprehensive, covering all required topics listed in the functional requirements.
+- [ ] Documentation includes visual aids and example use cases for better understanding.
+- [ ] Guide adheres to MeshHook's style and usability standards, with clear, accessible language.
+- [ ] Security best practices are clearly outlined, with emphasis on signature verification.
+- [ ] The troubleshooting section addresses common setup issues.
+- [ ] Feedback from the project team indicates the guide is accurate, understandable, and helpful.
+- [ ] Documentation is successfully integrated into the MeshHook documentation site and accessible to users.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+## 6. Dependencies and Prerequisites
 
-## Dependencies
+- Access to MeshHook's current webhook implementation details.
+- Collaboration with the development team for technical insights and review.
+- Tools for creating visual aids (screenshot tools, diagram software).
+- MeshHook's documentation site infrastructure for deployment.
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow Markdown syntax standards for documentation writing.
+- Ensure all documentation is version-controlled within the MeshHook repository.
+- Use clear, jargon-free language to maximize accessibility and comprehension.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Conduct peer reviews for technical accuracy and clarity.
+- Utilize Markdown linters to ensure syntax correctness.
+- Preview documentation on a staging environment to test for usability and accessibility.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Emphasize the importance of secure webhook configurations, focusing on signature verification mechanisms.
+- Ensure no sensitive information is disclosed within examples or screenshots.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+Not directly applicable to this documentation task. However, feedback mechanisms implemented should be monitored to gather user insights for future improvements.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
+- [MeshHook — PRD](../PRD.md)
 - [Architecture](../Architecture.md)
 - [Security Guidelines](../Security.md)
 - [Operations Guide](../Operations.md)
 
-## Task Details
-
-**Original Task Description:**
-Webhook setup guide
-
-**Full Issue Body:**
-**Phase:** Phase 8
-**Section:** User Documentation
-
-**Task:** Webhook setup guide
-
----
-_Auto-generated from TODO.md_
-
----
-
-*This PRD was auto-generated from GitHub issue #189*  
 *Last updated: 2025-10-10*
+
+---
+
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #189*
+*Generated: 2025-10-10*

@@ -1,0 +1,33 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] - [SvelteKit]
+    [Workflow CRUD] - [SvelteKit]
+    [Publish Versions] - [SvelteKit]
+    [Run Console] - [SvelteKit]
+    database "Supabase" {
+        [Postgres]
+        [Realtime]
+        [Storage]
+        [Edge]
+    }
+    [SvelteKit] --> [Supabase] : Uses for data, logs, artifacts, cron/timers
+    [Orchestrator Worker] --> [Supabase] : State management & scheduling
+    [HTTP Executor Worker] --> [Supabase] : HTTP tasks with retries/backoff
+    node "External Services" {
+        [Supabase Services]
+    }
+    [Supabase] --> [Supabase Services] : Integration
+}
+
+package "JMESPath Examples Feature" {
+    [JMESPath Examples] - [Documentation]
+    [Documentation] ..> [User Documentation] : Part of
+    [JMESPath Examples] ..> [SvelteKit] : Implements examples in
+    [JMESPath Examples] ..> [Supabase] : Utilizes for data manipulation examples
+}
+
+[User Documentation] --> [MeshHook System] : Documents
+
+@enduml

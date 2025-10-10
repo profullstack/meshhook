@@ -1,0 +1,58 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] <<SvelteKit>>
+    [Workflow CRUD] <<SvelteKit>>
+    [Publish Versions] <<SvelteKit>>
+    [Run Console] <<SvelteKit>>
+    [Orchestrator Worker]
+    [HTTP Executor Worker]
+    database "Supabase" {
+        [Postgres]
+        [Realtime]
+        [Storage]
+        [Edge Functions]
+    }
+}
+
+[Webhook Intake] --> [Orchestrator Worker] : Triggers workflow
+[Workflow CRUD] --> [Postgres] : CRUD operations
+[Publish Versions] --> [Postgres] : Version management
+[Run Console] --> [Realtime] : Live logs
+[Orchestrator Worker] --> [HTTP Executor Worker] : Executes HTTP tasks
+[Orchestrator Worker] --> [Postgres] : Updates state
+[HTTP Executor Worker] --> [Edge Functions] : Schedules retries/backoffs
+[Realtime] .> [Run Console] : Streams logs
+
+note right of [Orchestrator Worker]
+  State machine + scheduling
+end note
+
+note right of [HTTP Executor Worker]
+  Robust HTTP requests
+  with retries/backoff
+end note
+
+note right of [Webhook Intake]
+  Webhook triggers
+  with signature verification
+end note
+
+note right of [Postgres]
+  Data + queues
+end note
+
+note right of [Realtime]
+  Log streaming
+end note
+
+note right of [Storage]
+  Artifacts
+end note
+
+note right of [Edge Functions]
+  Cron/Timers
+end note
+
+@enduml

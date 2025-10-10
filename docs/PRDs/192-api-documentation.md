@@ -1,202 +1,116 @@
 # PRD: API documentation
 
+**Issue:** [#192](https://github.com/profullstack/meshhook/issues/192)
+**Milestone:** Phase 8: Documentation
+**Labels:** developer-documentation, hacktoberfest
+
+---
+
+# PRD: API Documentation for MeshHook
+
 **Issue:** [#192](https://github.com/profullstack/meshhook/issues/192)  
 **Milestone:** Phase 8: Documentation  
-**Labels:** developer-documentation  
+**Labels:** developer-documentation, hacktoberfest  
 **Phase:** Phase 8  
-**Section:** Developer Documentation
+**Section:** Developer Documentation  
 
 ---
 
 ## Overview
 
-This task is part of Phase 8 in the Developer Documentation section of the MeshHook project. 
+The objective of this task is to develop comprehensive API documentation for MeshHook, aligning with the project's commitment to ease of use, reliability, and security. The API documentation will serve as a critical resource for developers, enabling them to integrate with MeshHook effectively, understand its capabilities, and leverage its features to build and manage webhook-driven workflows with confidence.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
-
-**Task Objective:** API documentation
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+**Purpose:** The API documentation is intended to:
+- Provide clear, accurate, and detailed information about MeshHook's API endpoints, request/response formats, and error codes.
+- Facilitate developers' understanding of MeshHook's functionalities, aiding in quicker integration and troubleshooting.
+- Align with MeshHook's goals of delivering a user-friendly, robust, and secure webhook-first workflow engine.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "API documentation"
-2. Create RESTful API endpoint(s) following project conventions
-3. Implement proper request validation and error handling
-4. Return appropriate HTTP status codes and response formats
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Comprehensive Coverage:** Document all public API endpoints, including webhook triggers, workflow management, version publications, and run consoles.
+2. **Clarity and Accuracy:** Ensure that the documentation is clear, accurate, and provides examples for common use cases.
+3. **Searchability and Navigation:** The documentation should be easy to navigate, with a search function to quickly locate relevant sections or endpoints.
+4. **Versioning and Updates:** Include documentation versioning, ensuring users can access documentation for previous API versions.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Documentation should be hosted on a platform that ensures high availability and quick load times.
+- **Maintainability:** The documentation process should include a workflow for keeping it up to date with API changes.
+- **Security:** Include security best practices, highlighting how to securely use the API, manage secrets, and verify webhooks.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook's architecture, as outlined in `docs/Architecture.md`, integrates SvelteKit for SSR/API, utilizes Supabase for backend services, and employs workers for orchestration and HTTP execution. The API documentation task should consider these components and provide guidance on interacting with each through the API.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Tool Selection:** Choose a documentation tool or platform (e.g., Swagger, OpenAPI) that supports automatic generation, versioning, and hosting of API documentation.
+2. **Template Creation:** Define a documentation template that includes sections for endpoint descriptions, request/response examples, error codes, and security considerations.
+3. **Content Development:** Populate the template with details of all public API endpoints, adhering to MeshHook's coding and API design standards.
+4. **Review and Feedback:** Conduct internal reviews of the documentation with the development team and select beta users for external feedback.
+5. **Publication:** Host the finalized API documentation on a suitable platform, ensuring it is accessible to all intended users.
+6. **Maintenance Plan:** Establish a process for regularly updating the documentation in line with API changes, including versioning for backward compatibility.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model and API Endpoints
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+No new data model changes are required for this task. However, the API documentation will detail existing endpoints, such as:
 
-### Data Model
+- **Webhook Triggers:** `/api/webhook/{project_id}/{workflow_id}`
+- **Workflow Management:** `/api/workflows/{project_id}`
+- **Version Publication:** `/api/workflows/{project_id}/{workflow_id}/versions`
+- **Run Console:** `/api/runs/{run_id}`
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-Define API endpoints:
-
-### Endpoint 1: [Method] /path/to/endpoint
-
-**Request:**
-```json
-{
-  "field": "value"
-}
-```
-
-**Response:**
-```json
-{
-  "status": "success",
-  "data": {}
-}
-```
-
-**Error Responses:**
-- 400: Bad Request - Invalid input
-- 401: Unauthorized - Authentication required
-- 403: Forbidden - Insufficient permissions
-- 404: Not Found - Resource not found
-- 500: Internal Server Error - Server error
-
-Add additional endpoints as needed.
+Each endpoint section will include method, path, request parameters, request body examples, response body examples, and possible error codes.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- [ ] All public API endpoints are documented, including request/response formats and examples.
+- [ ] Documentation includes a section on security best practices and webhook verification.
+- [ ] The documentation is hosted on a platform that ensures easy access and navigation.
+- [ ] The documentation has been reviewed internally and by selected external users for clarity and completeness.
+- [ ] A maintenance plan for the documentation is established and documented.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+## Dependencies and Prerequisites
 
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the current API codebase and developers for information gathering.
+- Selection and setup of the documentation tool or platform.
+- Coordination with the security team to include correct security practices and webhook verification methods.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow OpenAPI specifications for structuring API documentation.
+- Ensure examples are realistic and cover typical use cases.
+- Use clear and concise language to explain complex concepts.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Validate all documentation examples with actual API calls to ensure accuracy.
+- Conduct usability testing with developers not familiar with the project to identify areas of confusion or improvement.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Emphasize authentication, authorization, and webhook verification methods.
+- Clearly mark endpoints according to their required security level and permissions.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Utilize analytics on the documentation platform to track usage, popular sections, and search queries to inform continuous improvement.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
+- [MeshHook Project README](../README.md)
+- [Architecture Overview](../Architecture.md)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
 
-## Task Details
-
-**Original Task Description:**
-API documentation
-
-**Full Issue Body:**
-**Phase:** Phase 8
-**Section:** Developer Documentation
-
-**Task:** API documentation
-
----
-_Auto-generated from TODO.md_
+This PRD establishes the framework for creating comprehensive, clear, and useful API documentation for MeshHook, ensuring developers can effectively utilize the platform to build and manage webhook-driven workflows.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #192*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #192*
+*Generated: 2025-10-10*

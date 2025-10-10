@@ -1,72 +1,54 @@
 @startuml
 !theme plain
 
-package "MeshHook Project" {
-    [Deployment Guide] as (DG)
-    [Supabase\n(Postgres, Realtime, Storage)] as Supabase
-    [SvelteKit\n(SSR/API)] as SvelteKit
-    [Existing Codebase] as Codebase
-    [Database\n(schema.sql)] as DB
-    [Workers\n(Orchestrator, HTTP Executor)] as Workers
-    [External Services] as ExtServices
+package "MeshHook System" {
+    [Webhook Intake] as Webhooks
+    [Workflow CRUD API] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
+    [Realtime Log Streaming] as Logs
+    [Artifact Storage] as Storage
+    [Cron/Timers] as Timers
 }
 
-cloud {
-    [Supabase] 
+package "Supabase" {
+    [Postgres] as DB
+    [Realtime] as RealtimeDB
+    [Storage] as SupabaseStorage
+    [Edge Functions] as Edge
 }
 
-node "Development Environment" {
-    [Codebase]
-    [DB]
+package "Workers" {
+    [Orchestrator] as Orchestrator
+    [HTTP Executor] as Executor
 }
 
-[DG] -down-> [SvelteKit] : Implements\nDeployment Logic
-[SvelteKit] -right-> [Supabase] : Uses
-[DG] -down-> [Workers] : Configures
-[Workers] -left-> [Supabase] : Interacts
-[DG] -left-> [Codebase] : Updates
-[Codebase] -down-> [DB] : Modifies
-[DG] -down-> [ExtServices] : Integrates
+database "Postgres (data + queues)" as PostgresData
 
-note right of [DG]
-  Key Steps:
-  1. Analysis
-  2. Design
-  3. Implementation
-  4. Integration
-  5. Testing
-  6. Documentation
-  7. Review
-end note
+[Deployment Guide] - [Analysis]
+[Analysis] --> [Design]
+[Design] --> [Implementation]
+[Implementation] --> [Integration]
+[Integration] --> [Testing]
+[Testing] --> [Documentation]
+[Documentation] --> [Review]
+[Review] --> [Deployment Guide]
 
-note left of [SvelteKit]
-  - Webhook Intake
-  - Workflow CRUD
-  - Publish Versions
-  - Run Console
-end note
+Webhooks --> DB : triggers & signature verification
+CRUD --> DB : CRUD operations
+Publish --> DB : version management
+Console --> DB : run management
+Logs --> RealtimeDB : log updates
+Storage --> SupabaseStorage : artifact storage
+Timers --> Edge : scheduling
 
-note right of [Workers]
-  - State Machine
-  - Scheduling
-  - HTTP Execution
-end note
+Orchestrator --> PostgresData : state management & scheduling
+Executor --> PostgresData : HTTP requests handling
 
-note on link [DG] - [SvelteKit]
-  Visual DAG Builder
-  Using Svelte
-end note
-
-note on link [DG] - [Workers]
-  Durable, Replayable Runs
-end note
-
-note on link [DG] - [Codebase]
-  Follows Project Coding Standards
-end note
-
-note on link [DG] - [ExtServices]
-  Supabase Realtime for Live Logs
-end note
+DB -[hidden]- RealtimeDB
+RealtimeDB -[hidden]- SupabaseStorage
+SupabaseStorage -[hidden]- Edge
+Edge -[hidden]- Orchestrator
+Orchestrator -[hidden]- Executor
 
 @enduml

@@ -1,0 +1,65 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Supabase] <<Database>> as DB
+    [SvelteKit SSR/API] as SSR
+    [Webhook Intake] as Webhook
+    [Workflow CRUD] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
+    [Workers] <<Node>> {
+        [Orchestrator] <<Worker>>
+        [HTTP Executor] <<Worker>>
+    }
+    [Existing Codebase] <<Code>>
+}
+
+package "Contributing Guide Implementation" {
+    [Analysis] as Analysis
+    [Design] as Design
+    [Implementation] as Implementation
+    [Integration] as Integration
+    [Testing] as Testing
+    [Documentation] as Documentation
+    [Review] as Review
+}
+
+DB -[hidden]-> SSR
+Webhook -[hidden]-> CRUD
+Publish -[hidden]-> Console
+Console -[hidden]-> Workers
+Workers -[hidden]-> ExistingCodebase
+
+Analysis --> Design : follows
+Design --> Implementation : follows
+Implementation --> Integration : follows
+Integration --> Testing : follows
+Testing --> Documentation : follows
+Documentation --> Review : follows
+
+SSR --> Analysis : "Reviews\nExisting Implementation"
+Design ..> [Data Structures and Schemas] : "Considers"
+Design ..> [API Contracts and Interfaces] : "Defines"
+Design ..> [Component Architecture] : "Designs"
+Design ..> [Error Handling Strategies] : "Plans"
+Integration --> [Existing Codebase] : "Integrates With"
+Testing --> [Unit Tests] : "Includes"
+Testing --> [Integration Tests] : "Includes"
+Testing --> [E2E Tests] : "Includes"
+Documentation --> [Developer Documentation] : "Updates"
+Review --> [Code Review] : "Undergoes"
+
+note right of [Developer Documentation]
+  - Update README
+  - Update API docs
+  - Ensure accuracy
+end note
+
+note right of [Code Review]
+  - Peer Feedback
+  - Linting Passes
+  - CI/CD Checks
+end note
+
+@enduml

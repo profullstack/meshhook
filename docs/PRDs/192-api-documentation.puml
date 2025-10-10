@@ -1,0 +1,61 @@
+@startuml
+!theme plain
+
+package "MeshHook API" {
+    [API Gateway] - [Authentication Service]
+    [API Gateway] --> [API Documentation]
+    [API Gateway] --> [Webhook Service]
+    [API Gateway] --> [Workflow Engine]
+    [API Gateway] --> [Logging Service]
+
+    [Webhook Service] --> [Workflow Engine]
+    [Workflow Engine] --> [Database]
+    [Logging Service] --> [Database]
+    [Authentication Service] --> [Database]
+
+    [API Documentation] ..> [Developer Portal]: publishes
+}
+
+package "External Systems" {
+    [Supabase] --> [Database]
+    [Developer Portal] 
+}
+
+package "Supabase" {
+    [Postgres] - [Realtime]
+    [Postgres] - [Storage]
+    [Postgres] - [Edge]
+}
+
+[Database] ..> [Postgres] : <<use>>
+
+note right of [API Documentation]
+  Key Tasks:
+  - Document RESTful API endpoints
+  - Include request/response schemas
+  - Error codes explanation
+end note
+
+note right of [Workflow Engine]
+  Handles:
+  - Workflow CRUD operations
+  - Version publishing
+  - Run executions
+end note
+
+note right of [Webhook Service]
+  - Signature verification
+  - Trigger workflows
+end note
+
+note right of [Logging Service]
+  - Live logs via Supabase Realtime
+  - Error logging
+end note
+
+note right of [Authentication Service]
+  - AuthN/AuthZ
+  - Multi-tenant RLS security
+end note
+
+@enduml

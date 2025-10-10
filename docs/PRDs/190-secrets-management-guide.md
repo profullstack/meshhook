@@ -1,176 +1,119 @@
 # PRD: Secrets management guide
 
+**Issue:** [#190](https://github.com/profullstack/meshhook/issues/190)
+**Milestone:** Phase 8: Documentation
+**Labels:** user-documentation, hacktoberfest
+
+---
+
+# PRD: Secrets Management Guide
+
 **Issue:** [#190](https://github.com/profullstack/meshhook/issues/190)  
 **Milestone:** Phase 8: Documentation  
-**Labels:** user-documentation  
-**Phase:** Phase 8  
-**Section:** User Documentation
+**Labels:** user-documentation, hacktoberfest  
+**Owner:** Anthony Ettinger (Profullstack)  
+**License:** MIT  
 
 ---
 
 ## Overview
 
-This task is part of Phase 8 in the User Documentation section of the MeshHook project. 
+The objective of this task is to create a comprehensive guide for managing secrets within the MeshHook platform. This guide will adhere to the project's broader goals of simplicity, durability, and security, particularly focusing on secrets management to ensure that user and system data remain secure at all times. This task is crucial for maintaining trust and compliance, especially for users in regulated industries.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+MeshHook's architecture leverages various technologies for a robust and secure operation, including Postgres for data storage and Supabase Realtime for live updates. This guide will serve as a critical resource for users and developers, providing clear instructions on how to securely manage secrets, such as API keys, database credentials, and other sensitive information.
 
-**Task Objective:** Secrets management guide
+## Functional Requirements
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+1. **Guide Structure:** Create a structured, easy-to-navigate document that covers all aspects of secrets management within MeshHook.
+2. **Content Creation:** Develop comprehensive content that includes:
+   - Introduction to secrets management and its importance.
+   - Step-by-step instructions for adding, updating, and removing secrets.
+   - Best practices for generating and storing secrets.
+   - Examples of accessing secrets within workflows securely.
+3. **Integration with Existing Documentation:** Ensure the guide fits seamlessly with the project's existing documentation, maintaining consistency in style and terminology.
+4. **Searchability:** Enhance the guide with a searchable index or table of contents for quick access to information.
+5. **Visual Aids:** Incorporate diagrams or screenshots where necessary to illustrate concepts and procedures clearly.
 
-## Requirements
+## Non-Functional Requirements
 
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Secrets management guide"
-2. Create reusable Svelte 5 components
-3. Implement responsive design for mobile and desktop
-4. Follow project UI/UX patterns and styling
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The guide should be hosted in a way that ensures fast access times, even under high traffic.
+- **Reliability:** Content should be accurate, up-to-date, and reflective of the latest version of MeshHook.
+- **Security:** The guide must emphasize security best practices, ensuring users understand how to manage secrets without exposing sensitive information.
+- **Maintainability:** The documentation framework should allow for easy updates as MeshHook evolves.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook uses a combination of SvelteKit for its front end and Supabase for backend services, including Postgres for storage. Secrets management is a critical component, ensuring sensitive data is encrypted and accessible only where necessary.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Research:** Begin with a thorough review of MeshHook's current secrets management capabilities and security features.
+2. **Outline:** Draft an outline of the guide, including all necessary sections and key points to cover.
+3. **Content Development:** Write the guide, focusing on clarity, accuracy, and comprehensiveness.
+4. **Peer Review:** Have the guide reviewed by project contributors for technical accuracy and comprehensibility.
+5. **Publication:** Integrate the guide into the existing MeshHook documentation site, ensuring it is properly indexed and searchable.
+6. **Feedback Loop:** Establish a mechanism for receiving and incorporating user feedback on the guide.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No new data model changes are required specifically for this documentation task.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+No new API endpoints are required specifically for this documentation task.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] The guide is comprehensive, covering all aspects of secrets management within MeshHook.
+- [ ] All steps and procedures are clearly explained and easy to follow.
+- [ ] Documentation is consistent with the existing MeshHook documentation style and format.
+- [ ] The guide has been peer-reviewed and approved by the MeshHook team.
+- [ ] The guide is published and easily accessible within the MeshHook documentation site.
+- [ ] Feedback mechanisms are in place to continually improve the guide based on user input.
 
 ## Dependencies
 
 ### Technical Dependencies
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- Access to the MeshHook codebase and existing documentation.
+- Tools for editing and publishing documentation (e.g., Markdown editor, static site generator).
 
 ### Prerequisite Tasks
 
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Any pending updates or changes to the secrets management features must be completed and merged.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Use Markdown for writing the guide to ensure compatibility with the MeshHook documentation site.
+- Follow the MeshHook documentation style guide for consistency in voice and formatting.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Peer Review:** The guide should be reviewed by multiple project contributors.
+- **User Testing:** Solicit feedback from a small group of users for clarity and usefulness.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure no sensitive information is included in the guide.
+- Emphasize the importance of secure secrets management practices throughout the document.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Monitor the usage of the documentation page to identify areas that may require further clarification or detail based on user behavior and feedback.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
+- [MeshHook Main PRD](../PRD.md)
+- [MeshHook Architecture Overview](../Architecture.md)
+- [MeshHook Security Guidelines](../Security.md)
 
-## Task Details
-
-**Original Task Description:**
-Secrets management guide
-
-**Full Issue Body:**
-**Phase:** Phase 8
-**Section:** User Documentation
-
-**Task:** Secrets management guide
-
----
-_Auto-generated from TODO.md_
-
----
-
-*This PRD was auto-generated from GitHub issue #190*  
 *Last updated: 2025-10-10*
+
+---
+
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #190*
+*Generated: 2025-10-10*

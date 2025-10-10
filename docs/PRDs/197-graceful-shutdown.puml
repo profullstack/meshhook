@@ -3,41 +3,25 @@
 
 title Graceful Shutdown Process
 
-actor User
-boundary WebServer as "Web Server\n(SvelteKit)"
-control Orchestrator
-database Postgres
-boundary SupabaseRealtime as "Supabase\nRealtime"
-boundary HTTPExecutor as "HTTP Executor"
-queue JobQueue as "Job Queue"
+actor Client
+boundary "Web Server" as WebServer
+control "Orchestrator" as Orchestrator
+database "Postgres" as Postgres
+collections "Supabase Services" as Supabase
+entity "Existing Components" as Existing
 
-User -> WebServer : Request to Shutdown
-WebServer -> Orchestrator : Initiate Shutdown
-Orchestrator -> Postgres : Update State\n(Graceful Shutdown Initiated)
-Orchestrator -> JobQueue : Pause New Jobs
-loop until all jobs are processed
-    Orchestrator -> JobQueue : Check Running Jobs
-    JobQueue --> Orchestrator : Running Jobs Status
-end
-Orchestrator -> HTTPExecutor : Signal to Stop New Executions
-HTTPExecutor -> SupabaseRealtime : Update Execution State
-Orchestrator -> Postgres : Update State\n(Shutdown Complete)
-Orchestrator --> WebServer : Shutdown Complete
-WebServer --> User : Acknowledge Shutdown
+Client -> WebServer : Request Shutdown
+WebServer -> Orchestrator : Signal Shutdown
+Orchestrator -> Orchestrator : Finish Current Tasks
+Orchestrator -> Postgres : Update State
+Postgres -> Orchestrator : Acknowledge
+Orchestrator -> Supabase : Flush Logs
+Supabase -> Orchestrator : Confirm Flush
+Orchestrator -> Existing : Notify Dependencies
+Existing -> Orchestrator : Acknowledge Shutdown
+Orchestrator -> WebServer : Shutdown Complete
+WebServer -> Client : Acknowledge
 
-note right of HTTPExecutor
-  HTTP Executor stops accepting new tasks
-  and completes any ongoing executions
-end note
-
-note left of JobQueue
-  Job Queue stops accepting new jobs
-  and ensures current jobs complete
-end note
-
-note over Orchestrator
-  Orchestrator coordinates the graceful shutdown
-  ensuring data consistency and no job loss
-end note
+note right of Orchestrator : Graceful shutdown\nensures all tasks are\nsafely completed or stored
 
 @enduml
