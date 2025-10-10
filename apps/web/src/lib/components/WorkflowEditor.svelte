@@ -3,10 +3,11 @@
 	import '@xyflow/svelte/dist/style.css';
 
 	// Props
-	let { nodes = $bindable([]), edges = $bindable([]), onNodesChange, onEdgesChange } = $props();
+	let { nodes = $bindable([]), edges = $bindable([]), onNodesChange, onEdgesChange, onNodeClick } = $props();
 
 	// State
 	let reactFlowWrapper = $state(null);
+	let selectedNodeId = $state(null);
 
 	// Handle drag over (required to enable drop)
 	function handleDragOver(event) {
@@ -57,9 +58,27 @@
 			console.error('Error adding node:', error);
 		}
 	}
+	
+	// Handle node click in the canvas
+	function handleCanvasNodeClick(event) {
+		// Find the clicked node element
+		const nodeElement = event.target.closest('.svelte-flow__node');
+		if (!nodeElement) return;
+		
+		// Get the node ID from the data attribute
+		const nodeId = nodeElement.getAttribute('data-id');
+		if (!nodeId) return;
+		
+		// Find the node in our nodes array
+		const node = nodes.find(n => n.id === nodeId);
+		if (node && onNodeClick) {
+			selectedNodeId = nodeId;
+			onNodeClick(node);
+		}
+	}
 </script>
 
-<div class="workflow-editor" bind:this={reactFlowWrapper} ondrop={handleDrop} ondragover={handleDragOver} role="application">
+<div class="workflow-editor" bind:this={reactFlowWrapper} ondrop={handleDrop} ondragover={handleDragOver} onclick={handleCanvasNodeClick} role="application">
 	<SvelteFlow
 		{nodes}
 		{edges}
@@ -162,9 +181,14 @@
 		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 	}
 
-	:global(.svelte-flow__node.selected) {
+	:global(.svelte-flow__node.selected),
+	:global(.svelte-flow__node[data-id].selected) {
 		border-color: #ff3e00;
 		box-shadow: 0 4px 12px rgba(255, 62, 0, 0.3);
+	}
+	
+	:global(.svelte-flow__node) {
+		cursor: pointer;
 	}
 
 	:global(.svelte-flow__edge-path) {
