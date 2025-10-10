@@ -47,11 +47,11 @@ function getRepo() {
   }
 }
 
-// Check if issue exists by title
+// Check if issue exists by title (only check open issues)
 async function issueExists(repo, title) {
   try {
     const result = gh(
-      `issue list --repo ${repo} --search "in:title ${title}" --state all --json number --jq '.[0].number'`
+      `issue list --repo ${repo} --search "in:title ${title}" --state open --json number --jq '.[0].number'`
     );
     return result ? parseInt(result) : null;
   } catch {
@@ -111,19 +111,12 @@ async function ensureLabel(repo, labelName) {
   }
 }
 
-// Create a regular issue
-async function createIssue(repo, title, body, labels, milestoneNumber = null) {
+// Create a regular issue (without milestone, add it separately)
+async function createIssue(repo, title, body, labels) {
   try {
     // Escape strings properly for shell
     const escapedTitle = title.replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$/g, '\\$');
     const escapedBody = body.replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$/g, '\\$');
-    
-    // Ensure all labels exist first
-    for (const label of labels) {
-      await ensureLabel(repo, label);
-      // Small delay after label creation
-      await new Promise((resolve) => setTimeout(resolve, 200));
-    }
     
     const labelStr = labels.join(",");
     let cmd = `issue create --repo ${repo} --title "${escapedTitle}" --body "${escapedBody}"`;
@@ -132,16 +125,23 @@ async function createIssue(repo, title, body, labels, milestoneNumber = null) {
       cmd += ` --label "${labelStr}"`;
     }
 
-    if (milestoneNumber) {
-      cmd += ` --milestone ${milestoneNumber}`;
-    }
-
     const url = gh(cmd);
     const match = url.match(/\/issues\/(\d+)/);
     return match ? parseInt(match[1]) : null;
   } catch (error) {
     console.error(`  ✗ Failed to create issue: ${error.message}`);
     return null;
+  }
+}
+
+// Add milestone to an existing issue
+async function addMilestoneToIssue(repo, issueNumber, milestoneNumber) {
+  try {
+    gh(`api repos/${repo}/issues/${issueNumber} -F milestone=${milestoneNumber}`);
+    return true;
+  } catch (error) {
+    console.error(`  ⚠️  Could not add milestone to issue #${issueNumber}: ${error.message}`);
+    return false;
   }
 }
 
@@ -222,9 +222,7 @@ function parseTodoStructure(content) {
       const task = taskMatch[2];
       const cleanTask = task.replace(/`/g, "").trim();
 
-      const title = currentSection
-        ? `[${currentPhase}] ${currentSection}: ${cleanTask}`
-        : `[${currentPhase}] ${cleanTask}`;
+      const title = cleanTask;
 
       const taskLabels = [];
       if (currentSectionLabel) {
@@ -250,12 +248,48 @@ _Auto-generated from TODO.md_`;
     }
   }
 
+  // Add default GitHub labels
+  const defaultLabels = [
+    'bug',
+    'documentation',
+    'duplicate',
+    'enhancement',
+    'good first issue',
+    'help wanted',
+    'invalid',
+    'question',
+    'wontfix'
+  ];
+  
+  for (const label of defaultLabels) {
+    labels.add(label);
+  }
+
   return { milestones: Array.from(milestones.values()), labels: Array.from(labels), tasks };
 }
 
-// Clean up existing milestones and labels
+// Clean up existing milestones, labels, and issues
 async function cleanupGitHub(repo) {
-  console.log("🧹 Cleaning up existing milestones and labels...\n");
+  console.log("🧹 Cleaning up existing issues, milestones, and labels...\n");
+
+  // Close all open issues
+  try {
+    const issues = JSON.parse(
+      gh(`api repos/${repo}/issues?state=open --jq '.'`)
+    );
+    
+    for (const issue of issues) {
+      try {
+        gh(`api repos/${repo}/issues/${issue.number} -f state=closed`);
+        console.log(`  🗑️  Closed issue #${issue.number}: ${issue.title}`);
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      } catch (error) {
+        console.error(`  ⚠️  Could not close issue #${issue.number}: ${error.message}`);
+      }
+    }
+  } catch (error) {
+    console.error(`  ⚠️  Could not fetch issues: ${error.message}`);
+  }
 
   // Delete all milestones
   try {
@@ -357,6 +391,12 @@ async function syncTodoWithGitHub(shouldClean = false) {
     }
   }
 
+  // Wait for milestones to propagate in GitHub's system
+  if (milestoneCount > 0) {
+    console.log(`\n⏳ Waiting 5 seconds for milestones to propagate...\n`);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+
   console.log();
   let labelIndex = 0;
   for (const label of labels) {
@@ -370,8 +410,14 @@ async function syncTodoWithGitHub(shouldClean = false) {
     await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
+  // Wait for labels to propagate before creating issues
+  if (labels.length > 0) {
+    console.log(`\n⏳ Waiting 5 seconds for labels to propagate...\n`);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+
   // Pass 3: Create all issues
-  console.log("\n📝 Pass 3: Creating issues...\n");
+  console.log("📝 Pass 3: Creating issues...\n");
   
   let issueCount = 0;
   let skipCount = 0;
@@ -399,18 +445,26 @@ async function syncTodoWithGitHub(shouldClean = false) {
       console.log(`  🔗 Using milestone #${milestoneNumber} for: ${task.cleanTask}`);
     }
 
-    // Create issue
+    // Create issue without milestone first
     const issueNum = await createIssue(
       repo,
       task.title,
       task.body,
-      task.labels,
-      milestoneNumber
+      task.labels
     );
 
     if (issueNum) {
       const prefix = task.indent > 0 ? "  ".repeat(task.indent / 2) + "└─" : "";
       console.log(`  ${prefix}✓ Created #${issueNum}: ${task.cleanTask}`);
+      
+      // Add milestone separately if available
+      if (milestoneNumber) {
+        const added = await addMilestoneToIssue(repo, issueNum, milestoneNumber);
+        if (added) {
+          console.log(`  ${prefix}  📍 Added to milestone #${milestoneNumber}`);
+        }
+      }
+      
       issueCount++;
 
       // Delay to avoid rate limiting
