@@ -1,13 +1,8 @@
 # Railway configuration for the Web Application (SvelteKit)
 [build]
-builder = "RAILPACKS"
 buildCommand = "pnpm install && cd apps/web && pnpm run build"
 
 [deploy]
 startCommand = "cd apps/web && node build/index.js"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-
-[env]
-NODE_VERSION = "20"
-PNPM_VERSION = "9"
