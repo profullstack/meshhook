@@ -1,0 +1,63 @@
+@startuml
+!theme plain
+
+title Demo Workflows - Implementation Overview
+
+package "MeshHook System" {
+    [Webhook Intake] as Webhook
+    [Workflow CRUD API] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
+    database "Supabase" {
+        [Postgres\n(data + queues)] as Postgres
+        [Realtime\n(log streaming)] as Realtime
+        [Storage\n(artifacts)] as Storage
+        [Edge\n(cron/timers)] as Edge
+    }
+    [Orchestrator\n(state machine + scheduling)] as Orchestrator
+    [HTTP Executor\n(robust HTTP with retries/backoff)] as Executor
+}
+
+node "External Services" {
+    [Supabase Services] as ExternalSupabase
+}
+
+[Webhook] --> [Orchestrator] : Triggers & Data
+[CRUD] --> [Postgres] : CRUD Operations
+[Publish] --> [Postgres] : Version Data
+[Console] --> [Realtime] : Live Logs
+[Orchestrator] --> [Executor] : HTTP Tasks
+[Orchestrator] --> [Postgres] : State & Queue Management
+[Executor] --> [ExternalSupabase] : External API Calls
+[Postgres] --> [Realtime] : Updates Stream
+[Realtime] -.-> [Console] : Live Updates
+[Storage] --> [Edge] : Serve Artifacts
+
+note right of [Orchestrator]
+  Orchestrator handles:
+  - Workflow scheduling
+  - Task execution
+  - State management
+end note
+
+note right of [Executor]
+  Executor is responsible for:
+  - Performing HTTP requests
+  - Handling retries and backoff
+end note
+
+note right of [Webhook]
+  Webhook Intake for:
+  - Triggering workflows
+  - Signature verification
+end note
+
+note right of [CRUD]
+  Workflow CRUD for:
+  - Creating
+  - Reading
+  - Updating
+  - Deleting workflows
+end note
+
+@enduml

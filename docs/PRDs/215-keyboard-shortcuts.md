@@ -1,172 +1,115 @@
 # PRD: Keyboard shortcuts
 
-**Issue:** [#215](https://github.com/profullstack/meshhook/issues/215)  
-**Milestone:** Phase 10: Polish & Launch  
-**Labels:** ux-improvements  
-**Phase:** Phase 10  
-**Section:** UX Improvements
+**Issue:** [#215](https://github.com/profullstack/meshhook/issues/215)
+**Milestone:** Phase 10: Polish & Launch
+**Labels:** ux-improvements, hacktoberfest
 
 ---
 
+# PRD: Keyboard Shortcuts
+
+**Issue:** [#215](https://github.com/profullstack/meshhook/issues/215)  
+**Milestone:** Phase 10: Polish & Launch  
+**Labels:** ux-improvements, hacktoberfest  
+**Phase:** Phase 10  
+**Section:** UX Improvements  
+
 ## Overview
 
-This task is part of Phase 10 in the UX Improvements section of the MeshHook project. 
+This task aims to enhance the MeshHook user experience by introducing keyboard shortcuts, enabling users to perform common actions more efficiently. This feature aligns with MeshHook's goal of delivering an intuitive and efficient workflow engine by reducing the reliance on point-and-click interactions, thereby speeding up workflow design, execution monitoring, and general navigation within the platform.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
-
-**Task Objective:** Keyboard shortcuts
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+**Objective:** Implement keyboard shortcuts to improve user experience and productivity.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Keyboard shortcuts"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Discoverability:** Users should be able to view a list of available keyboard shortcuts within the application.
+2. **Common Actions:** Implement shortcuts for the following actions:
+   - `Ctrl + S`: Save current workflow
+   - `Ctrl + Z`: Undo last action in the workflow editor
+   - `Ctrl + Shift + Z`: Redo last undone action
+   - `Ctrl + F`: Focus on the search/filter input field
+   - `Ctrl + P`: Toggle the preview of the current workflow
+   - `Esc`: Close any open modal or dropdown menu
+3. **Customization (Stretch Goal):** Allow users to customize keyboard shortcuts.
+4. **Accessibility:** Ensure keyboard shortcuts do not conflict with screen readers or other accessibility tools.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Keyboard shortcuts should respond instantly, with no perceptible delay to the user.
+- **Compatibility:** Shortcuts should work across the latest versions of major browsers (Chrome, Firefox, Safari, Edge).
+- **Usability:** Shortcuts must not interfere with standard browser or operating system shortcuts.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Frontend:** SvelteKit/Svelte 5 will be used for implementing the UI components needed to display and manage keyboard shortcuts.
+- **Backend:** No backend changes are necessary for the initial implementation of static keyboard shortcuts. Customization features may require backend support for storing user preferences.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis & Design:**
+   - Identify common actions within MeshHook that can benefit from keyboard shortcuts.
+   - Design a modal or dedicated settings page for displaying available shortcuts.
+2. **Frontend Implementation:**
+   - Use Svelte's global event handlers to listen for keyboard events.
+   - Implement a keyboard shortcut manager as a Svelte store to handle the registration and execution of shortcuts.
+   - Create a UI component to display shortcuts to the user.
+3. **Testing & Documentation:**
+   - Unit tests for the shortcut manager logic.
+   - Document how to use and, if applicable, customize shortcuts within the user guide.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- No data model changes required for the initial implementation of static shortcuts.
+- For customization (stretch goal): a new table or JSON column in an existing table may be needed to store user preferences.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+- No new API endpoints are required for the initial implementation.
+- For customization (stretch goal): endpoints for fetching and updating user preferences may be needed.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] All the listed common actions have keyboard shortcuts implemented.
+- [ ] A UI component for displaying available keyboard shortcuts exists and is easily accessible.
+- [ ] Keyboard shortcuts do not interfere with browser/OS defaults or accessibility tools.
+- [ ] Documentation updated with a section on using keyboard shortcuts within MeshHook.
+- [ ] Unit tests cover the keyboard shortcut manager logic.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Project setup and infrastructure (if not already complete)
-- Database schema initialized
-- Development environment configured
+- SvelteKit/Svelte 5 for frontend development.
+- Existing user settings management, if customization is pursued.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the existing project structure and coding conventions.
+- Ensure keyboard shortcuts are configurable to some degree to avoid conflicts with global shortcuts.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For the shortcut manager and any utility functions handling keyboard events.
+- **Manual Testing:** Ensure shortcuts work as expected across different browsers and do not conflict with accessibility tools.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure that keyboard shortcuts do not expose any security vulnerabilities, such as allowing unauthorized actions without proper authentication.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Monitor the usage of keyboard shortcuts if feasible to gather data for potential UX improvements.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Keyboard shortcuts
-
-**Full Issue Body:**
-**Phase:** Phase 10
-**Section:** UX Improvements
-
-**Task:** Keyboard shortcuts
-
----
-_Auto-generated from TODO.md_
+- [Svelte Event Handlers](https://svelte.dev/docs#template-syntax-element-directives-on-eventname)
+- [User Guide](../UserGuide.md) for documenting the feature for end-users.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #215*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #215*
+*Generated: 2025-10-10*

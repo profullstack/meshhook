@@ -1,173 +1,103 @@
 # PRD: Application metrics
 
-**Issue:** [#201](https://github.com/profullstack/meshhook/issues/201)  
-**Milestone:** Phase 9: Deployment & Operations  
-**Labels:** monitoring  
-**Phase:** Phase 9  
-**Section:** Monitoring
+**Issue:** [#201](https://github.com/profullstack/meshhook/issues/201)
+**Milestone:** Phase 9: Deployment & Operations
+**Labels:** monitoring, hacktoberfest
 
 ---
 
+# PRD: Application Metrics
+
 ## Overview
 
-This task is part of Phase 9 in the Monitoring section of the MeshHook project. 
+The objective of this Product Requirements Document (PRD) is to articulate the requirements and approach for integrating application metrics into MeshHook. This task is essential for Phase 9: Deployment & Operations, focusing on monitoring. Implementing application metrics is fundamental to achieving operational excellence, providing insights into application performance, and ensuring reliability and scalability. This functionality aligns with MeshHook's goals of delivering a robust, efficient, and secure workflow engine.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Application metrics
+1. **Metrics Collection**: Implement a system to collect runtime metrics, including but not limited to, CPU usage, memory usage, request count, error rate, and processing times of webhooks and workflow runs.
+2. **Metrics Aggregation**: Aggregate metrics at various granularities (e.g., per minute, hour, day) to support different levels of monitoring and analysis.
+3. **Metrics Visualization**: Integrate with a dashboard tool (e.g., Grafana) to visualize metrics in real-time, enabling quick insights into system performance and health.
+4. **Alerting Mechanism**: Implement alerting based on threshold values for critical metrics to enable proactive incident management.
+5. **Documentation**: Provide comprehensive documentation on metrics collected, the technology stack used for monitoring, and guidance on setting up custom dashboards and alerts.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Application metrics"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance**: Metrics collection and aggregation should not significantly impact the application's performance. Collecting metrics should have minimal overhead.
+- **Reliability**: The monitoring system should be highly available and resilient to failures.
+- **Security**: Ensure that metrics collection and storage are secure, with proper access controls in place to protect sensitive information.
+- **Maintainability**: The solution should be easy to maintain and scale, with clear documentation on how to add new metrics or modify existing ones.
 
 ## Technical Specifications
 
-### Architecture Context
+### Architecture Context and Integration Points
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- Utilize Prometheus for metrics collection, given its wide adoption, active community, and compatibility with Kubernetes environments.
+- Integrate with Grafana for metrics visualization, leveraging its support for Prometheus data sources and extensive library of dashboards.
+- Implement custom metrics exporters in the SvelteKit (SSR/API) and Worker components, exposing standard and custom metrics in a Prometheus-compatible format.
+- Use Supabase Realtime for live operation metrics, providing insight into the real-time performance of database operations.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis**: Evaluate the current system architecture to identify critical performance indicators and integration points for metrics collection.
+2. **Design**: Define the metrics to be collected, including both system and application-specific metrics. Design a scalable and secure architecture for metrics collection, aggregation, visualization, and alerting.
+3. **Implementation**:
+   - Integrate Prometheus for metrics collection, configuring it to scrape metrics from the application's components.
+   - Develop custom metrics exporters for SvelteKit and Worker components if needed.
+   - Set up Grafana for metrics visualization, configuring dashboards for key metrics.
+   - Implement alerting rules in Prometheus or Grafana based on predefined thresholds.
+4. **Testing**: Validate the metrics collection and alerting system through load testing and observe the accuracy and performance impact.
+5. **Documentation**: Document the setup process, including how to configure Prometheus, Grafana, and any custom exporters or dashboards.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+No new data model changes required specifically for this task.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+No new API endpoints required specifically for this task.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- [ ] Prometheus successfully collects and aggregates application metrics.
+- [ ] Grafana dashboards accurately visualize key performance indicators in real-time.
+- [ ] Alerting mechanisms are in place for critical metrics, with alerts successfully triggered during testing.
+- [ ] The monitoring setup has minimal impact on application performance.
+- [ ] Documentation provides clear guidance on monitoring setup, metrics collection, and alert configuration.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+## Dependencies and Prerequisites
 
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to Prometheus and Grafana installations or cloud services.
+- Existing codebase components, particularly understanding of SvelteKit and Worker components for integration.
+- Development environment ready for implementing and testing monitoring solutions.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the existing project architecture, utilizing ESM module system and modern JavaScript features.
+- Ensure that metrics collection is modular and easily extensible to support future metrics or changes in monitoring requirements.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Use unit tests to validate metrics collection logic and any custom exporter functionality.
+- Perform integration tests to ensure that metrics are correctly exposed to Prometheus and visualized in Grafana.
+- Conduct load testing to assess the performance impact of the monitoring solution and the accuracy of alerting mechanisms under stress.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure that access to metrics endpoints is secured, allowing access only to Prometheus and authorized personnel.
+- Apply best practices for securing Prometheus and Grafana, including authentication, encryption, and network policies.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Beyond the scope of application metrics, ensure that logging and tracing are in place for observability into the application's internal operations, particularly for error diagnostics and performance analysis.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Application metrics
-
-**Full Issue Body:**
-**Phase:** Phase 9
-**Section:** Monitoring
-
-**Task:** Application metrics
-
----
-_Auto-generated from TODO.md_
+- Main PRD, Architecture, and Security Guidelines documents provide context and requirements that should be considered when implementing application metrics.
+- Prometheus and Grafana official documentation for best practices and advanced configuration options.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #201*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #201*
+*Generated: 2025-10-10*

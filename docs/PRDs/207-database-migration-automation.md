@@ -1,184 +1,111 @@
 # PRD: Database migration automation
 
+**Issue:** [#207](https://github.com/profullstack/meshhook/issues/207)
+**Milestone:** Phase 9: Deployment & Operations
+**Labels:** cicd, hacktoberfest
+
+---
+
+# PRD: Database Migration Automation
+
 **Issue:** [#207](https://github.com/profullstack/meshhook/issues/207)  
 **Milestone:** Phase 9: Deployment & Operations  
-**Labels:** cicd  
+**Labels:** cicd, hacktoberfest  
 **Phase:** Phase 9  
-**Section:** CI/CD
+**Section:** CI/CD  
 
 ---
 
 ## Overview
 
-This task is part of Phase 9 in the CI/CD section of the MeshHook project. 
-
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
-
-**Task Objective:** Database migration automation
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+The objective of this task is to automate the database migration process for MeshHook, ensuring seamless, error-free transitions between database schema versions as the platform evolves. This automation is critical for supporting MeshHook's ongoing development and deployment cycles, aligning with the project's goals of reliability, security, and maintainability.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Database migration automation"
-2. Design database schema following normalization principles
-3. Implement RLS policies for multi-tenant security
-4. Create necessary indexes for query performance
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Automation Tool Integration:** Integrate a database migration tool (e.g., Flyway, Liquibase, or a Postgres-native solution) into the CI/CD pipeline.
+2. **Version Control for Database Schema:** Ensure all database schema changes are version-controlled, including tables, indexes, and RLS policies.
+3. **Automatic Execution:** Migrations should run automatically as part of the deployment process, with no manual intervention required.
+4. **Rollback Capability:** Provide a mechanism for rolling back to a previous database schema version in case of migration failure.
+5. **Multi-Environment Support:** Support different environments (development, testing, production) with potentially different database configurations.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure migrations do not significantly impact deployment times or application performance.
+- **Reliability:** Automate error checks and provide alerts for migration failures.
+- **Security:** Ensure all migration scripts follow security best practices, including the handling of sensitive data.
+- **Maintainability:** Write clear, well-documented migration scripts that follow project conventions.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a Postgres database managed by Supabase, with the current schema defined in `schema.sql`. The automation of database migrations must integrate seamlessly with:
+
+- The existing Supabase Postgres setup.
+- The GitHub Actions CI/CD pipeline currently in use for deployment.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Select a Migration Tool:** Choose an appropriate database migration tool that supports Postgres and integrates well with GitHub Actions.
+2. **Setup Migration Scripts:** Convert existing database schema changes into migration scripts following the chosen tool's conventions.
+3. **CI/CD Integration:** Update the GitHub Actions workflow to include a step for running database migrations automatically before the application is deployed.
+4. **Environment Configuration:** Configure different environments in the migration tool to handle development, staging, and production databases.
+5. **Rollback Strategy:** Implement a strategy for rolling back failed migrations, including clear documentation on how to trigger a rollback.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- **Migration Scripts:** Each migration script represents a change or a set of changes to the database schema. These will be stored in a version-controlled directory.
 
-### Data Model
+### API Endpoints
 
-Define the data model including:
-
-- **Tables:** List all new or modified tables
-- **Columns:** Specify column names, types, and constraints
-- **Relationships:** Define foreign keys and relationships
-- **Indexes:** Identify columns that need indexing
-- **RLS Policies:** Define row-level security policies
-
-Refer to `schema.sql` for existing schema and follow established patterns.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+- N/A for this task.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Database migration tool successfully integrated into the CI/CD pipeline.
+- [ ] All existing database schema changes are converted into migration scripts.
+- [ ] Database migrations run automatically during the deployment process.
+- [ ] Rollback capability is tested and verified.
+- [ ] Documentation updated with the migration process, including rollback instructions.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the project's GitHub repository and CI/CD pipeline.
+- Access to the Supabase project and database configurations.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Choose a migration tool that is widely adopted and supported in the Postgres community.
+- Migration scripts should be idempotent, ensuring they can be run multiple times without causing errors.
+- Follow the established project structure and naming conventions for creating migration scripts.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Testing:** Not applicable for database migration scripts.
+- **Integration Testing:** Test the integration of the migration tool in the CI/CD pipeline using a development database.
+- **Manual Testing:** Perform manual migrations on a staging database to ensure correctness before deploying to production.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure migration scripts do not expose sensitive data.
+- Use role-based access control in the CI/CD pipeline to limit who can modify migration scripts.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Configure alerts for migration failures in the CI/CD pipeline.
+- Monitor the duration of migration steps to ensure they do not impact deployment times significantly.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Database migration automation
-
-**Full Issue Body:**
-**Phase:** Phase 9
-**Section:** CI/CD
-
-**Task:** Database migration automation
-
----
-_Auto-generated from TODO.md_
+- Existing `schema.sql` for current database schema.
+- GitHub Actions documentation for CI/CD pipeline configurations.
+- Selected database migration tool's official documentation for setup and usage instructions.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #207*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #207*
+*Generated: 2025-10-10*

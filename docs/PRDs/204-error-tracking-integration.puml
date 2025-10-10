@@ -1,0 +1,38 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    component [SvelteKit SSR/API] as SvelteKit
+    component [Supabase] {
+        database Postgres
+        node Realtime
+        cloud Storage
+        node Edge
+    }
+    component [Workers] {
+        component [Orchestrator] as Orchestrator
+        component [HTTP Executor] as Executor
+    }
+}
+
+package "Error Tracking Integration" {
+    [Error Tracking Service] as ErrorService
+    database "Error Logs DB" as ErrorDB
+}
+
+SvelteKit --> ErrorService : webhook errors
+SvelteKit --> Postgres : CRUD operations
+Postgres --> Realtime : stream logs
+Storage --> SvelteKit : serve artifacts
+Edge --> SvelteKit : handle cron/timers
+Orchestrator --> Postgres : state machine operations
+Executor --> SvelteKit : HTTP requests
+
+ErrorService --> ErrorDB : store errors
+Realtime --> ErrorService : stream errors for live monitoring
+Orchestrator --> ErrorService : report workflow errors
+Executor --> ErrorService : report HTTP errors
+
+note right of ErrorService : Integration Points\n- Webhook errors\n- Workflow errors\n- HTTP request errors
+
+@enduml

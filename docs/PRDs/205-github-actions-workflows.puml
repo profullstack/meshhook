@@ -1,0 +1,39 @@
+@startuml
+
+!theme plain
+
+title GitHub Actions Workflows for MeshHook Project
+
+actor Developer as dev
+participant "GitHub Actions" as GH
+database "Supabase Postgres" as DB
+participant "Supabase Realtime" as RT
+participant "SvelteKit SSR/API" as SK
+participant "Workers\nOrchestrator & HTTP Executor" as Workers
+
+dev -> GH : Push code changes
+GH -> GH : Trigger workflow
+GH -> SK : Webhook intake
+SK -> DB : Update workflow run details
+DB -> RT : Notify run update
+RT --> dev : Stream live logs
+
+group Integration with existing components
+    GH -> Workers : Execute tasks
+    Workers -> DB : Update task state
+    Workers -> SK : Callback with results
+end
+
+group Error Handling
+    Workers -> GH : Report failure
+    GH -> SK : Trigger error workflow
+    SK -> DB : Log error details
+end
+
+group Documentation Update
+    dev -> GH : Update docs
+    GH -> SK : Trigger documentation build
+    SK --> dev : Notify build success
+end
+
+@enduml

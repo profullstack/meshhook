@@ -1,0 +1,46 @@
+@startuml
+!theme plain
+
+title Documentation Review Process
+
+actor Developer as dev
+actor Reviewer as rev
+database "Supabase\n(Postgres + Realtime)" as db
+entity "Existing Codebase" as codebase
+cloud "External Services\n(Supabase)" as services
+rectangle "Documentation\nReview Task" as task {
+  usecase "1. Analysis" as UC1
+  usecase "2. Design" as UC2
+  usecase "3. Implementation" as UC3
+  usecase "4. Integration" as UC4
+  usecase "5. Testing" as UC5
+  usecase "6. Documentation" as UC6
+  usecase "7. Review" as UC7
+}
+
+dev --> UC1 : initiates
+UC1 --> UC2 : follows
+UC2 --> UC3 : follows
+UC3 --> UC4 : follows
+UC4 --> UC5 : follows
+UC5 --> UC6 : follows
+UC6 --> UC7 : follows
+UC7 --> rev : submits for review
+
+db -[hidden]d-> codebase
+services -[hidden]d-> codebase
+
+codebase -[hidden]-> task
+db -[hidden]-> task
+services -[hidden]-> task
+
+codebase ..> UC1 : Analyses
+codebase ..> UC4 : Integrates with
+db ..> UC3 : Updates during
+db ..> UC5 : Utilized in
+services ..> UC3 : Interacts during
+services ..> UC5 : Supports
+
+rev ..> UC7 : Reviews & Approves
+
+@enduml

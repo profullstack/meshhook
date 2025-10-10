@@ -1,0 +1,61 @@
+@startuml
+!theme plain
+
+title Queue Health Monitoring System Architecture
+
+package "MeshHook System" {
+    [Webhook Intake] as WI
+    [Workflow CRUD API] as WCA
+    [Publish Versions] as PV
+    [Run Console] as RC
+    [Supabase Realtime] as SR
+    [Postgres DB] as PDB
+    [Storage] as S
+    [Edge (cron/timers)] as E
+}
+
+package "Workers" {
+    [Orchestrator] as O
+    [HTTP Executor] as HE
+}
+
+package "Monitoring" {
+    [Queue Health Monitor] as QHM
+    [Alerting System] as AS
+    [Metrics Collector] as MC
+}
+
+database "Supabase" {
+    [Postgres (data + queues)] as PDQ
+    [Realtime (log streaming)] as RLS
+    [Storage (artifacts)] as SA
+    [Edge (cron/timers)] as ECT
+}
+
+cloud {
+    [External Services] as ES
+}
+
+WI --> PDQ : Uses
+WCA --> PDQ : Uses
+PV --> PDQ : Uses
+RC --> PDQ : Uses
+SR <--> RLS : Sync
+PDB --> PDQ : Data Storage
+S --> SA : Stores Artifacts
+E --> ECT : Manages Timers
+
+O --> PDQ : Manages State & Scheduling
+HE --> PDQ : Executes HTTP Calls
+O .right.> QHM : Reports Health
+HE .right.> QHM : Reports Health
+
+QHM --> PDQ : Monitors & Logs
+QHM --> MC : Collects Metrics
+QHM --> AS : Triggers Alerts
+MC --> AS : Sends Metrics
+AS --> ES : Sends Notifications
+
+note right of QHM : Monitors queue health\nand triggers alerts on anomalies
+
+@enduml

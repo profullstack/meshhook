@@ -1,0 +1,40 @@
+@startuml
+!theme amiga
+
+package "MeshHook CI/CD Pipeline" {
+    [Deployment Automation] as DA
+    [Supabase Postgres] as DB
+    [Supabase Realtime] as RT
+    [Supabase Storage] as ST
+    [SvelteKit SSR/API] as SV
+    [Orchestrator Worker] as OW
+    [HTTP Executor Worker] as HW
+}
+
+package "External Services" {
+    [GitHub] as GH
+    [Docker Registry] as DR
+}
+
+SV --> DA : Triggers\nDeployment
+DA --> OW : Schedule\nWorkflows
+OW --> HW : Execute\nHTTP Requests
+HW --> SV : Callback with\nResults
+DA --> DB : Update\nDeployment Status
+DB --> RT : Stream\nLogs
+SV --> RT : Publish\nVersions
+OW --> ST : Store\nArtifacts
+DA --> GH : Fetch Codebase
+GH --> DR : Push\nDocker Images
+DR --> DA : Notify\nDeployment Success
+
+note right of DA : Core Deployment\nAutomation Logic
+note right of OW : Manages State\n& Scheduling
+note right of HW : Executes External\nHTTP Calls with Retries
+note right of DB : Stores Workflow\n& Deployment Data
+note right of RT : Provides Live Logs\n& Updates
+note right of ST : Artifacts &\nVersioned Files Storage
+note right of GH : Source Code\nManagement
+note right of DR : Hosts Docker\nImages
+
+@enduml

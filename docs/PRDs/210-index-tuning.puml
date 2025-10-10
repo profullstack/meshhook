@@ -1,0 +1,45 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] --> [Workflow CRUD API]
+    [Workflow CRUD API] --> [Publish Versions]
+    [Publish Versions] --> [Run Console]
+    [Run Console] --> [Supabase Realtime]
+    [Supabase Realtime] --> [Worker Orchestrator]
+    [Worker Orchestrator] --> [HTTP Executor]
+    [HTTP Executor] --> [Supabase: Postgres]
+    database "Supabase: Postgres" {
+        folder "Data + Queues" {
+        }
+        folder "schema.sql" {
+        }
+    }
+    [Supabase: Postgres] --> [Data + Queues]
+    [Supabase: Postgres] --> [schema.sql]
+    [Data + Queues] ..> [Index Tuning] : triggers
+    [schema.sql] ..> [Index Tuning] : references
+}
+
+package "Index Tuning" {
+    [Index Analysis] --> [Design Indexes]
+    [Design Indexes] --> [Implement Indexes]
+    [Implement Indexes] --> [Integration Testing]
+    [Integration Testing] --> [Performance Testing]
+    [Performance Testing] --> [Documentation]
+    [Documentation] --> [Review]
+}
+
+[Worker Orchestrator] ..> [Index Tuning] : uses
+[HTTP Executor] ..> [Index Tuning] : uses
+[Supabase Realtime] ..> [Index Tuning] : uses
+
+note right of [Index Tuning]
+  Key Considerations:
+  - Maintain backward compatibility
+  - Use Postgres for durable storage
+  - Implement proper error handling and logging
+  - Consider rate limiting and resource constraints
+end note
+
+@enduml

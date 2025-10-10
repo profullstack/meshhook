@@ -6,8 +6,11 @@
  *
  * Features:
  * - Fetches all open issues from GitHub using gh CLI
- * - Generates comprehensive PRDs based on issue metadata
- * - Saves PRDs to docs/PRDs/{issue-number}.md
+ * - Generates comprehensive PRDs using GPT-4 (optional) or template-based
+ * - Creates PlantUML diagrams for visual documentation (optional)
+ * - Exports diagrams to PNG format (requires plantuml installed)
+ * - Saves PRDs to docs/PRDs/{issue-number}-{title}.md
+ * - Saves diagrams to docs/PRDs/{issue-number}-{title}.puml and .png
  * - Updates issue bodies with PRD content and links
  * - Supports --dry-run mode for preview
  * - Can add labels to issues
@@ -15,24 +18,40 @@
  * Prerequisites:
  *   - GitHub CLI installed: https://cli.github.com/
  *   - Authenticated: gh auth login
+ *   - OpenAI API key in .env (for --use-ai mode)
+ *   - PlantUML installed (optional, for PNG generation): https://plantuml.com/download
  *
  * Usage:
- *   node scripts/generate-issue-prds.mjs [--dry-run] [--labels label1,label2,...]
+ *   node scripts/generate-issue-prds.mjs [options]
  *
  * Options:
  *   --dry-run           Preview PRDs without saving or updating issues
+ *   --use-ai            Use GPT-4 to generate comprehensive PRDs (requires OPENAI_API_KEY)
+ *   --diagrams          Generate PlantUML diagrams for each issue
+ *   --force             Regenerate PRDs even if they already exist (updates files and issue bodies)
  *   --labels <labels>   Comma-separated list of labels to add to all issues
  *
  * Examples:
  *   node scripts/generate-issue-prds.mjs --dry-run
- *   node scripts/generate-issue-prds.mjs --labels hacktoberfest,good-first-issue
- *   node scripts/generate-issue-prds.mjs --dry-run --labels hacktoberfest
+ *   node scripts/generate-issue-prds.mjs --use-ai --diagrams
+ *   node scripts/generate-issue-prds.mjs --use-ai --diagrams --labels documentation
+ *   node scripts/generate-issue-prds.mjs --dry-run --use-ai
+ *   node scripts/generate-issue-prds.mjs --use-ai --diagrams --force
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, statSync } from "fs";
 import { execSync } from "child_process";
 import { join, dirname, extname } from "path";
 import { fileURLToPath } from "url";
+import { config } from "dotenv";
+import {
+  generatePRDWithAI,
+  generatePlantUMLDiagram,
+  validateOpenAIConfig,
+} from "./lib/openai-prd-generator.mjs";
+
+// Load environment variables
+config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -542,11 +561,52 @@ function savePRD(issueNumber, issueTitle, content, dryRun = false) {
   return filename;
 }
 
+// Save PlantUML diagram to file
+function savePlantUMLDiagram(issueNumber, issueTitle, diagramCode, dryRun = false) {
+  if (dryRun || !diagramCode) {
+    return null;
+  }
+
+  const sanitizedTitle = sanitizeFilename(issueTitle);
+  const filename = join(PRDS_DIR, `${issueNumber}-${sanitizedTitle}.puml`);
+  writeFileSync(filename, diagramCode, "utf8");
+
+  return filename;
+}
+
+// Generate PNG from PlantUML using plantuml.jar or online service
+async function generatePNGFromPlantUML(pumlFile, dryRun = false) {
+  if (dryRun || !pumlFile) {
+    return null;
+  }
+
+  try {
+    // Try to use local plantuml.jar if available
+    const pngFile = pumlFile.replace('.puml', '.png');
+    
+    try {
+      execSync(`plantuml "${pumlFile}"`, { encoding: "utf8" });
+      console.log(`  🖼️  Generated PNG: ${pngFile}`);
+      return pngFile;
+    } catch (error) {
+      console.log(`  ℹ️  plantuml not found locally, skipping PNG generation`);
+      console.log(`     Install PlantUML to generate PNG diagrams: https://plantuml.com/download`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`  ⚠️  Could not generate PNG: ${error.message}`);
+    return null;
+  }
+}
+
 // Parse command line arguments
 function parseArgs() {
   const args = {
     dryRun: false,
     labels: [],
+    useAI: false,
+    generateDiagrams: false,
+    force: false,
   };
 
   for (let i = 2; i < process.argv.length; i++) {
@@ -554,6 +614,12 @@ function parseArgs() {
     
     if (arg === "--dry-run") {
       args.dryRun = true;
+    } else if (arg === "--use-ai") {
+      args.useAI = true;
+    } else if (arg === "--diagrams") {
+      args.generateDiagrams = true;
+    } else if (arg === "--force") {
+      args.force = true;
     } else if (arg === "--labels" && i + 1 < process.argv.length) {
       // Parse comma-separated labels
       args.labels = process.argv[i + 1]
@@ -609,22 +675,30 @@ async function addLabelsToIssue(repo, issueNumber, labels, dryRun = false) {
 }
 
 // Update issue body with PRD content and link
-async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdContent, defaultBranch, dryRun = false) {
+async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdContent, defaultBranch, dryRun = false, force = false) {
   const sanitizedTitle = sanitizeFilename(issueTitle);
   const prdFilename = `${issueNumber}-${sanitizedTitle}.md`;
   const prdLink = `\n\n---\n\n## 📋 Product Requirements Document\n\n**Full PRD:** [docs/PRDs/${prdFilename}](https://github.com/${repo}/blob/${defaultBranch}/docs/PRDs/${prdFilename})\n\n<details>\n<summary>View PRD Content</summary>\n\n${prdContent}\n\n</details>`;
 
-  // Check if PRD section already exists
-  if (hasPRDSection(originalBody)) {
+  // Check if PRD section already exists (skip unless force is true)
+  if (hasPRDSection(originalBody) && !force) {
     console.log(`  ⏭️  Issue #${issueNumber} already has PRD section - skipping update`);
     return true; // Return true since no update is needed
   }
 
-  // Append PRD section to original body
-  const newBody = (originalBody || "") + prdLink;
+  let newBody;
+  if (hasPRDSection(originalBody) && force) {
+    // Replace existing PRD section with new one
+    const prdSectionRegex = /\n\n---\n\n## 📋 Product Requirements Document[\s\S]*?(?=\n\n---|\n\n##|$)/;
+    newBody = originalBody.replace(prdSectionRegex, prdLink);
+    console.log(`  🔄 Updating existing PRD section in issue body...`);
+  } else {
+    // Append PRD section to original body
+    newBody = (originalBody || "") + prdLink;
+  }
 
   if (dryRun) {
-    console.log(`  [DRY RUN] Would append PRD section to issue #${issueNumber}`);
+    console.log(`  [DRY RUN] Would ${force && hasPRDSection(originalBody) ? 'update' : 'append'} PRD section to issue #${issueNumber}`);
     return true;
   }
 
@@ -644,9 +718,32 @@ async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdC
   }
 }
 
+// Format AI-generated PRD with metadata
+function formatAIPRD(issue, aiResult) {
+  const { number, title, url, milestone, labels } = issue;
+  const labelNames = labels.map((l) => l.name).join(", ");
+  const milestoneName = milestone?.title || "None";
+  
+  return `# PRD: ${title}
+
+**Issue:** [#${number}](${url})
+**Milestone:** ${milestoneName}
+**Labels:** ${labelNames || "None"}
+
+---
+
+${aiResult.markdown}
+
+---
+
+*This PRD was AI-generated using ${aiResult.metadata.model} from GitHub issue #${number}*
+*Generated: ${new Date(aiResult.metadata.generatedAt).toISOString().split("T")[0]}*
+`;
+}
+
 // Main function
 async function generateIssuePRDs(args) {
-  const { dryRun, labels } = args;
+  const { dryRun, labels, useAI, generateDiagrams, force } = args;
   
   console.log("📋 GitHub Issue PRD Generator\n");
 
@@ -669,6 +766,16 @@ async function generateIssuePRDs(args) {
     process.exit(1);
   }
 
+  // Check OpenAI configuration if AI mode is enabled
+  if (useAI) {
+    if (!validateOpenAIConfig()) {
+      console.error("❌ OPENAI_API_KEY not found in environment variables");
+      console.error("Please add it to your .env file to use --use-ai mode");
+      process.exit(1);
+    }
+    console.log("✓ OpenAI API configured");
+  }
+
   const repo = getRepo();
   console.log(`📦 Repository: ${repo}`);
   
@@ -677,6 +784,18 @@ async function generateIssuePRDs(args) {
 
   if (dryRun) {
     console.log("🔍 DRY RUN MODE - No changes will be made");
+  }
+  
+  if (useAI) {
+    console.log("🤖 AI MODE - Using GPT-4 to generate comprehensive PRDs");
+  }
+  
+  if (generateDiagrams) {
+    console.log("🎨 DIAGRAMS MODE - Generating PlantUML diagrams");
+  }
+  
+  if (force) {
+    console.log("🔄 FORCE MODE - Regenerating all PRDs (overwriting existing)");
   }
   
   if (labels.length > 0) {
@@ -709,15 +828,33 @@ async function generateIssuePRDs(args) {
     console.log(`\n📝 Processing Issue #${issue.number}: ${issue.title}`);
 
     try {
-      // Check if issue already has PRD section
-      if (hasPRDSection(issue.body)) {
-        console.log(`  ⏭️  Already has PRD - skipping`);
+      // Check if issue already has PRD section (skip unless --force is used)
+      if (hasPRDSection(issue.body) && !force) {
+        console.log(`  ⏭️  Already has PRD - skipping (use --force to regenerate)`);
         processedCount++;
         continue;
       }
+      
+      if (force && hasPRDSection(issue.body)) {
+        console.log(`  🔄 Regenerating existing PRD...`);
+      }
 
-      // Generate PRD
-      const prdContent = generatePRD(issue, context);
+      // Generate PRD (using AI or template)
+      let prdContent;
+      let prdMetadata = null;
+      
+      if (useAI) {
+        try {
+          const aiResult = await generatePRDWithAI(issue, context);
+          prdContent = formatAIPRD(issue, aiResult);
+          prdMetadata = aiResult.metadata;
+        } catch (error) {
+          console.error(`  ⚠️  AI generation failed, falling back to template: ${error.message}`);
+          prdContent = generatePRD(issue, context);
+        }
+      } else {
+        prdContent = generatePRD(issue, context);
+      }
 
       // Save PRD to file
       const filename = savePRD(issue.number, issue.title, prdContent, dryRun);
@@ -725,7 +862,25 @@ async function generateIssuePRDs(args) {
         console.log(`  ✓ Saved PRD to: ${filename}`);
       }
 
-      // Update issue body (append PRD section)
+      // Generate and save PlantUML diagram if requested
+      if (generateDiagrams && !dryRun) {
+        try {
+          const diagramCode = await generatePlantUMLDiagram(issue, context);
+          if (diagramCode) {
+            const pumlFile = savePlantUMLDiagram(issue.number, issue.title, diagramCode, dryRun);
+            if (pumlFile) {
+              console.log(`  ✓ Saved PlantUML diagram: ${pumlFile}`);
+              
+              // Try to generate PNG
+              await generatePNGFromPlantUML(pumlFile, dryRun);
+            }
+          }
+        } catch (error) {
+          console.error(`  ⚠️  Diagram generation failed: ${error.message}`);
+        }
+      }
+
+      // Update issue body (append or update PRD section)
       const updated = await updateIssueBody(
         repo,
         issue.number,
@@ -733,7 +888,8 @@ async function generateIssuePRDs(args) {
         issue.body,
         prdContent,
         defaultBranch,
-        dryRun
+        dryRun,
+        force
       );
 
       if (updated) {
@@ -755,6 +911,9 @@ async function generateIssuePRDs(args) {
           console.log(`  ✓ Added labels: ${labels.join(", ")}`);
         }
       }
+
+      // Output link to the issue
+      console.log(`  🔗 View issue: ${issue.url}`);
 
       processedCount++;
 

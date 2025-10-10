@@ -1,0 +1,35 @@
+@startuml
+title Keyboard Shortcuts Implementation Flow
+
+actor User
+participant "UI: SvelteKit" as UI
+participant "Workflow Engine" as Engine
+participant "Supabase Realtime" as Realtime
+participant "Postgres DB" as DB
+database "Supabase Storage" as Storage
+
+== Analysis & Design ==
+User -> UI : Identify need for\nkeyboard shortcuts
+UI -> Engine : Review existing\nworkflow capabilities
+Engine -> DB : Check current\nschema support
+DB --> Engine : Confirm no changes\nneeded
+Engine --> UI : Design proposal\nfor shortcuts
+
+== Implementation ==
+UI -> UI : Implement shortcut\nlistener
+UI -> Engine : Trigger workflows\nvia shortcuts
+Engine -> Realtime : Update workflow\nstatus in realtime
+Realtime --> UI : Display live\nworkflow updates
+
+== Integration & Testing ==
+UI -> Engine : Integrate with\nexisting components
+Engine -> DB : Ensure compatibility\nwith existing schemas
+UI -> UI : Write unit & integration\ntests for shortcuts
+UI --> User : Conduct E2E tests
+
+== Deployment ==
+User -> UI : Use keyboard shortcuts\nin production
+UI -> Storage : Log usage metrics
+Storage --> Engine : Analyze performance\nand reliability
+
+@enduml

@@ -1,0 +1,68 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase] <<Database>> as Supabase
+    [Workers] <<Service>> as Workers
+    database "Postgres" as PostgresDB
+}
+
+cloud {
+    [External Services] as External
+}
+
+node "Development Environment" {
+    [Bundle Size Optimization Task] as BundleOptimization
+    [TDD - Tests] as TDD
+    [Code Implementation] as CodeImpl
+    [Documentation] as Docs
+}
+
+[BundleOptimization] --> [TDD] : 1. Write tests
+[TDD] --> [CodeImpl] : 2. Implement code
+[CodeImpl] --> [Docs] : 3. Update documentation
+
+[SvelteKit] --> [Supabase] : Uses
+[Workers] --> [Supabase] : Uses
+[Supabase] --> [PostgresDB] : Manages
+[Supabase] .up.> [External] : Integrates with\n(Supabase Realtime, Storage, Edge)
+
+[BundleOptimization] --> [SvelteKit] : Optimizes
+[BundleOptimization] .right.> [Workers] : Integrates with
+[BundleOptimization] .down.> [Supabase] : Utilizes for\nlog streaming and storage
+
+note right of [BundleOptimization]
+  Key Steps:
+  - Analysis
+  - Design
+  - Implementation
+  - Integration
+  - Testing
+  - Documentation
+  - Review
+end note
+
+note right of [SvelteKit]
+  SvelteKit (SSR/API):
+  - Webhook intake
+  - Workflow CRUD
+  - Publish versions
+  - Run console
+end note
+
+note right of [Workers]
+  Workers include:
+  - Orchestrator
+  - HTTP Executor
+end note
+
+note on link [SvelteKit] --> [Supabase]
+  Data and queues
+end note
+
+note on link [Workers] --> [Supabase]
+  Log streaming
+end note
+
+@enduml
