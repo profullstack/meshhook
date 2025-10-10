@@ -9,7 +9,7 @@
 	let filterStatus = $state('all');
 
 	// Filtered and sorted workflows
-	const filteredWorkflows = $derived(() => {
+	const filtered = $derived.by(() => {
 		let result = workflows;
 
 		// Filter by search query
@@ -41,8 +41,6 @@
 
 		return result;
 	});
-
-	const filtered = filteredWorkflows();
 
 	function handleEdit(workflow) {
 		goto(`/workflows/${workflow.id}/edit`);
