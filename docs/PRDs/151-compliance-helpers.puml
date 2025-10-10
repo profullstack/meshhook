@@ -1,0 +1,38 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] as Webhook
+    [Workflow CRUD API] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
+    [Realtime Log Streaming] as Logs
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as Executor
+    database "Postgres (Data + Queues)" as Postgres
+    database "Supabase Storage (Artifacts)" as Storage
+    [Supabase Edge (Cron/Timers)] as Edge
+}
+
+package "Compliance Helpers Feature" {
+    [Compliance Helpers] as Helpers
+    [PII Redaction Rules] as PII
+    [Secrets Management] as Secrets
+    [Audit Logging] as Audit
+}
+
+Webhook --> Helpers : Triggers\nwith signature verification
+CRUD --> Helpers : Workflow management
+Publish --> Helpers : Versioning
+Console --> Helpers : Execution monitoring
+Helpers --> Postgres : Utilizes data & queues
+Helpers --> Logs : Sends real-time logs
+Helpers --> Storage : Manages artifacts
+Helpers --> Edge : Schedules tasks
+Helpers --> Orchestrator : Coordinates workflows
+Helpers --> Executor : Handles HTTP requests
+Helpers --> PII : Applies redaction rules
+Helpers --> Secrets : Manages encryption keys
+Helpers --> Audit : Logs admin actions & secret access
+
+@enduml

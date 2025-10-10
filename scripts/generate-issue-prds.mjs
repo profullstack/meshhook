@@ -713,12 +713,18 @@ async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdC
   // Collect all generated files
   const generatedFiles = collectGeneratedFiles(issueNumber, issueTitle);
   
-  // Build file links section
+  // Build file links section - only include files that actually exist
   let fileLinksSection = '';
   if (generatedFiles.length > 0) {
     fileLinksSection = '\n\n### 📎 Generated Documentation\n\n';
     
     for (const file of generatedFiles) {
+      // Double-check file exists before creating link
+      if (!existsSync(file.path)) {
+        console.log(`  ⚠️  Skipping non-existent file: ${file.name}`);
+        continue;
+      }
+      
       const fileUrl = `https://github.com/${repo}/blob/${defaultBranch}/docs/PRDs/${file.name}`;
       
       if (file.type === 'md') {
@@ -937,6 +943,8 @@ async function generateIssuePRDs(args) {
       }
 
       // Update issue body (append or update PRD section)
+      // Note: We update the issue body AFTER all files are generated
+      // so collectGeneratedFiles() can accurately detect what exists
       const updated = await updateIssueBody(
         repo,
         issue.number,

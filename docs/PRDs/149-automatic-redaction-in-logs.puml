@@ -1,0 +1,61 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] --> [Workflow Engine]
+    [Workflow Engine] --> [Log Processor]
+    [Log Processor] --> [Log Storage]
+    [Log Storage] --> [Supabase Realtime]
+    [Workflow Engine] --> [HTTP Executor]
+
+    database "Supabase Postgres" as Postgres {
+        [Log Storage] --> Postgres
+    }
+
+    [Supabase Realtime] ..> [Client Dashboard] : live updates
+    [Client Dashboard] .up.> [Webhook Intake] : configures
+}
+
+package "External Services" {
+    [Supabase Storage] --> [Artifact Storage]
+    [Supabase Edge] --> [Cron/Timers]
+}
+
+[Log Processor] ..> [PII Redaction] : uses
+[PII Redaction] .right.> [Redaction Rules] : follows
+
+note right of [PII Redaction]
+  Redacts PII from logs based on
+  predefined rules before storage.
+end note
+
+note right of [Log Storage]
+  Stores processed logs in
+  Postgres and streams to clients
+  via Supabase Realtime.
+end note
+
+[Workflow Engine] -right-> [Orchestrator]
+[Orchestrator] --> [State Machine]
+[Orchestrator] --> [Scheduling]
+
+[HTTP Executor] ..> [Retry/Backoff] : implements
+
+note "Key Components:\n- Webhook Intake\n- Workflow Engine\n- Log Processor\n- PII Redaction\n- Supabase Realtime\n- Client Dashboard" as KeyComponents
+
+note over Postgres, Supabase Storage, Supabase Edge
+  Supabase Services
+end note
+
+note over [Workflow Engine], [HTTP Executor]
+  Core Processing Components
+end note
+
+' Sequence of operations for log processing and redaction
+[Webhook Intake] -> [Workflow Engine] : Receives event
+[Workflow Engine] -> [Log Processor] : Generates log
+[Log Processor] -> [PII Redaction] : Redacts sensitive info
+[PII Redaction] -> [Log Storage] : Stores redacted log
+[Log Storage] -> [Supabase Realtime] : Streams to dashboard
+
+@enduml

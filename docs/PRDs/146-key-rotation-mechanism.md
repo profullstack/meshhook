@@ -1,173 +1,115 @@
 # PRD: Key rotation mechanism
 
+**Issue:** [#146](https://github.com/profullstack/meshhook/issues/146)
+**Milestone:** Phase 4: Security
+**Labels:** secrets-encryption, hacktoberfest
+
+---
+
+# PRD: Key Rotation Mechanism
+
 **Issue:** [#146](https://github.com/profullstack/meshhook/issues/146)  
 **Milestone:** Phase 4: Security  
 **Labels:** secrets-encryption  
 **Phase:** Phase 4  
-**Section:** Secrets Encryption
-
----
+**Section:** Secrets Encryption  
 
 ## Overview
 
-This task is part of Phase 4 in the Secrets Encryption section of the MeshHook project. 
+The introduction of a key rotation mechanism is a critical security enhancement for the MeshHook project. This task focuses on developing a system to periodically update the encryption keys used for securing secrets within the project's secret vault. The primary goal is to enhance the security posture of MeshHook by minimizing the risks associated with key compromise. This mechanism aligns with MeshHook's commitment to providing robust, multi-tenant RLS security and adheres to best practices in secrets management.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Key rotation mechanism
+1. **Key Rotation Logic:** Implement logic for rotating encryption keys used in secrets encryption. This includes generating new keys and transitioning the secrets to use the newly generated keys.
+2. **Backward Compatibility:** Ensure the key rotation mechanism supports decrypting secrets encrypted with old keys to maintain access to historical data.
+3. **Automatic Rotation Schedule:** Implement a configurable schedule for automatic key rotation, allowing system administrators to define rotation frequency.
+4. **Manual Rotation Trigger:** Provide an interface (CLI/API) for manually triggering a key rotation, in addition to the automatic schedule.
+5. **Key Versioning:** Maintain a versioning system for encryption keys to track and manage the use of current and previous keys.
+6. **Key Rotation Audit:** Log all key rotation activities, including the initiation of a rotation, completion, and any errors encountered during the process.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Key rotation mechanism"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure the key rotation process does not significantly impact system performance or availability.
+- **Reliability:** Design the rotation mechanism to handle failures gracefully, with the ability to retry or rollback in case of errors.
+- **Security:** Use secure cryptographic practices for generating, storing, and handling encryption keys. Ensure all key rotation operations are authorized and authenticated.
+- **Maintainability:** Write clear, well-documented, and modular code to facilitate future updates and maintenance.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes SvelteKit for its front-end and Supabase for backend services, including Postgres for data storage. The key rotation mechanism must integrate seamlessly with this existing architecture, particularly focusing on the secure handling and storage of encryption keys within Postgres.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis:** Conduct a thorough review of the current encryption and secrets management implementation to identify the best integration points for the key rotation mechanism.
+2. **Design:**
+   - Define a new schema for storing encryption keys with versioning information in Postgres.
+   - Outline the process for migrating existing secrets to use new keys.
+   - Draft the logic for automatic and manual key rotation triggers.
+3. **Implementation:**
+   - Develop the key rotation logic, including new key generation, secrets re-encryption, and version management.
+   - Implement the scheduling system for automatic rotations and API/CLI endpoints for manual triggers.
+   - Create audit logging for all key rotation activities.
+4. **Integration:** Ensure the new mechanism works in harmony with the existing secrets encryption and storage workflows.
+5. **Testing:** Perform comprehensive testing, including unit, integration, and end-to-end tests, to validate functionality and reliability.
+6. **Documentation:** Update the project documentation to include details on the key rotation mechanism, configuration options, and operational procedures.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- **EncryptionKeys Table:** A new table to store encryption keys with fields for key ID, version, creation date, and an indicator of whether it's the active key.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
-
+- **POST /api/keys/rotate:** Triggers a manual key rotation. Requires administrative privileges.
+  
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Key rotation logic correctly generates new keys and re-encrypts secrets.
+- [ ] Automatic and manual rotation mechanisms are fully operational.
+- [ ] Key versioning system effectively tracks and manages multiple key versions.
+- [ ] Key rotation activities are accurately logged for audit purposes.
+- [ ] No significant performance degradation during or after key rotations.
+- [ ] Documentation accurately reflects the key rotation feature and its usage.
+- [ ] All security considerations are adequately addressed.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the project's Supabase instance for schema modifications and integration testing.
+- Existing encryption and secrets management code for integration points analysis.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow modern JavaScript best practices and the existing project's coding standards.
+- Utilize secure cryptographic libraries recommended for key generation and management.
+- Ensure all new code is thoroughly covered with automated tests.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For key rotation logic, version management, and scheduling.
+- **Integration Tests:** To verify the interaction between the key rotation mechanism and secrets encryption/storage.
+- **Manual Testing:** For the manual rotation trigger and audit log verification.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all cryptographic operations use secure algorithms and libraries.
+- Restrict key rotation operations to authorized users only.
+- Securely manage old keys, ensuring they are accessible for decrypting historical data but protected from unauthorized use.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement monitoring for the key rotation process to track its success, duration, and any failures.
+- Enhance existing logging to include key rotation activities for audit and troubleshooting purposes.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Key rotation mechanism
-
-**Full Issue Body:**
-**Phase:** Phase 4
-**Section:** Secrets Encryption
-
-**Task:** Key rotation mechanism
-
----
-_Auto-generated from TODO.md_
+- Updated schema definitions in `schema.sql` reflecting the new EncryptionKeys table.
+- API documentation to include details on the new /api/keys/rotate endpoint.
+- Operational documentation on configuring automatic key rotation schedules and performing manual rotations.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #146*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #146*
+*Generated: 2025-10-10*

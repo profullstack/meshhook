@@ -1,0 +1,55 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+  [Supabase] <<Database>> #lightgreen
+  [Realtime Log Streaming] <<Service>> #lightblue
+  [Artifact Storage] <<Service>> #lightblue
+  [Webhook Intake] <<Component>> #FFAA77
+  [Workflow CRUD API] <<Component>> #FFAA77
+  [Publish Versions] <<Component>> #FFAA77
+  [Run Console] <<Component>> #FFAA77
+  [Orchestrator Worker] <<Worker>> #FFCCAA
+  [HTTP Executor Worker] <<Worker>> #FFCCAA
+}
+
+package "Artifact Sanitization Feature" {
+  [Artifact Sanitization] <<Task>> #pink
+  [Data Model] <<Model>> #lightgrey
+  [Error Handling] <<Strategy>> #FFDD88
+}
+
+[Supabase] --> [Data Model] : Uses
+[Realtime Log Streaming] --> [Run Console] : Updates live logs
+[Artifact Storage] --> [Artifact Sanitization] : Stores sanitized artifacts
+
+[Webhook Intake] --> [Orchestrator Worker] : Triggers workflows
+[Workflow CRUD API] --> [Supabase] : CRUD operations
+[Publish Versions] --> [Supabase] : Updates workflow versions
+[Run Console] --> [Supabase] : Fetches run information
+[Orchestrator Worker] --> [HTTP Executor Worker] : Delegates tasks
+[Orchestrator Worker] --> [Artifact Sanitization] : Initiates sanitization
+[HTTP Executor Worker] --> [Artifact Sanitization] : Provides artifacts for sanitization
+
+[Artifact Sanitization] --> [Artifact Storage] : Stores sanitized artifacts
+[Artifact Sanitization] --> [Error Handling] : Utilizes
+[Error Handling] --> [Run Console] : Displays errors
+
+note right of [Artifact Sanitization]
+  1. Analyze artifact
+  2. Redact PII
+  3. Store sanitized artifact
+  4. Log completion
+end note
+
+note right of [Orchestrator Worker]
+  Manages workflow execution
+  and task scheduling
+end note
+
+note right of [HTTP Executor Worker]
+  Executes HTTP requests with
+  retries and backoff
+end note
+
+@enduml

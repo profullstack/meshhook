@@ -1,0 +1,34 @@
+@startuml
+!theme plain
+
+title Key Rotation Mechanism for MeshHook
+
+actor Admin
+boundary "Webhook System" as Webhook
+boundary "CRUD System" as CRUD
+database "Supabase" as DB
+entity "Key Rotation Service" as KRS
+control "Orchestrator Worker" as OW
+control "HTTP Executor Worker" as HEW
+
+Admin --> Webhook : Requests key rotation
+Webhook --> KRS : Triggers rotation process
+KRS --> DB : Validates existing keys
+DB --> KRS : Returns validation result
+KRS --> OW : Initiates new key generation
+OW --> KRS : Returns new key
+KRS --> DB : Stores new key
+KRS --> HEW : Instructs cache update
+HEW --> KRS : Confirms update
+KRS --> Webhook : Confirms rotation completion
+Webhook --> Admin : Notifies success
+
+note right of KRS : Handles key generation,\nrotation, and validation
+
+note over DB : Uses Postgres for\n durable storage
+
+note over HEW : Ensures robust HTTP\n with retries/backoff
+
+note over OW : Manages state machine\n and scheduling
+
+@enduml

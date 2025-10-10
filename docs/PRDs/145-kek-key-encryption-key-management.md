@@ -1,8 +1,16 @@
 # PRD: KEK (Key Encryption Key) management
 
+**Issue:** [#145](https://github.com/profullstack/meshhook/issues/145)
+**Milestone:** Phase 4: Security
+**Labels:** secrets-encryption, hacktoberfest
+
+---
+
+# PRD: KEK (Key Encryption Key) Management
+
 **Issue:** [#145](https://github.com/profullstack/meshhook/issues/145)  
 **Milestone:** Phase 4: Security  
-**Labels:** secrets-encryption  
+**Labels:** secrets-encryption, hacktoberfest  
 **Phase:** Phase 4  
 **Section:** Secrets Encryption
 
@@ -10,164 +18,113 @@
 
 ## Overview
 
-This task is part of Phase 4 in the Secrets Encryption section of the MeshHook project. 
+In the ongoing effort to enhance MeshHook's security, this PRD outlines the task of implementing a robust Key Encryption Key (KEK) management system. The KEK management system is crucial for securing the encryption keys used to encrypt and decrypt sensitive data, such as user secrets stored within the platform. This system aligns with MeshHook’s commitment to providing a secure, multi-tenant workflow engine environment. By implementing KEK management, MeshHook will ensure that all encrypted data remains secure, even in the event of a breach, by facilitating regular rotation and secure storage of KEKs.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Objectives
 
-**Task Objective:** KEK (Key Encryption Key) management
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+- Securely manage the lifecycle of Key Encryption Keys (KEKs) used to encrypt secret data.
+- Provide mechanisms for secure rotation, storage, and access to KEKs.
+- Align with industry best practices for encryption key management to bolster MeshHook's security posture.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "KEK (Key Encryption Key) management"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **KEK Generation:** Ability to generate new KEKs securely.
+2. **KEK Rotation:** Implement a process for rotating KEKs periodically without service interruption.
+3. **Secure Storage:** Securely store KEKs, ensuring they are encrypted at rest.
+4. **Access Control:** Restrict access to KEKs to only authorized services and personnel.
+5. **Audit Logging:** Log all operations related to KEK management, including generation, rotation, and access.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** KEK operations should not significantly impact the performance of the MeshHook platform.
+- **Reliability:** Ensure KEK management processes are fault-tolerant and can recover from errors without data loss.
+- **Security:** Adhere to industry-standard security practices for key management, including the use of secure cryptographic algorithms.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a combination of SvelteKit for frontend operations and Supabase for backend services, including database and real-time functionalities. The KEK management system will integrate closely with these existing components, particularly focusing on secure interactions with the database where encrypted data is stored.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+1. **Design KEK Storage Schema:** Update the `schema.sql` to include a new table for storing KEKs, their metadata, and encrypted forms.
+2. **KEK Generation & Storage:** Implement a service module responsible for generating new KEKs and storing them securely in the database.
+3. **KEK Rotation Process:** Develop a process (potentially a scheduled job) that handles the rotation of KEKs, including re-encrypting data with the new KEK.
+4. **Access Control & Logging:** Ensure that only authorized services can access KEKs and that all access is logged for audit purposes.
+5. **Update Documentation:** Document the KEK management system, including architecture changes, API endpoints, and operational procedures.
 
 **Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
 
-### Data Model
+- KEKs must be stored in a manner that is encrypted at rest.
+- Ensure backward compatibility during the KEK rotation process to avoid service disruption.
+- Include error handling and recovery mechanisms throughout the KEK lifecycle management process.
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+### Data Model Changes
 
-### API Endpoints (if applicable)
+Addition of a `kek_storage` table:
 
-No new API endpoints required for this task.
+```sql
+CREATE TABLE kek_storage (
+    kek_id SERIAL PRIMARY KEY,
+    kek_encrypted BYTEA NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    rotated_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(50) NOT NULL
+);
+```
+
+### API Endpoints
+
+- `POST /api/v1/kek/rotate` - Initiates a KEK rotation process.
+- `GET /api/v1/kek/status` - Retrieves the current status of KEKs, including the last rotation date.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] KEK generation and secure storage functionality implemented.
+- [ ] KEK rotation process developed and tested.
+- [ ] Access to KEK management features restricted and logged.
+- [ ] All new code is covered by unit and integration tests.
+- [ ] Documentation updated to reflect changes in the system.
+- [ ] Security audit completed with no major issues reported.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Supabase for database and real-time functionality.
+- Existing MeshHook infrastructure and services.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow MeshHook's existing coding standards and best practices.
+- Use TDD (Test Driven Development) approach for the development of new features.
+- Ensure all new code is compatible with Node.js 20+ and uses ES2024+ features where applicable.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Testing:** For individual components and utilities related to KEK management.
+- **Integration Testing:** To ensure KEK management processes interact correctly with other MeshHook components and services.
+- **Security Testing:** Specifically focusing on the encryption, storage, and access control mechanisms of KEKs.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Utilize AES-GCM for encryption tasks related to KEK storage.
+- Implement strict access control and logging for all KEK management operations.
+- Regularly audit the KEK management system for potential security issues.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Integrate KEK management operations into MeshHook’s existing monitoring systems.
+- Set up alerts for critical KEK management operations and failures.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-KEK (Key Encryption Key) management
-
-**Full Issue Body:**
-**Phase:** Phase 4
-**Section:** Secrets Encryption
-
-**Task:** KEK (Key Encryption Key) management
-
----
-_Auto-generated from TODO.md_
+- Main PRD, Architecture, and Security Guidelines documents should be updated to reflect the introduction of KEK management features.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #145*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #145*
+*Generated: 2025-10-10*

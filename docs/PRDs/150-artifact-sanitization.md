@@ -1,150 +1,99 @@
 # PRD: Artifact sanitization
 
-**Issue:** [#150](https://github.com/profullstack/meshhook/issues/150)  
-**Milestone:** Phase 4: Security  
-**Labels:** pii-redaction  
-**Phase:** Phase 4  
-**Section:** PII & Redaction
+**Issue:** [#150](https://github.com/profullstack/meshhook/issues/150)
+**Milestone:** Phase 4: Security
+**Labels:** pii-redaction, hacktoberfest
 
 ---
 
+# PRD: Artifact Sanitization
+
 ## Overview
 
-This task is part of Phase 4 in the PII & Redaction section of the MeshHook project. 
+The task of artifact sanitization is a crucial component in the security layer of the MeshHook project, focusing on the redaction of personally identifiable information (PII) from workflow artifacts. This process aligns with MeshHook's commitment to providing a secure, multi-tenant workflow engine that respects user privacy and complies with global data protection regulations.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+**Objective:** Enhance MeshHook's security by implementing a robust artifact sanitization mechanism to automatically redact PII from stored artifacts, ensuring the privacy of sensitive information.
 
-**Task Objective:** Artifact sanitization
+## Functional Requirements
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+1. **Sanitization Engine Development:** Develop a sanitization engine capable of identifying and redacting PII from workflow artifacts.
+2. **Configuration Mechanism:** Enable users to define custom PII redaction rules per project, including the ability to specify what constitutes PII.
+3. **Integration with Workflow Pipeline:** Integrate the sanitization engine within the existing workflow pipeline, ensuring that all artifacts are scanned and sanitized before storage.
+4. **Audit Logging:** Log all sanitization actions, capturing details about what was redacted, by whom, and when, without storing PII in logs.
 
-## Requirements
+## Non-Functional Requirements
 
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Artifact sanitization"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure that the sanitization process adds minimal overhead to the workflow execution time.
+- **Reliability:** Achieve a high level of accuracy in PII detection and redaction, minimizing false positives and negatives.
+- **Security:** Implement secure coding practices to prevent introducing vulnerabilities within the sanitization engine.
+- **Maintainability:** Design the sanitization engine for easy updates as PII detection techniques evolve.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+The artifact sanitization feature will be integrated into the existing MeshHook architecture, specifically within the workflow execution pipeline, immediately before artifact storage in Supabase.
+
+**Integration Points:**
+- **Workflow Execution Pipeline:** Insert the sanitization step post-execution and pre-storage.
+- **Supabase Storage:** Ensure sanitized artifacts are stored, replacing or alongside original artifacts.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Requirement Analysis:** Evaluate current artifact handling processes and identify types of PII commonly stored in artifacts.
+2. **Design the Sanitization Engine:** Outline the engine's architecture, including PII detection methods (regex patterns, machine learning models, etc.) and redaction techniques.
+3. **Integration Planning:** Design the integration with the workflow pipeline, ensuring seamless insertion of the sanitization step.
+4. **Development:** Implement the sanitization engine and integration logic, following the TDD approach.
+5. **Testing and Validation:** Conduct thorough testing, including unit, integration, and E2E tests, to ensure effectiveness and performance.
+6. **Documentation and Deployment:** Update documentation to cover the new sanitization feature and its configuration. Prepare for deployment.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- **Sanitization Rules Table:** Introduce a new table to store user-defined PII redaction rules, including pattern definitions and action specifications.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+- **GET /projects/{projectId}/sanitization-rules:** Fetches the PII redaction rules for a project.
+- **POST /projects/{projectId}/sanitization-rules:** Creates or updates PII redaction rules for a project.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Sanitization engine accurately identifies and redacts PII from artifacts.
+- [ ] Users can define and manage custom PII redaction rules.
+- [ ] Integration with the workflow pipeline is seamless, with minimal performance impact.
+- [ ] All actions are audited and logged appropriately.
+- [ ] Documentation is updated to include details about the sanitization feature and how to configure it.
+- [ ] The feature passes all security, performance, and reliability benchmarks.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the current MeshHook codebase and architecture documentation.
+- Supabase for storage and Realtime for log streaming.
+- Development tools and libraries for implementing PII detection and redaction algorithms.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the established MeshHook coding standards, including ESLint and Prettier configurations.
+- Ensure code is modular, well-commented, and adheres to security best practices.
+- Utilize environment variables for sensitive configurations to facilitate KEK rotation and secure deployment.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Implement unit tests for individual components of the sanitization engine.
+- Design integration tests to evaluate the engine's integration with the workflow pipeline.
+- Conduct E2E tests to assess the overall system's performance and reliability in real-world scenarios.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Sanitization rules and logs must be stored securely, with access restricted based on `project_id`.
+- Review and apply secure coding practices to prevent injection attacks or unauthorized access to PII.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement metrics to monitor the performance impact of the sanitization process.
+- Ensure comprehensive logging of the sanitization actions for auditability and debugging.
 
 ## Related Documentation
 
@@ -153,21 +102,7 @@ No new API endpoints required for this task.
 - [Security Guidelines](../Security.md)
 - [Operations Guide](../Operations.md)
 
-## Task Details
-
-**Original Task Description:**
-Artifact sanitization
-
-**Full Issue Body:**
-**Phase:** Phase 4
-**Section:** PII & Redaction
-
-**Task:** Artifact sanitization
-
----
-_Auto-generated from TODO.md_
-
 ---
 
-*This PRD was auto-generated from GitHub issue #150*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #150*
+*Generated: 2025-10-10*

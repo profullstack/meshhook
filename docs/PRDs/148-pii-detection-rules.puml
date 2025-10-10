@@ -1,0 +1,51 @@
+@startuml
+
+!theme plain
+
+title PII Detection Rules Implementation Flow
+
+actor Developer
+participant "GitHub Issue #148" as Issue
+participant "PRD Document" as PRD
+database "Supabase Postgres" as DB
+participant "SvelteKit SSR/API" as SvelteKit
+participant "Supabase Realtime" as Realtime
+participant "Orchestrator Worker" as Orchestrator
+participant "HTTP Executor Worker" as Executor
+
+Developer -> Issue: Reviews task details
+Issue -> PRD: Links to full PRD
+Developer -> PRD: Reads PRD for specifications
+
+PRD -> Developer: Provides implementation steps
+
+group Implementation
+    Developer -> SvelteKit: 1. Analysis of integration points
+    SvelteKit -> DB: 2. Design data interactions
+    DB --> SvelteKit: Returns existing schemas
+    Developer -> SvelteKit: 3. Implements PII detection logic
+    SvelteKit -> Orchestrator: 4. Integration with workflow engine
+    Orchestrator -> Executor: Schedules PII detection jobs
+    Executor -> DB: Performs PII data queries
+    DB --> Executor: Returns queried data
+    Executor -> Realtime: Streams logs
+end
+
+group Testing & Documentation
+    Developer -> SvelteKit: Writes unit and integration tests
+    SvelteKit -> Developer: Test results
+    Developer -> PRD: Updates documentation
+end
+
+group Review & Deployment
+    Developer -> Issue: Marks as ready for review
+    Issue -> Developer: Code review feedback
+    Developer -> Issue: Implements feedback
+    Issue -> Developer: Approves changes
+    Developer -> DB: Applies any DB migrations
+    DB --> Developer: Confirms migration success
+    Developer -> SvelteKit: Merges to main branch
+    SvelteKit -> Realtime: Deployment notifications
+end
+
+@enduml

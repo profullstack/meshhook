@@ -1,173 +1,123 @@
 # PRD: Automatic redaction in logs
 
-**Issue:** [#149](https://github.com/profullstack/meshhook/issues/149)  
-**Milestone:** Phase 4: Security  
-**Labels:** pii-redaction  
-**Phase:** Phase 4  
-**Section:** PII & Redaction
+**Issue:** [#149](https://github.com/profullstack/meshhook/issues/149)
+**Milestone:** Phase 4: Security
+**Labels:** pii-redaction, hacktoberfest
 
 ---
 
-## Overview
+# PRD: Automatic Redaction in Logs
 
-This task is part of Phase 4 in the PII & Redaction section of the MeshHook project. 
+## 1. Overview
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### 1.1 Purpose
 
-**Task Objective:** Automatic redaction in logs
+The objective of this task is to enhance the security and privacy of the MeshHook workflow engine by implementing automatic redaction of Personally Identifiable Information (PII) in logs. This feature aligns with our commitment to security, privacy, and compliance, ensuring that sensitive information is protected across all operational logs.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+### 1.2 Alignment with Project Goals
 
-## Requirements
+This task directly supports MeshHook's core goals by enhancing the security layer of our multi-tenant architecture and ensuring that our logging mechanisms adhere to best practices for PII handling. By integrating automatic redaction capabilities, we further solidify our promise of providing a secure, reliable, and privacy-compliant workflow engine.
 
-### Functional Requirements
+## 2. Functional Requirements
 
-1. Implement the core functionality described in the task: "Automatic redaction in logs"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+1. **Automatic Detection and Redaction:** The system must automatically detect and redact PII information from all log entries before they are stored or displayed.
+2. **Customizable Redaction Rules:** Support customizable redaction rules to allow for the flexibility of defining what constitutes PII, accommodating different regulatory requirements.
+3. **Audit Trail:** Maintain an audit trail of redaction actions, including metadata about the redaction without storing the redacted information.
+4. **Minimal Performance Impact:** Implement the redaction mechanism in a way that minimizes the impact on logging performance.
+5. **API Documentation:** Update the API documentation to include details about the redaction process, available customization, and configuration options.
 
+## 3. Non-Functional Requirements
 
-### Non-Functional Requirements
+- **Performance:** Ensure that the log redaction process adds no more than a 10% overhead to the log processing time.
+- **Reliability:** Guarantee a 99.9% success rate in detecting and redacting PII from logs.
+- **Security:** Adhere to the latest security standards for PII detection and redaction, ensuring that redacted logs cannot be reverse-engineered to expose sensitive information.
+- **Maintainability:** Code related to log redaction should be modular, well-documented, and easy to update or extend with new rules.
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+## 4. Technical Specifications
 
-## Technical Specifications
+### 4.1 Architecture Context
 
-### Architecture Context
+- **Integration Points:**
+  - Supabase Realtime for log streaming.
+  - Existing logging mechanisms within the SvelteKit (SSR/API) components and Workers.
+- **Components Affected:**
+  - Logging services.
+  - Database schema for storing redaction rules and audit trails.
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+### 4.2 Implementation Approach
 
-### Implementation Approach
+1. **Analysis:** Evaluate current logging mechanisms to identify where and how logs are generated, stored, and streamed.
+2. **Design:**
+   - Define a schema for storing redaction rules in Postgres.
+   - Design an audit trail mechanism for tracking redactions.
+   - Outline the architecture for intercepting and processing logs for PII before storage/display.
+3. **Implementation:**
+   - Implement the redaction engine, integrating it into the current logging flow.
+   - Create a management API for redaction rules.
+   - Update logging mechanisms to support asynchronous redaction where necessary.
+4. **Testing and Documentation:** Write tests covering all new functionality and update documentation accordingly.
 
-The implementation should follow these steps:
+### 4.3 Data Model Changes
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+- New table `log_redaction_rules` for storing redaction patterns and rules.
+- New table `log_redaction_audit` for storing redaction audit trails.
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+### 4.4 API Endpoints
 
-### Data Model
+- `POST /api/redaction-rules`: Create new redaction rule.
+- `GET /api/redaction-rules`: List all redaction rules.
+- `DELETE /api/redaction-rules/{id}`: Delete a redaction rule.
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+## 5. Acceptance Criteria
 
-### API Endpoints (if applicable)
+- [ ] Automatic redaction of PII in logs is implemented and functional.
+- [ ] Log redaction adds no more than a 10% overhead to log processing time.
+- [ ] Customizable redaction rules can be created, listed, and deleted via new API endpoints.
+- [ ] An audit trail of redaction actions is maintained, with appropriate metadata.
+- [ ] Documentation is updated with clear, comprehensive details on the redaction process and API usage.
+- [ ] All new code is covered by unit and integration tests with >95% coverage.
+- [ ] Performance, reliability, and security non-functional requirements are met.
 
-No new API endpoints required for this task.
+## 6. Dependencies and Prerequisites
 
-## Acceptance Criteria
+- Access to the existing MeshHook codebase and infrastructure.
+- Supabase and Postgres setup for development and testing.
+- Knowledge of the current logging and data storage mechanisms.
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+## 7. Implementation Notes
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+### 7.1 Development Guidelines
 
-## Dependencies
+- Follow the existing code style and conventions.
+- Write modular, reusable code with comprehensive inline documentation.
+- Ensure all new functionality is covered by automated tests.
 
-### Technical Dependencies
+### 7.2 Testing Strategy
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- **Unit Tests:** For redaction logic and rule application.
+- **Integration Tests:** For the full log processing pipeline, including redaction and audit logging.
+- **Performance Tests:** To verify the impact on log processing times.
 
-### Prerequisite Tasks
+### 7.3 Security Considerations
 
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Ensure redacted logs cannot be reverse-engineered to expose PII.
+- Securely manage and access redaction rules and audit logs.
 
-## Implementation Notes
+### 7.4 Monitoring & Observability
 
-### Development Guidelines
+- Implement monitoring to track the performance impact of log redaction.
+- Alerting for failures in the log redaction process or violations of performance thresholds.
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
-
-### Testing Strategy
-
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
-
-### Security Considerations
-
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
-
-### Monitoring & Observability
-
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
-
-## Related Documentation
+## 8. Related Documentation
 
 - [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
+- [Architecture Overview](../Architecture.md)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
+- [API Documentation](../API.md) (to be updated with new endpoints)
 
-## Task Details
-
-**Original Task Description:**
-Automatic redaction in logs
-
-**Full Issue Body:**
-**Phase:** Phase 4
-**Section:** PII & Redaction
-
-**Task:** Automatic redaction in logs
-
----
-_Auto-generated from TODO.md_
+*Last updated: 2023-12-01*
 
 ---
 
-*This PRD was auto-generated from GitHub issue #149*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #149*
+*Generated: 2025-10-10*

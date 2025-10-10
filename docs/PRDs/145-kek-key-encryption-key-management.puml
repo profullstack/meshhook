@@ -1,0 +1,32 @@
+@startuml
+!theme plain
+
+package "KEK Management System" {
+    [KEK Rotation Service] as KEKRotation
+    [KEK Storage] as KEKStore
+    [Audit Log] as AuditLog
+    database "Postgres DB" as Postgres {
+        [Secrets Table]
+        [Audit Table]
+    }
+    [Supabase Realtime] as SupabaseRT
+    [Webhook Service] as Webhook
+    [API Gateway] as API
+}
+
+package "External Systems" {
+    [Supabase Storage] as SupabaseStorage
+}
+
+API --> Webhook : triggers
+Webhook --> KEKRotation : requests KEK rotation
+KEKRotation --> KEKStore : fetches current KEK
+KEKStore --> Postgres.Secrets Table : accesses encrypted secrets
+KEKRotation --> KEKStore : updates KEK
+KEKStore --> Postgres.Secrets Table : re-encrypts secrets
+KEKRotation --> AuditLog : logs rotation event
+AuditLog --> Postgres.Audit Table : stores logs
+SupabaseRT <.. Postgres : streams updates
+Postgres --> SupabaseStorage : backs up encrypted secrets
+
+@enduml
