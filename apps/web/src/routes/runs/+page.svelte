@@ -1,5 +1,6 @@
 <script>
 	import RunCard from '$lib/components/RunCard.svelte';
+	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import { goto } from '$app/navigation';
 
 	let { data } = $props();
@@ -7,6 +8,8 @@
 	let runs = $state(data.runs || []);
 	let filterStatus = $state('all');
 	let filterWorkflow = $state('all');
+	let loading = $state(false);
+	let loadingMessage = $state('');
 
 	const filteredRuns = $derived(() => {
 		let result = runs;
@@ -36,6 +39,8 @@
 
 	async function handleRetry(run) {
 		try {
+			loading = true;
+			loadingMessage = 'Retrying run...';
 			const response = await fetch(`/api/runs/${run.id}/retry`, {
 				method: 'POST'
 			});
@@ -47,6 +52,9 @@
 			goto(`/runs/${result.run.id}`);
 		} catch (error) {
 			alert(`Error retrying run: ${error.message}`);
+		} finally {
+			loading = false;
+			loadingMessage = '';
 		}
 	}
 
@@ -54,6 +62,8 @@
 		if (!confirm('Cancel this run?')) return;
 
 		try {
+			loading = true;
+			loadingMessage = 'Cancelling run...';
 			const response = await fetch(`/api/runs/${run.id}/cancel`, {
 				method: 'POST'
 			});
@@ -64,6 +74,9 @@
 			runs = runs.map((r) => (r.id === run.id ? { ...r, status: 'cancelled' } : r));
 		} catch (error) {
 			alert(`Error cancelling run: ${error.message}`);
+		} finally {
+			loading = false;
+			loadingMessage = '';
 		}
 	}
 </script>
@@ -73,6 +86,15 @@
 </svelte:head>
 
 <div class="runs-page">
+	{#if loading}
+		<div class="loading-overlay" role="status" aria-live="polite">
+			<div class="loading-content">
+				<LoadingSpinner size="large" label={loadingMessage} />
+				<p class="loading-message">{loadingMessage}</p>
+			</div>
+		</div>
+	{/if}
+
 	<header class="page-header">
 		<h1>Workflow Runs</h1>
 	</header>
@@ -113,8 +135,40 @@
 
 <style>
 	.runs-page {
+		position: relative;
 		min-height: 100vh;
 		background: #f8f9fa;
+	}
+
+	.loading-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+	}
+
+	.loading-content {
+		background: white;
+		padding: 2rem 3rem;
+		border-radius: 8px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+	}
+
+	.loading-message {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 500;
+		color: #333;
 	}
 
 	.page-header {
