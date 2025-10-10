@@ -1,5 +1,5 @@
-import { db } from "./lib/db.js";
-import { queue, enqueueStep } from "./lib/queue.js";
+import { db } from "@meshhook/shared/lib/db.js";
+import { queue, enqueueStep } from "@meshhook/shared/lib/queue.js";
 
 async function replay(runId) {
   const events = await db.manyOrNone(
