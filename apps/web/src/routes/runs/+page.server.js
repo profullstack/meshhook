@@ -1,23 +1,17 @@
-import { createServerSupabaseClient } from '$lib/supabase.js';
+import { requireAuth, getSupabase } from '$lib/auth.js';
 
 /**
  * Load runs for the list view
  */
 export async function load(event) {
-	const supabase = createServerSupabaseClient(event);
+	// Require authentication - will redirect to /login if not authenticated
+	const user = requireAuth(event);
+	const supabase = getSupabase(event);
 
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-
-		if (!session) {
-			return { runs: [] };
-		}
-
 		const { data: runs, error } = await supabase
-			.from('runs')
-			.select('*, workflow:workflows(name)')
+			.from('workflow_runs')
+			.select('*, workflow:workflow_definitions(slug)')
 			.order('created_at', { ascending: false });
 
 		if (error) {
@@ -25,7 +19,10 @@ export async function load(event) {
 			return { runs: [], error: error.message };
 		}
 
-		return { runs: runs || [] };
+		return {
+			runs: runs || [],
+			user
+		};
 	} catch (error) {
 		console.error('Error in runs load:', error);
 		return { runs: [], error: error.message };
