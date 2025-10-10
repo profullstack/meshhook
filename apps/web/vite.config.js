@@ -1,14 +1,15 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default {
 	plugins: [sveltekit()],
-	server: {
-		port: 5173,
-		strictPort: false
+	ssr: {
+		// Mark worker modules as external so they're not bundled
+		// They'll be resolved at runtime from the monorepo root
+		noExternal: []
 	},
-	preview: {
-		port: 4173,
-		strictPort: false
+	build: {
+		rollupOptions: {
+			external: [/^\.\.\/\.\.\/workers\//]
+		}
 	}
-});
+};
