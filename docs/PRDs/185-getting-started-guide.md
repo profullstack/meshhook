@@ -1,8 +1,16 @@
 # PRD: Getting started guide
 
+**Issue:** [#185](https://github.com/profullstack/meshhook/issues/185)
+**Milestone:** Phase 8: Documentation
+**Labels:** user-documentation, hacktoberfest
+
+---
+
+# PRD: Getting Started Guide
+
 **Issue:** [#185](https://github.com/profullstack/meshhook/issues/185)  
 **Milestone:** Phase 8: Documentation  
-**Labels:** user-documentation  
+**Labels:** user-documentation, hacktoberfest  
 **Phase:** Phase 8  
 **Section:** User Documentation
 
@@ -10,167 +18,93 @@
 
 ## Overview
 
-This task is part of Phase 8 in the User Documentation section of the MeshHook project. 
+This Getting Started Guide is an essential component of the MeshHook project's User Documentation. Its main objective is to equip new users with the knowledge and tools needed to begin using MeshHook effectively. The guide will align with MeshHook's core goals, providing clear, step-by-step instructions and examples for setting up webhooks, creating workflows with the visual DAG builder, and understanding MeshHook's event sourcing and security features.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Getting started guide
+1. **Guide Structure:** Develop a structured outline for the guide that includes an introduction to MeshHook, setup instructions, a tutorial for creating a simple workflow, and references to advanced features.
+2. **Content Creation:** Write clear, concise content for each section of the guide, incorporating screenshots and code snippets where applicable.
+3. **Example Workflows:** Include example workflows that demonstrate key features of MeshHook, such as webhook triggers, the visual DAG builder, and live logs.
+4. **Best Practices:** Provide best practices for workflow design and management within MeshHook, including error handling and security considerations.
+5. **Resources Section:** Compile a list of additional resources, such as links to the API documentation, advanced tutorials, and community forums.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Getting started guide"
-2. Create reusable Svelte 5 components
-3. Implement responsive design for mobile and desktop
-4. Follow project UI/UX patterns and styling
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Usability:** Ensure the guide is user-friendly, with easy-to-follow instructions suitable for beginners.
+- **Accessibility:** The guide should be accessible, following web content accessibility guidelines.
+- **Maintainability:** Structure the guide in a modular fashion to facilitate easy updates as MeshHook evolves.
+- **Localization Readiness:** Prepare the document structure for potential future localization efforts.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+The guide will be hosted as part of the MeshHook documentation site, built with SvelteKit to ensure consistency with the existing project infrastructure. The guide will not require changes to the core MeshHook architecture but will integrate seamlessly with the current user interface and documentation framework.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Outline Development:** Collaborate with the project team to develop a comprehensive outline for the Getting Started guide.
+2. **Content Creation:** Write the content for each section, starting with high-priority areas such as installation/setup and basic workflow creation.
+3. **Media Inclusion:** Work with the UI/UX team to create and embed screenshots and diagrams that enhance the guide's clarity.
+4. **Internal Review:** Conduct reviews with the development and documentation teams to ensure accuracy and completeness.
+5. **Publication:** Publish the guide on the MeshHook documentation site, ensuring it is correctly linked within the site's navigation.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No changes to the data model are required for this task.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+Not applicable for this documentation task.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] The guide includes a comprehensive introduction to MeshHook.
+- [ ] Instructions for initial setup and configuration are clear and accurate.
+- [ ] At least three example workflows are documented, demonstrating core functionalities.
+- [ ] Best practices for workflow design and security are clearly communicated.
+- [ ] The guide is reviewed for technical accuracy, usability, and accessibility.
+- [ ] The guide is easily accessible from the MeshHook documentation site's main navigation.
 
 ## Dependencies
 
 ### Technical Dependencies
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- Access to the MeshHook documentation site's content management system.
+- Collaboration with the UI/UX team for media creation.
 
 ### Prerequisite Tasks
 
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Completion of the MeshHook v1 feature set documentation.
+- Availability of example workflows for inclusion in the guide.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Use Markdown for content creation to ensure compatibility with the SvelteKit-based documentation site.
+- Follow the MeshHook documentation style guide to maintain consistency across documents.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Peer Review:** Conduct thorough peer reviews of the guide content for technical accuracy and usability.
+- **User Feedback:** Collect initial feedback from a small group of new users and incorporate necessary changes before wide release.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all example workflows and code snippets follow MeshHook security guidelines, including the use of RLS and secrets management.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+Not applicable for this documentation task.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Getting started guide
-
-**Full Issue Body:**
-**Phase:** Phase 8
-**Section:** User Documentation
-
-**Task:** Getting started guide
-
----
-_Auto-generated from TODO.md_
+- MeshHook Documentation Style Guide
+- MeshHook API Documentation
+- Advanced MeshHook Tutorials
 
 ---
 
-*This PRD was auto-generated from GitHub issue #185*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #185*
+*Generated: 2025-10-10*

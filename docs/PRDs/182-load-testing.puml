@@ -1,0 +1,22 @@
+@startuml
+!define RECTANGLE class
+
+RECTANGLE SvelteKit << (S,#FF7700) SSR/API >>
+RECTANGLE Supabase << (D,#0073E6) Database >>
+RECTANGLE Workers << (W,#FFAA00) Worker >>
+
+note right of SvelteKit : webhook intake\nworkflow CRUD\npublish versions\nrun console
+note right of Supabase : Postgres (data + queues)\nRealtime (log streaming)\nStorage (artifacts)\nEdge (cron/timers)
+note right of Workers : Orchestrator (state machine + scheduling)\nHTTP Executor (robust HTTP with retries/backoff)
+
+RECTANGLE LoadTesting << (T,#FF0000) Task >>
+note right of LoadTesting : Implement Load Testing\nAnalyze & Design\nWrite Tests\nRefactor & Document
+
+SvelteKit -down-> LoadTesting : Triggers Load Testing
+LoadTesting -down-> Supabase : Utilizes\n<<Database>>
+LoadTesting -down-> Workers : Orchestrates\n<<Tasks>>
+
+Supabase -[hidden]-> Workers : 
+SvelteKit -[hidden]-> Workers : 
+
+@enduml

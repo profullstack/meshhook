@@ -1,0 +1,27 @@
+@startuml
+!theme plain
+
+title Queue Throughput Tests - MeshHook Project
+
+actor Tester
+entity "Queue Throughput Test Suite" as TestSuite
+component "Test Orchestrator" as Orchestrator
+component "Supabase Postgres" as Postgres
+component "Supabase Realtime" as Realtime
+component "HTTP Executor" as Executor
+database "Workflow Engine DB" as WorkflowDB
+
+Tester --> TestSuite : initiates tests
+TestSuite --> Orchestrator : triggers test scenarios
+Orchestrator --> Postgres : utilizes queue system
+Orchestrator --> Executor : dispatches HTTP tasks
+Postgres --> WorkflowDB : reads/writes test data
+Postgres --> Realtime : streams logs
+Realtime --> TestSuite : provides live test logs
+Executor --> Postgres : updates task status
+
+note right of Postgres : Queue Management
+note right of Realtime : Log Streaming
+note right of Executor : HTTP Requests Handling
+
+@enduml

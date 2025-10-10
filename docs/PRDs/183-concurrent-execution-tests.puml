@@ -1,0 +1,30 @@
+@startuml
+!theme plain
+
+title Concurrent Execution Tests - MeshHook Project
+
+actor Tester
+entity "Supabase" as Supabase
+component "Webhook Intake" as Webhook
+component "Workflow Engine" as Engine
+component "Orchestrator" as Orchestrator
+component "HTTP Executor" as Executor
+database "Postgres" as DB
+queue "Task Queue" as Queue
+
+Tester --> Webhook : Triggers test
+Webhook --> Engine : Initiates workflow
+Engine --> DB : Validates & logs start
+Engine --> Queue : Enqueues tasks
+Queue --> Orchestrator : Picks up tasks
+Orchestrator --> Executor : Dispatches HTTP tasks
+Executor --> Supabase : Performs operations
+Supabase --> Executor : Returns results
+Executor --> DB : Logs results
+DB --> Engine : Updates workflow state
+Engine --> Tester : Returns test results
+
+note right of DB : Uses RLS for security
+note right of Executor : Robust HTTP with retries/backoff
+
+@enduml

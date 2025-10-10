@@ -1,0 +1,37 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Supabase] <<Database>> as Supabase
+    [Webhook Intake] <<API>> as WebhookIntake
+    [Workflow CRUD] <<API>> as WorkflowCRUD
+    [Publish Versions] <<API>> as PublishVersions
+    [Run Console] <<API>> as RunConsole
+    [Orchestrator Worker] <<Worker>> as Orchestrator
+    [HTTP Executor Worker] <<Worker>> as HTTPExecutor
+}
+
+package "Integration Tests" {
+    [Multi-tenant Isolation Tests] <<Test>> as MultiTenantTests
+}
+
+Supabase --> WebhookIntake : Data Storage & Queues
+Supabase --> WorkflowCRUD : Data Storage
+Supabase --> PublishVersions : Data Storage
+Supabase --> RunConsole : Data Storage & Realtime Logs
+Supabase --> Orchestrator : Data Storage & Queues
+Supabase --> HTTPExecutor : Data Storage & Queues
+
+WebhookIntake --> Orchestrator : Trigger Workflows
+Orchestrator --> HTTPExecutor : HTTP Requests
+Orchestrator --> RunConsole : Workflow State Updates
+
+MultiTenantTests ..> Supabase : Validates RLS & Multi-tenancy
+MultiTenantTests ..> WebhookIntake : Tests Signature Verification
+MultiTenantTests ..> RunConsole : Tests Realtime Log Streaming
+MultiTenantTests ..> Orchestrator : Validates Workflow Execution Isolation
+MultiTenantTests ..> HTTPExecutor : Validates HTTP Execution Isolation
+
+note right of MultiTenantTests : Integration Points\nwith Existing System
+
+@enduml

@@ -1,176 +1,103 @@
 # PRD: End-to-end workflow tests
 
-**Issue:** [#178](https://github.com/profullstack/meshhook/issues/178)  
-**Milestone:** Phase 7: Testing  
-**Labels:** integration-tests  
-**Phase:** Phase 7  
-**Section:** Integration Tests
+**Issue:** [#178](https://github.com/profullstack/meshhook/issues/178)
+**Milestone:** Phase 7: Testing
+**Labels:** integration-tests, hacktoberfest
 
 ---
 
+# PRD: End-to-end Workflow Tests for MeshHook
+
 ## Overview
 
-This task is part of Phase 7 in the Integration Tests section of the MeshHook project. 
+This PRD outlines the approach for implementing end-to-end (E2E) workflow tests for the MeshHook project. This task is instrumental in ensuring that MeshHook delivers on its promise of providing a reliable, efficient, and secure workflow engine. E2E tests are designed to simulate real-world usage, ensuring that the system operates as expected under various conditions and workflows. This initiative aligns with MeshHook's goals of durability, security, and ease of use, significantly contributing to the project's overall quality assurance strategy.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** End-to-end workflow tests
+1. **E2E Test Suite Creation**: Develop a comprehensive suite of E2E tests that cover all major functionalities of MeshHook, including webhook triggers, DAG execution, event sourcing, live logging, and multi-tenant security.
+2. **Workflow Simulation**: Tests must simulate real-world workflows, including complex DAG configurations, failure and retry scenarios, and multi-tenant use cases.
+3. **Signature Verification Testing**: Include tests for webhook signature verification to ensure security mechanisms are correctly implemented.
+4. **Visual DAG Builder Testing**: Ensure the visual DAG builder functions as expected, allowing users to create, edit, and publish workflows without issues.
+5. **Event Sourcing and Replayability**: Test the durability and accuracy of event sourcing mechanisms, including the ability to replay runs for debugging and auditing.
+6. **Live Logging Verification**: Validate the functionality of live logs, ensuring logs are accurate, timely, and secure.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "End-to-end workflow tests"
-2. Write comprehensive test coverage (unit, integration, e2e)
-3. Ensure all tests pass before merging
-4. Document test scenarios and edge cases
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance**: E2E tests should not significantly impact system performance. Test execution should be optimized for speed and efficiency.
+- **Reliability**: Tests must be reliable, with consistent results across repeated runs. Flaky tests must be identified and fixed promptly.
+- **Security**: Testing must not expose the system or data to security risks. Use secure, isolated environments for testing.
+- **Maintainability**: The test suite should be easy to maintain, with clear documentation and straightforward mechanisms for adding new tests.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a combination of SvelteKit, Supabase, and worker processes for its operations. The testing architecture should integrate seamlessly with these components, leveraging existing infrastructure for test execution.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Assessment**: Review the current system and test coverage to identify gaps and areas requiring E2E testing.
+2. **Tool Selection**: Choose appropriate tools for E2E testing that integrate well with the MeshHook stack (e.g., Cypress, Puppeteer).
+3. **Test Development**:
+   - Develop tests incrementally, starting with critical paths.
+   - Use mock data and isolated environments to simulate real-world scenarios.
+4. **Integration**: Integrate the E2E test suite into the CI/CD pipeline, ensuring tests run automatically on major updates.
+5. **Monitoring and Iteration**: Monitor test results, adjusting and expanding the test suite as necessary to cover new features and scenarios.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No changes to the data model are required for the implementation of E2E tests. Tests should use separate testing databases or schemas to avoid impacting production data.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+No new API endpoints are required. Testing should utilize existing endpoints, ensuring they function correctly across various scenarios.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- [ ] E2E test suite fully covers all major functionalities and workflows.
+- [ ] Tests simulate real-world scenarios, including complex workflows and error conditions.
+- [ ] All tests pass consistently, with no flaky results.
+- [ ] Test suite integrates seamlessly with the CI/CD pipeline.
+- [ ] Documentation is updated to include information on running and extending the E2E test suite.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+## Dependencies and Prerequisites
 
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to MeshHook development and testing environments.
+- Selection and setup of E2E testing tools compatible with the MeshHook stack.
+- Existing unit and integration test suites are in place and passing.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow MeshHook's coding standards and best practices.
+- Implement tests in a scalable and maintainable manner, ensuring ease of adding new tests as MeshHook evolves.
+- Ensure tests are well-documented, explaining the purpose and expected outcomes.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Utilize a combination of mocking and real data to simulate various operational scenarios.
+- Incorporate tests for both happy paths and failure modes, ensuring the system gracefully handles errors.
+- Prioritize testing of critical paths and security features.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure testing environments are secure and isolated from production.
+- Use encrypted connections and handle sensitive data (e.g., webhook signatures) securely.
+- Follow best practices for authentication and authorization in tests, ensuring no security holes are introduced.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement logging and monitoring within the test suite to identify issues quickly.
+- Monitor test execution times and resource usage, optimizing as necessary to avoid performance bottlenecks.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-End-to-end workflow tests
-
-**Full Issue Body:**
-**Phase:** Phase 7
-**Section:** Integration Tests
-
-**Task:** End-to-end workflow tests
-
----
-_Auto-generated from TODO.md_
+- MeshHook Project README
+- Existing MeshHook API Documentation
+- Selected E2E Testing Tool Documentation
 
 ---
 
-*This PRD was auto-generated from GitHub issue #178*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #178*
+*Generated: 2025-10-10*

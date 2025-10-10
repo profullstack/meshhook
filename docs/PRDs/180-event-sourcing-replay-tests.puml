@@ -1,0 +1,32 @@
+@startuml
+!theme plain
+
+title Event Sourcing Replay Tests - Integration Flow
+
+actor Tester
+entity "Integration Test Suite" as ITS
+component "Event Store" as ES
+database "Postgres DB" as DB
+component "Supabase Realtime" as SR
+component "Workflow Engine" as WE
+component "HTTP Executor" as HE
+component "Orchestrator Worker" as OW
+
+Tester -> ITS : initiates tests
+ITS -> ES : 1. Fetches events
+ES -> DB : 2. Reads events\nfrom DB
+DB -> ES : 3. Returns events
+ES -> ITS : 4. Provides events
+ITS -> WE : 5. Triggers replay\nwith events
+WE -> OW : 6. Orchestrates replay
+OW -> HE : 7. Executes HTTP tasks
+HE -> OW : 8. Returns task results
+OW -> WE : 9. Completes replay
+WE -> SR : 10. Streams logs
+SR --> ITS : 11. Validates live logs
+ITS -> Tester : 12. Reports test results
+
+note right of WE : Uses event sourcing\nfor state changes
+note right of DB : No schema changes\nrequired for this task
+
+@enduml

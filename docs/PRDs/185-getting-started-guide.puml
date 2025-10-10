@@ -1,0 +1,60 @@
+@startuml
+!theme plain
+
+package "MeshHook Project" {
+    [Getting Started Guide] as Guide
+    [Existing Codebase] as Codebase
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase] as Supabase
+    [Workers] as Workers
+    [Documentation] as Documentation
+}
+
+database "Postgres" as Postgres {
+    folder "schema.sql" as Schema
+}
+
+cloud {
+    [Realtime] as Realtime
+    [Storage] as Storage
+    [Edge] as Edge
+}
+
+node "External Services" {
+    [Supabase Services] as ExtSupabase
+}
+
+[Guide] --> [SvelteKit] : Implements\nusing
+[Guide] --> [Documentation] : Updates
+[SvelteKit] --> [Supabase] : Uses
+[Supabase] --> [Postgres] : Data & Queues
+[Supabase] --> [Realtime] : Log Streaming
+[Supabase] --> [Storage] : Stores Artifacts
+[Supabase] --> [Edge] : Cron/Timers
+[Workers] --> [SvelteKit] : Orchestrates & Executes
+[Codebase] --> [Guide] : Integration Points
+[ExtSupabase] --> [Supabase] : Includes
+
+note right of [Guide]
+  Phase 8: Documentation
+  Section: User Documentation
+  Task: Getting started guide
+end note
+
+note right of [SvelteKit]
+  Webhook intake
+  Workflow CRUD
+end note
+
+note right of [Workers]
+  - Orchestrator
+  - HTTP Executor
+end note
+
+note right of [Documentation]
+  - API Docs
+  - README
+  - Code comments
+end note
+
+@enduml

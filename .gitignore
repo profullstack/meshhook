@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+.svelte-kit/
+build/
+
 
 # Environment variables (production/staging only)
 .env

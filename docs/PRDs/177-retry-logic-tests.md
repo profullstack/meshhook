@@ -1,176 +1,118 @@
 # PRD: Retry logic tests
 
-**Issue:** [#177](https://github.com/profullstack/meshhook/issues/177)  
-**Milestone:** Phase 7: Testing  
-**Labels:** unit-tests  
-**Phase:** Phase 7  
-**Section:** Unit Tests
+**Issue:** [#177](https://github.com/profullstack/meshhook/issues/177)
+**Milestone:** Phase 7: Testing
+**Labels:** unit-tests, hacktoberfest
 
 ---
 
+# PRD: Retry Logic Tests for MeshHook
+
 ## Overview
 
-This task is part of Phase 7 in the Unit Tests section of the MeshHook project. 
+This PRD outlines the requirements and approach for implementing and testing the retry logic within MeshHook, a webhook-first, deterministic, Postgres-native workflow engine. The retry logic is a crucial component of the HTTP Executor, ensuring robustness and reliability in webhook delivery and HTTP requests through retries and backoff strategies. This task aligns with MeshHook's goals of providing a durable, reliable, and secure workflow engine, addressing the need for resilience in the face of transient failures.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Purpose
 
-**Task Objective:** Retry logic tests
+To ensure that MeshHook's retry mechanism for HTTP requests is reliable, efficient, and fails gracefully, enhancing the overall robustness of the system.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+### Alignment with Project Goals
 
-## Requirements
+- **Reliability and Durability:** Ensures workflows can recover from transient errors in HTTP actions.
+- **Security:** Verifies that retry logic does not expose sensitive information or lead to security vulnerabilities.
+- **Performance:** Optimizes retry intervals to maintain system performance under failure conditions.
 
-### Functional Requirements
+## Functional Requirements
 
-1. Implement the core functionality described in the task: "Retry logic tests"
-2. Write comprehensive test coverage (unit, integration, e2e)
-3. Ensure all tests pass before merging
-4. Document test scenarios and edge cases
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+1. **Retry Mechanism Implementation:** Implement a retry mechanism for the HTTP Executor that utilizes exponential backoff with jitter to minimize the thundering herd problem.
+2. **Configurable Retry Parameters:** Allow users to configure the maximum number of retry attempts and the initial backoff interval for each `http_call` node.
+3. **Failure Handling:** Implement logic to handle maximum retry attempts exceeded, including logging and optional notification on failure.
+4. **Unit Tests:** Develop unit tests covering the following scenarios:
+   - Successful request on the first attempt.
+   - Successful request after one or more retries.
+   - Exceeded maximum retry attempts without success.
+   - Configuration of retry parameters.
+5. **Integration Tests:** Develop integration tests that simulate transient network failures and verify that the retry mechanism behaves as expected.
 
+## Non-Functional Requirements
 
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure that the retry mechanism does not significantly degrade system performance or response times.
+- **Reliability:** Achieve 99.9% reliability in handling transient failures through the retry mechanism.
+- **Security:** Ensure that retry attempts do not expose sensitive information or lead to security vulnerabilities.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Component:** HTTP Executor within the Workers module.
+- **Integration Points:** 
+  - Workflow Engine for initiating HTTP requests based on workflow definitions.
+  - Logging and Monitoring systems for tracking retry attempts and failures.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Review Existing Code:** Understand the current implementation of the HTTP Executor and identify areas for integration.
+2. **Design Retry Logic:** Design the retry mechanism, including exponential backoff with jitter, using pseudocode or flowcharts.
+3. **Configuration:** Extend the `http_call` node schema to include retry parameters (max attempts, initial backoff interval).
+4. **Coding:** Implement the retry logic within the HTTP Executor, following best practices and project coding standards.
+5. **Unit Testing:** Write unit tests for each scenario outlined in the functional requirements.
+6. **Integration Testing:** Develop integration tests that simulate transient network failures.
+7. **Documentation:** Update the project documentation to include information on the retry mechanism and configuration options.
+8. **Review and Feedback:** Submit the implementation for code review and incorporate feedback.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+No direct changes to the data model are required for the implementation of retry logic tests. Configuration for retries will be stored within the existing structure of the workflow definitions.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+No new API endpoints are required for this task.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- [ ] Retry logic correctly implemented within the HTTP Executor component.
+- [ ] Unit tests cover all outlined scenarios and pass successfully.
+- [ ] Integration tests simulate transient failures and verify retry behavior.
+- [ ] Documentation accurately reflects the retry mechanism and configuration options.
+- [ ] No degradation in performance due to the retry implementation.
+- [ ] Code review approved with no major issues.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+## Dependencies and Prerequisites
 
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the existing MeshHook codebase and development environment.
+- Familiarity with the project's existing HTTP Executor and workflow engine architecture.
+- Required services (e.g., Supabase, Postgres) accessible for testing purposes.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the ESM module system and use modern JavaScript (ES2024+) features.
+- Utilize TDD (Test-Driven Development) for the retry logic implementation.
+- Ensure code adheres to ESLint and Prettier configurations for consistency and maintainability.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Focus on isolated testing of the retry logic under various scenarios.
+- **Integration Tests:** Ensure that the retry mechanism integrates correctly with the workflow engine and behaves as expected in a simulated environment.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Verify that retry attempts do not inadvertently log or expose sensitive information.
+- Ensure that configurations for retries do not open up potential for DoS (Denial of Service) attacks due to excessive retrying.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement logging for each retry attempt, including the reason for the retry and the attempt number.
+- Monitor key metrics related to retry attempts, success rates, and failure rates to identify potential issues or areas for optimization.
 
 ## Related Documentation
 
 - [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
+- [Architecture Documentation](../Architecture.md)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Retry logic tests
-
-**Full Issue Body:**
-**Phase:** Phase 7
-**Section:** Unit Tests
-
-**Task:** Retry logic tests
-
----
-_Auto-generated from TODO.md_
 
 ---
 
-*This PRD was auto-generated from GitHub issue #177*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #177*
+*Generated: 2025-10-10*

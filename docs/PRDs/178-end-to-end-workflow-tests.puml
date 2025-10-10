@@ -1,0 +1,31 @@
+@startuml
+!theme plain
+
+title End-to-End Workflow Tests - MeshHook Project
+
+actor Developer
+boundary "SvelteKit SSR/API" as SSR
+database "Supabase Postgres" as Postgres
+control "Orchestrator Worker" as Orchestrator
+control "HTTP Executor Worker" as Executor
+collections "Supabase Realtime" as Realtime
+collections "Supabase Storage" as Storage
+boundary "External Services" as External
+
+Developer --> SSR : Initiates workflow tests
+SSR --> Postgres : 1. Fetch workflow definition
+Postgres --> Orchestrator : 2. Trigger workflow
+Orchestrator --> Executor : 3. Execute HTTP tasks
+Executor --> External : 4. Interact with external APIs
+External --> Executor : 5. Receive responses
+Executor --> Postgres : 6. Update task status
+Postgres --> Realtime : 7. Stream logs
+Realtime --> Developer : 8. Display live logs
+
+note over Developer, External : End-to-End Testing Scenario
+
+note right of Postgres : Data + Queues
+note right of Realtime : Log Streaming
+note right of Storage : Artifacts
+
+@enduml

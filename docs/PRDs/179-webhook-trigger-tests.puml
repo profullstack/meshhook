@@ -1,0 +1,31 @@
+@startuml
+!theme plain
+
+title Webhook Trigger Tests - Integration Flow
+
+actor Tester
+entity "Webhook Service" as Webhook
+entity "Test Framework" as Framework
+database "Supabase" as Supabase
+control "Orchestrator Worker" as Orchestrator
+control "HTTP Executor Worker" as Executor
+
+Tester -> Webhook : Send test webhook payload
+Webhook -> Framework : Trigger test execution
+Framework -> Supabase : Log test initiation
+Supabase --> Framework : Confirm log entry
+
+Framework -> Orchestrator : Initiate webhook processing test
+Orchestrator -> Executor : Schedule HTTP requests
+Executor -> Supabase : Perform actions & log results
+Supabase --> Executor : Confirm actions & logging
+
+Executor -> Framework : Return test results
+Framework -> Webhook : Signal test completion
+Webhook -> Tester : Display test outcome
+
+note right of Executor : Retry mechanisms\nand backoff strategies\nare tested here.
+
+note right of Supabase : Uses Postgres for data,\nRealtime for logs, and\nStorage for artifacts.
+
+@enduml

@@ -1,0 +1,49 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] <<SvelteKit>>
+    [Workflow CRUD] <<SvelteKit>>
+    [Publish Versions] <<SvelteKit>>
+    [Run Console] <<SvelteKit>>
+    database "Supabase" {
+        [Postgres]
+        [Realtime]
+        [Storage]
+        [Edge]
+    }
+    [Orchestrator Worker]
+    [HTTP Executor Worker]
+    
+    [Webhook Intake] --> [Postgres] : Saves webhook data
+    [Workflow CRUD] --> [Postgres] : Manages workflows
+    [Publish Versions] --> [Postgres] : Version control
+    [Run Console] --> [Realtime] : Streams logs
+    [Orchestrator Worker] --> [Postgres] : Updates state
+    [HTTP Executor Worker] --> [Edge] : Executes timed tasks
+}
+
+package "Workflow Builder Tutorial" {
+    [Tutorial Content] <<Documentation>>
+    [Svelte 5 Components] <<Implementation>>
+    [Responsive Design] <<UI/UX>>
+    [Public APIs Docs] <<Documentation>>
+}
+
+[Tutorial Content] .down.> [Svelte 5 Components] : Describes
+[Tutorial Content] .right.> [Responsive Design] : Covers
+[Tutorial Content] .up.> [Public APIs Docs] : Includes
+
+[Svelte 5 Components] --> [Workflow CRUD] : Integrates with
+[Responsive Design] --> [Webhook Intake]
+[Responsive Design] --> [Run Console]
+[Public APIs Docs] --> [Supabase] : Details interaction with
+
+note right of [Tutorial Content]
+  Key components:
+  - Svelte 5 for UI
+  - Supabase for backend
+  - Documentation for APIs and interfaces
+end note
+
+@enduml
