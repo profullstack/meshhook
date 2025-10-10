@@ -10,13 +10,13 @@ import { redirect } from '@sveltejs/kit';
  * Redirects to login if user is not authenticated
  * @param {object} event - SvelteKit event object
  * @returns {object} user object if authenticated
- * @throws {redirect} Redirects to /login if not authenticated
+ * @throws {redirect} Redirects to /auth/login if not authenticated
  */
 export function requireAuth(event) {
 	const user = event.locals.user;
 
 	if (!user) {
-		throw redirect(303, '/login');
+		throw redirect(303, '/auth/login');
 	}
 
 	return user;

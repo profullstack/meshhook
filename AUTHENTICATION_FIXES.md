@@ -37,7 +37,7 @@ from public.workflow_definitions;
 
 Created a comprehensive authentication utility library with the following functions:
 
-- `requireAuth(event)` - Redirects to /login if not authenticated (for page routes)
+- `requireAuth(event)` - Redirects to /auth/login if not authenticated (for page routes)
 - `getUser(event)` - Returns user or null without redirecting
 - `isAuthenticated(event)` - Boolean check for authentication
 - `getSupabase(event)` - Gets Supabase client from event.locals
@@ -66,7 +66,7 @@ Updated the following page server files to use `requireAuth()`:
 import { requireAuth, getSupabase } from '$lib/auth.js';
 
 export async function load(event) {
-  const user = requireAuth(event); // Redirects to /login if not authenticated
+  const user = requireAuth(event); // Redirects to /auth/auth/login if not authenticated
   const supabase = getSupabase(event);
   
   // ... rest of the code
@@ -113,7 +113,7 @@ export async function GET(event) {
 - ✅ Uses `supabase.auth.getUser()` which verifies with Supabase Auth server
 - ✅ All Supabase calls happen server-side only
 - ✅ HTTP-only cookies for session management
-- ✅ All protected routes redirect to /login if not authenticated
+- ✅ All protected routes redirect to /auth/login if not authenticated
 - ✅ All API routes return 401 if not authenticated
 - ✅ Database schema fixed with workflows view
 
@@ -148,7 +148,7 @@ supabase db push
 
 1. **Unauthenticated Access**:
    - Visit `/workflows` without being logged in
-   - Should redirect to `/login`
+   - Should redirect to `/auth/login`
    - Same for `/secrets` and `/runs`
 
 2. **API Authentication**:
@@ -161,7 +161,7 @@ supabase db push
    ```
 
 3. **Authenticated Access**:
-   - Log in via `/login`
+   - Log in via `/auth/login`
    - Visit `/workflows`, `/secrets`, `/runs`
    - Should load data successfully
    - No console warnings about `getSession()`
