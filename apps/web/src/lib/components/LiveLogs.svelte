@@ -1,6 +1,7 @@
 <script>
 	import { createClient } from '$lib/supabase.js';
 	import { onMount } from 'svelte';
+	import LoadingSpinner from './LoadingSpinner.svelte';
 
 	/**
 	 * Live logs component with Supabase Realtime
@@ -14,6 +15,8 @@
 	let searchQuery = $state('');
 	let autoScroll = $state(true);
 	let logsContainer;
+	let loading = $state(true);
+	let error = $state(null);
 
 	const supabase = createClient();
 
@@ -66,21 +69,28 @@
 	});
 
 	async function loadLogs() {
-		const { data, error } = await supabase
-			.from('logs')
-			.select('*')
-			.eq('run_id', runId)
-			.order('created_at', { ascending: true });
+		try {
+			loading = true;
+			error = null;
+			const { data, error: fetchError } = await supabase
+				.from('logs')
+				.select('*')
+				.eq('run_id', runId)
+				.order('created_at', { ascending: true });
 
-		if (error) {
-			console.error('Error loading logs:', error);
-		} else {
-			logs = data || [];
-			if (autoScroll && logsContainer) {
-				setTimeout(() => {
-					logsContainer.scrollTop = logsContainer.scrollHeight;
-				}, 100);
+			if (fetchError) {
+				console.error('Error loading logs:', fetchError);
+				error = fetchError.message;
+			} else {
+				logs = data || [];
+				if (autoScroll && logsContainer) {
+					setTimeout(() => {
+						logsContainer.scrollTop = logsContainer.scrollHeight;
+					}, 100);
+				}
 			}
+		} finally {
+			loading = false;
 		}
 	}
 
@@ -129,7 +139,16 @@
 	</div>
 
 	<div class="logs-container" bind:this={logsContainer}>
-		{#if filtered.length === 0}
+		{#if loading}
+			<div class="loading-state">
+				<LoadingSpinner size="medium" label="Loading logs..." />
+				<p class="loading-text">Loading logs...</p>
+			</div>
+		{:else if error}
+			<div class="error-state">
+				<p class="error-message">Failed to load logs: {error}</p>
+			</div>
+		{:else if filtered.length === 0}
 			<p class="empty-message">No logs yet...</p>
 		{:else}
 			{#each filtered as log (log.id)}
@@ -214,10 +233,33 @@
 		line-height: 1.6;
 	}
 
+	.loading-state,
+	.error-state,
 	.empty-message {
 		color: #999;
 		text-align: center;
 		padding: 2rem;
+	}
+
+	.loading-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.loading-text {
+		margin: 0;
+		font-size: 0.875rem;
+	}
+
+	.error-state {
+		color: #ef4444;
+	}
+
+	.error-message {
+		margin: 0;
+		font-size: 0.875rem;
 	}
 
 	.log-entry {

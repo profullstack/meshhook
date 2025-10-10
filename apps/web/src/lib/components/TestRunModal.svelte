@@ -4,6 +4,8 @@
 	 * Test workflow execution without persisting the run
 	 */
 
+	import LoadingButton from './LoadingButton.svelte';
+
 	let { workflow, isOpen = $bindable(false), onTest } = $props();
 
 	let testInputs = $state('{}');
@@ -79,10 +81,17 @@
 				{/if}
 
 				<div class="modal-actions">
-					<button class="btn-secondary" onclick={close} disabled={testing}>Close</button>
-					<button class="btn-primary" onclick={handleTest} disabled={testing}>
-						{testing ? 'Testing...' : 'Run Test'}
-					</button>
+					<LoadingButton variant="secondary" onclick={close} disabled={testing}>
+						Close
+					</LoadingButton>
+					<LoadingButton
+						variant="primary"
+						loading={testing}
+						onclick={handleTest}
+						loadingText="Testing..."
+					>
+						Run Test
+					</LoadingButton>
 				</div>
 			</div>
 		</div>
@@ -233,39 +242,5 @@
 		justify-content: flex-end;
 		padding-top: 1rem;
 		border-top: 1px solid #e0e0e0;
-	}
-
-	button {
-		padding: 0.625rem 1.25rem;
-		border: none;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.btn-primary {
-		background: var(--color-theme-1);
-		color: white;
-	}
-
-	.btn-primary:hover:not(:disabled) {
-		background: var(--color-theme-2);
-	}
-
-	.btn-secondary {
-		background: white;
-		border: 1px solid #ddd;
-		color: #333;
-	}
-
-	.btn-secondary:hover:not(:disabled) {
-		background: #f5f5f5;
-	}
-
-	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
 	}
 </style>

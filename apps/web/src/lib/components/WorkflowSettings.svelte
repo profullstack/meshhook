@@ -4,6 +4,8 @@
 	 * Configure workflow metadata, triggers, timeouts, and retry policies
 	 */
 
+	import LoadingButton from './LoadingButton.svelte';
+
 	let {
 		workflow,
 		onSave,
@@ -135,9 +137,15 @@
 		{/if}
 
 		<div class="form-actions">
-			<button type="submit" class="btn-primary" disabled={disabled || saving}>
-				{saving ? 'Saving...' : 'Save Settings'}
-			</button>
+			<LoadingButton
+				type="submit"
+				variant="primary"
+				loading={saving}
+				disabled={disabled}
+				loadingText="Saving..."
+			>
+				Save Settings
+			</LoadingButton>
 		</div>
 	</form>
 </div>
@@ -250,26 +258,5 @@
 		margin-top: 2rem;
 		display: flex;
 		justify-content: flex-end;
-	}
-
-	.btn-primary {
-		padding: 0.75rem 1.5rem;
-		background: var(--color-theme-1);
-		color: white;
-		border: none;
-		border-radius: 4px;
-		font-size: 0.875rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-
-	.btn-primary:hover:not(:disabled) {
-		background: var(--color-theme-2);
-	}
-
-	.btn-primary:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
 	}
 </style>
