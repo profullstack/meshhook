@@ -1,33 +1,33 @@
 @startuml
 !theme plain
 
-title Documentation Review Process for MeshHook
+title Documentation Review Process for MeshHook - Task #220
 
-actor Developer as dev
-actor Reviewer as rev
-database Codebase as code
-cloud "Documentation Tools\n& Platforms" as tools
-rectangle "MeshHook\nSystem" as system {
-  component "API Documentation" as apidoc
-  component "Security Documentation" as secdoc
-  component "Architectural Documentation" as arcdoc
-  component "Operational Documentation" as opdoc
-}
+actor Developer
+participant "Documentation\nInventory" as Inventory
+participant "Gap Analysis" as GapAnalysis
+participant "Update\nPrioritization" as Prioritization
+participant "Revision &\nExpansion" as Revision
+participant "Peer Review" as Review
+participant "Deployment" as Deployment
+database "MeshHook\nCodebase" as Codebase
+database "Documentation\nRepository" as DocRepo
 
-dev -> code : Audit & Inventory
-code -> apidoc : Identify Gaps
-code -> secdoc : Identify Gaps
-code -> arcdoc : Identify Gaps
-code -> opdoc : Identify Gaps
+Developer -> Inventory : Identify documentation resources
+Inventory -> Codebase : Review current documentation
+Codebase -> GapAnalysis : Provide latest features & architecture details
+GapAnalysis -> Prioritization : List discrepancies
+Prioritization -> Revision : Sort updates by criticality
+Revision -> Review : Update and create documentation
+Review -> Deployment : Validate updates for clarity & accuracy
+Deployment -> DocRepo : Publish updated documentation
 
-apidoc -> tools : Update Documentation
-secdoc -> tools : Update Documentation
-arcdoc -> tools : Update Documentation
-opdoc -> tools : Update Documentation
-
-tools -> rev : Submit for Review
-rev -> tools : Validate & Approve
-
-tools --> system : Publish Documentation
+note right of Deployment
+  Updated documentation includes:
+  - API Documentation
+  - Architectural Documentation
+  - Security Documentation
+  - Feature Documentation
+end note
 
 @enduml

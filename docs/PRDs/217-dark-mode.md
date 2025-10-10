@@ -8,108 +8,95 @@
 
 # PRD: Implementation of Dark Mode for MeshHook
 
-## Overview
+## 1. Overview
 
-The implementation of Dark Mode in MeshHook aims to enhance user experience by offering an alternative, visually subdued theme that reduces eye strain, especially under low-light conditions. This feature is in response to user feedback and aligns with modern UX design trends that prioritize user comfort and accessibility. Incorporating Dark Mode will not only cater to user preferences but also demonstrate MeshHook's commitment to inclusivity and adaptability, thereby supporting broader user engagement.
+The implementation of Dark Mode in MeshHook is aimed at enhancing the user experience by providing a visually comfortable alternative for users, especially in low-light environments. This feature is in direct response to user feedback and aligns with our ongoing efforts to make MeshHook an accessible and user-friendly platform for workflow automation. Integrating Dark Mode not only caters to user preferences but also contributes to energy efficiency on devices with OLED and AMOLED screens, thereby underscoring our commitment to sustainability. This initiative is part of Phase 10: Polish & Launch, marking a significant milestone in improving the platform's usability and aesthetic appeal.
 
-### Objectives
+## 2. Functional Requirements
 
-- To provide an intuitive and seamless Dark Mode experience across the MeshHook platform.
-- To ensure Dark Mode adheres to MeshHook's design principles, enhancing visual comfort without compromising functionality.
-- To implement Dark Mode in a way that respects user preferences across sessions and devices, contributing to a personalized user experience.
+- **Dark Mode Toggle**: Users must be able to switch between Dark and Light Mode via a toggle accessible within the user settings or directly from the main UI interface.
+- **Persistence of User Preference**: MeshHook should remember the user’s theme preference (Dark or Light Mode) across sessions and devices, applying it automatically upon subsequent logins.
+- **Consistency Across UI Components**: All UI elements, including menus, buttons, dialogs, and workflow visualizations, should reflect the Dark Mode theme consistently.
+- **Accessibility Compliance**: The Dark Mode should adhere to WCAG 2.1 AA standards, ensuring optimal contrast and readability.
 
-## Functional Requirements
+## 3. Non-Functional Requirements
 
-1. **Dark Mode Toggle:** Implement a toggle switch accessible from the user settings or main UI, allowing users to switch between Dark and Light modes.
-2. **User Preference Persistence:** Store the user's theme preference (Dark or Light mode) in their profile settings, ensuring the chosen theme persists across sessions and devices.
-3. **Consistent UI Implementation:** All components, pages, and functionalities must support Dark Mode, providing a consistent and visually integrated user experience.
-4. **Accessibility Compliance:** Ensure Dark Mode meets accessibility standards, offering sufficient contrast and readability.
+- **Performance**: The theme switch should be instantaneous without causing any noticeable delay or requiring a page refresh.
+- **Reliability**: The system must reliably store and apply the user’s theme preference across all sessions and devices without fail.
+- **Security**: User preferences for the theme must be securely stored, with mechanisms in place to prevent unauthorized access or modification.
+- **Maintainability**: The implementation should be modular and follow best practices to facilitate easy updates and maintenance without impacting existing functionalities.
 
-## Non-Functional Requirements
-
-- **Performance:** Theme switching should be smooth and instant, with minimal impact on application load times or performance.
-- **Reliability:** User preferences for Dark Mode must be accurately stored and retrieved, ensuring consistent application behavior.
-- **Security:** Securely handle theme preference settings, protecting against unauthorized modifications.
-- **Maintainability:** Develop Dark Mode in a modular and scalable manner, facilitating future updates and maintenance with minimal effort.
-
-## Technical Specifications
+## 4. Technical Specifications
 
 ### Architecture Context
 
-MeshHook utilizes SvelteKit for its frontend and Supabase for backend functionalities. The introduction of Dark Mode requires a systematic approach to theming, ensuring minimal performance impact and seamless integration with existing frontend and backend systems.
+MeshHook is built on a SvelteKit/Svelte 5 frontend and utilizes Supabase for backend services, including authentication and data persistence. The introduction of Dark Mode requires seamless integration with these technologies to ensure consistency and performance.
 
 ### Implementation Approach
 
-1. **Design & Audit:**
-   - Perform a UI component and color scheme audit to establish a comprehensive Dark Mode color palette.
-   - Design a toggle switch for Dark/Light mode, ensuring it's accessible and intuitive.
-   - Use CSS custom properties to manage color schemes, facilitating easy theme switching.
+1. **UI Component and Color Scheme Audit**:
+   - Perform a comprehensive review of existing UI components to determine adjustments required for Dark Mode.
+   - Define a Dark Mode color palette that complements MeshHook’s design principles.
 
-2. **Development:**
-   - Extend Supabase `user_settings` to include a `theme_preference` attribute.
-   - Utilize SvelteKit's reactive stores for theme state management, enabling real-time theme switching across the application.
-   - Implement Dark Mode styles, ensuring consistency and compliance with WCAG contrast ratios.
+2. **Theme Preference Management**:
+   - Extend the `user_settings` schema in Supabase to include a `theme_preference` attribute.
+   - Utilize SvelteKit stores to dynamically manage and apply the user’s theme preference.
 
-3. **Testing & Integration:**
-   - Conduct cross-browser and device testing to ensure consistent Dark Mode implementation.
-   - Perform accessibility testing, verifying compliance with established guidelines.
-   - Integrate Dark Mode preference into user profile settings, ensuring persistence across sessions and devices.
+3. **Frontend Development**:
+   - Implement Dark Mode styles using CSS custom properties for easy transitions between themes.
+   - Add a theme toggle within the user settings UI for easy access.
 
 ### Data Model Changes
 
-- Extend the `user_settings` table in Supabase to include a `theme_preference` column, storing user's theme choice (`'dark'` or `'light'`).
+- `user_settings` table modification:
+  - Add `theme_preference` ENUM('dark', 'light'), with a default value of 'light'.
 
 ### API Endpoints
 
-- Utilize existing user settings API to incorporate `theme_preference` updates, requiring no additional endpoints but minor modifications to existing ones to handle the new attribute.
+- Leverage existing user settings API for updating and retrieving `theme_preference`. No new endpoints are required.
 
-## Acceptance Criteria
+## 5. Acceptance Criteria
 
-- [ ] Dark Mode is consistently implemented across all UI components without impacting existing functionalities.
-- [ ] Users can easily switch between Dark and Light modes, with their preference persisting across sessions and devices.
-- [ ] Dark Mode implementation adheres to WCAG 2.1 AA contrast ratios and other accessibility standards.
-- [ ] Performance benchmarks pre- and post-Dark Mode implementation show no significant impact on application performance.
+- Users can toggle between Dark and Light Modes via a switch in the user settings.
+- The application remembers the user's theme preference across sessions and devices.
+- Dark Mode visuals are consistent across all UI components and meet WCAG 2.1 AA standards.
+- Theme switching is swift, with no perceptible delay or need for page reload.
 
-## Dependencies
+## 6. Dependencies and Prerequisites
 
-- SvelteKit and Supabase as core technologies.
-- Existing UI component library and design system for consistent UI/UX implementation.
+- SvelteKit for frontend development.
+- Supabase for backend data management.
+- Existing MeshHook design system and UI component library.
 
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-- Follow MeshHook's code style and contribution guidelines.
-- Implement Dark Mode using CSS variables for efficient theme management.
-- Ensure responsive design and test across a wide range of devices.
+- Ensure adherence to MeshHook coding standards and best practices.
+- Employ CSS custom properties for efficient theme management.
+- Test responsiveness across different devices and screen sizes.
 
 ### Testing Strategy
 
-- **Unit Tests:** Verify Dark Mode toggling logic and user preference storage.
-- **Integration Tests:** Ensure seamless integration with existing user settings and UI components.
-- **Accessibility Tests:** Use tools like WebAIM's Contrast Checker to validate contrast compliance.
+- **Unit Tests**: Validate the logic for theme switching and preference persistence.
+- **Visual Regression Tests**: Confirm that UI components render correctly under both themes.
+- **Accessibility Testing**: Utilize aXe or Lighthouse to confirm compliance with WCAG standards.
 
 ### Security Considerations
 
-- Securely handle the update and storage of `theme_preference` to prevent unauthorized access or modification.
-- Validate all user inputs related to theme preferences to mitigate potential vulnerabilities.
+- Securely handle user preferences to prevent unauthorized access or modification.
+- Validate user inputs for theme preference changes to avoid injection attacks.
 
 ### Monitoring & Observability
 
-- Monitor user interactions with the Dark Mode toggle to gather insights on usage patterns.
-- Track any reported issues or feedback regarding Dark Mode to continuously improve the feature.
+- Monitor user engagement with Dark Mode to gather insights for future improvements.
+- Implement logging for theme preference changes to aid troubleshooting.
 
-## Related Documentation
+## Definition of Done
 
-- MeshHook [Main PRD](../PRD.md)
-- MeshHook [Architecture Documentation](../Architecture.md)
-- MeshHook [Security Guidelines](../Security.md)
-- MeshHook [UI Component Library and Style Guide](https://github.com/profullstack/meshhook/ui-library)
-
-**Definition of Done:**
-
-- The Dark Mode feature is fully implemented, documented, tested, and merged into the main branch.
-- All related CI/CD pipelines are passing, and the feature is successfully deployed to production, accessible to all users.
+- Full implementation, testing, and documentation of the Dark Mode feature, with all changes merged into the main branch.
+- Successful deployment to production and passage of all related CI/CD pipelines.
+- Collection of initial user feedback post-launch for potential enhancements.
 
 ---
 

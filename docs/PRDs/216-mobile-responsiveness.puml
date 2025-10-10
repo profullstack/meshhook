@@ -1,5 +1,43 @@
 @startuml
 !theme plain
 
+package "MeshHook Mobile Responsiveness" {
+    [Audit Existing UI] as Audit
+    [Responsive Design Implementation] as ResponsiveDesign
+    [Optimize DAG Builder for Mobile] as OptimizeDAG
+    [Performance Optimization] as PerformanceOpt
+    [Testing & Validation] as Testing
+    [Deployment] as Deployment
+
+    package "SvelteKit Frontend" {
+        [UI Components] as UI
+        [DAG Builder] as DAG
+        [Live Logs Display] as Logs
+        [Documentation] as Docs
+    }
+
+    package "Supabase Backend" {
+    }
+
+    Audit --> ResponsiveDesign : identifies\nnon-responsive components
+    ResponsiveDesign --> OptimizeDAG : includes\nDAG Builder adjustments
+    ResponsiveDesign --> UI : applies\nmedia queries
+    OptimizeDAG --> DAG : introduces\ngestures & touch controls
+    PerformanceOpt --> [Asset Optimization] : compress & lazy load images
+    PerformanceOpt --> [Minify & Bundle] : CSS and JS files
+    Testing --> Deployment : upon\nsuccessful validation
+    Deployment --> UI : updates deployed
+    Deployment --> DAG : updates deployed
+    Deployment --> Logs : updates deployed
+    Deployment --> Docs : updates deployed
+
+    UI <.. SvelteKit Frontend : part of
+    DAG <.. SvelteKit Frontend : part of
+    Logs <.. SvelteKit Frontend : part of
+    Docs <.. SvelteKit Frontend : part of
+}
+
+[Asset Optimization] ..> PerformanceOpt : part of
+[Minify & Bundle] ..> PerformanceOpt : part of
 
 @enduml

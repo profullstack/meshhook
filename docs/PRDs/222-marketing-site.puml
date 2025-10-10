@@ -1,72 +1,54 @@
 @startuml
-!define RECTANGLE class
+!theme plain
 
-RECTANGLE Content_Strategy_Development {
-    +Develop content strategy
-    +Create detailed pages
-    +Craft use case guides
+package "Marketing Site for MeshHook" {
+    [Content Creation and Management] as CCM
+    [User Experience and Design] as UXD
+    [Lead Generation and CRM Integration] as LGCI
+    [SEO and Analytics] as SEA
+    [Frontend - SvelteKit] as Frontend
+    [Hosting - Vercel/Netlify] as Hosting
+    database "CRM System" as CRM
+    [Analytics - Google Analytics] as Analytics
+    [API /api/leads] as API
 }
 
-RECTANGLE Responsive_Design {
-    +Mobile-first strategy
-    +Cross-device compatibility
+cloud {
+    [Global CDN]
 }
 
-RECTANGLE SEO_Optimization {
-    +Implement SEO best practices
-    +Technical optimizations
-    +Content strategies
-}
+[Frontend] -down-> [Hosting]
+[Hosting] -right-> [Global CDN]
+[CCM] -right-> [Frontend]
+[UXD] -down-> [Frontend]
+[LGCI] -down-> [API]
+[SEA] -down-> [Frontend]
+[API] -left-> [CRM]
+[Frontend] -down-> [Analytics]
 
-RECTANGLE Lead_Generation {
-    +Contact form
-    +Newsletter sign-up
-}
+note right of [Frontend]
+  SvelteKit provides a modern framework
+  for efficient web development.
+end note
 
-RECTANGLE Analytics_Integration {
-    +Integrate analytical tools
-    +Monitor traffic and engagement
-}
+note right of [Hosting]
+  Utilize automated deployments,
+  HTTPS, and global CDN distribution.
+end note
 
-RECTANGLE Performance {
-    +90+ Google PageSpeed score
-}
+note left of [CRM]
+  Stores and manages lead data
+  captured through the site.
+end note
 
-RECTANGLE Reliability {
-    +99.9% uptime
-}
+note right of [Analytics]
+  Tracks site usage and user
+  engagement metrics.
+end note
 
-RECTANGLE Security {
-    +Web security best practices
-}
-
-RECTANGLE Scalability {
-    +Accommodate content and traffic growth
-}
-
-RECTANGLE Frontend_Framework {
-    +SvelteKit
-}
-
-RECTANGLE Hosting_Deployment {
-    +Vercel or Netlify
-}
-
-RECTANGLE SEO_Analytics {
-    +Google Analytics
-}
-
-Content_Strategy_Development --> Responsive_Design
-Responsive_Design --> SEO_Optimization
-SEO_Optimization --> Lead_Generation
-Lead_Generation --> Analytics_Integration
-Analytics_Integration --> Performance
-Performance --> Reliability
-Reliability --> Security
-Security --> Scalability
-
-Scalability --> Frontend_Framework
-Frontend_Framework --> Hosting_Deployment
-Hosting_Deployment --> SEO_Analytics
+note over [API]
+  Endpoint for submitting lead
+  generation form data.
+end note
 
 @enduml

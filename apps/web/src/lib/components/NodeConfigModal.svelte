@@ -1,9 +1,16 @@
 <script>
+	import HttpResponseViewer from './HttpResponseViewer.svelte';
+	
 	let { node, onSave, onCancel } = $props();
 	
 	// Local state for editing
 	let editedNode = $state({ ...node });
 	let config = $state(node.data?.config || {});
+	
+	// HTTP test state
+	let testing = $state(false);
+	let testResult = $state(null);
+	let showTestResult = $state(false);
 	
 	// Node type configurations
 	const nodeConfigs = {
@@ -94,6 +101,62 @@
 			handleCancel();
 		}
 	}
+	
+	/**
+	 * Test HTTP call configuration
+	 */
+	async function handleTestHttpCall() {
+		testing = true;
+		testResult = null;
+		showTestResult = false;
+		
+		try {
+			const response = await fetch('/api/test-http', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(config)
+			});
+			
+			const data = await response.json();
+			
+			if (data.success) {
+				testResult = {
+					response: data.response,
+					request: data.request,
+					error: null
+				};
+			} else {
+				testResult = {
+					response: null,
+					request: data.request,
+					error: data.error
+				};
+			}
+			
+			showTestResult = true;
+		} catch (err) {
+			testResult = {
+				response: null,
+				request: null,
+				error: {
+					message: err.message || 'Failed to test HTTP call',
+					name: 'NetworkError'
+				}
+			};
+			showTestResult = true;
+		} finally {
+			testing = false;
+		}
+	}
+	
+	/**
+	 * Close test result viewer
+	 */
+	function closeTestResult() {
+		showTestResult = false;
+	}
 </script>
 
 <div class="modal-overlay" onclick={handleOverlayClick} role="dialog" aria-modal="true">
@@ -152,11 +215,48 @@
 		</div>
 		
 		<div class="modal-footer">
-			<button class="btn-secondary" onclick={handleCancel}>Cancel</button>
-			<button class="btn-primary" onclick={handleSave}>Save Configuration</button>
+			<div class="footer-left">
+				{#if node.data?.type === 'httpCall'}
+					<button
+						class="btn-test"
+						onclick={handleTestHttpCall}
+						disabled={testing || !config.url}
+						title="Test this HTTP call configuration"
+					>
+						{#if testing}
+							<span class="spinner"></span>
+							Testing...
+						{:else}
+							🧪 Test Request
+						{/if}
+					</button>
+				{/if}
+			</div>
+			<div class="footer-right">
+				<button class="btn-secondary" onclick={handleCancel}>Cancel</button>
+				<button class="btn-primary" onclick={handleSave}>Save Configuration</button>
+			</div>
 		</div>
 	</div>
 </div>
+
+{#if showTestResult && testResult}
+	<div class="test-result-overlay" onclick={closeTestResult}>
+		<div class="test-result-modal" onclick={(e) => e.stopPropagation()}>
+			<div class="test-result-header">
+				<h2>HTTP Test Result</h2>
+				<button class="close-btn" onclick={closeTestResult} aria-label="Close">&times;</button>
+			</div>
+			<div class="test-result-body">
+				<HttpResponseViewer
+					response={testResult.response}
+					request={testResult.request}
+					error={testResult.error}
+				/>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.modal-overlay {
@@ -272,10 +372,21 @@
 	
 	.modal-footer {
 		display: flex;
-		justify-content: flex-end;
+		justify-content: space-between;
+		align-items: center;
 		gap: 1rem;
 		padding: 1.5rem;
 		border-top: 1px solid #e0e0e0;
+	}
+	
+	.footer-left {
+		display: flex;
+		gap: 0.5rem;
+	}
+	
+	.footer-right {
+		display: flex;
+		gap: 1rem;
 	}
 	
 	button {
@@ -305,5 +416,82 @@
 	
 	.btn-secondary:hover {
 		background: #f5f5f5;
+	}
+	
+	.btn-test {
+		background: #8b5cf6;
+		color: white;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	
+	.btn-test:hover:not(:disabled) {
+		background: #7c3aed;
+	}
+	
+	.btn-test:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+	
+	.spinner {
+		display: inline-block;
+		width: 1rem;
+		height: 1rem;
+		border: 2px solid rgba(255, 255, 255, 0.3);
+		border-top-color: white;
+		border-radius: 50%;
+		animation: spin 0.6s linear infinite;
+	}
+	
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+	
+	.test-result-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1100;
+	}
+	
+	.test-result-modal {
+		background: white;
+		border-radius: 8px;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+		width: 90%;
+		max-width: 900px;
+		max-height: 90vh;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.test-result-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1.5rem;
+		border-bottom: 1px solid #e0e0e0;
+	}
+	
+	.test-result-header h2 {
+		margin: 0;
+		font-size: 1.25rem;
+		font-weight: 600;
+		color: #333;
+	}
+	
+	.test-result-body {
+		flex: 1;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
 	}
 </style>

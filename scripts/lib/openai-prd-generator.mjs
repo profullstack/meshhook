@@ -261,6 +261,70 @@ function buildProjectContext(context) {
 }
 
 /**
+ * Fix PlantUML syntax errors using OpenAI
+ * @param {string} pumlContent - The PlantUML content with errors
+ * @param {string} errorMessage - The error message from PlantUML validation
+ * @returns {Promise<string|null>} Fixed PlantUML code or null if fix failed
+ */
+export async function fixPlantUMLWithAI(pumlContent, errorMessage) {
+  const openai = createOpenAIClient();
+
+  const systemPrompt = `You are a PlantUML expert who fixes syntax errors in PlantUML diagrams.
+
+Your task is to:
+1. Analyze the PlantUML code and error message
+2. Identify and fix syntax errors
+3. Return ONLY the corrected PlantUML code
+4. Ensure the diagram maintains its original intent and structure
+
+Common PlantUML issues to fix:
+- Missing @startuml or @enduml tags
+- Invalid arrow syntax (use --> or -> for connections)
+- Unclosed quotes or brackets
+- Invalid participant or component names
+- Incorrect sequence diagram syntax
+- Missing or extra spaces in keywords`;
+
+  const userPrompt = `Fix the following PlantUML code that has syntax errors:
+
+**Error Message:**
+${errorMessage}
+
+**PlantUML Code:**
+\`\`\`plantuml
+${pumlContent}
+\`\`\`
+
+Return ONLY the corrected PlantUML code, starting with @startuml and ending with @enduml. Do not include any explanations or markdown formatting.`;
+
+  try {
+    console.log(`  🔧 Attempting to fix PlantUML syntax with AI...`);
+    
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.3, // Lower temperature for more deterministic fixes
+      max_tokens: 2000,
+    });
+
+    const fixedCode = completion.choices[0].message.content;
+    
+    // Extract PlantUML code if wrapped in markdown
+    const match = fixedCode.match(/@startuml[\s\S]*@enduml/);
+    const result = match ? match[0] : fixedCode;
+    
+    console.log(`  ✓ AI generated fixed PlantUML code`);
+    return result;
+  } catch (error) {
+    console.error(`  ❌ AI fix failed: ${error.message}`);
+    return null;
+  }
+}
+
+/**
  * Validate OpenAI API key is configured
  * @returns {boolean} True if API key is configured
  */

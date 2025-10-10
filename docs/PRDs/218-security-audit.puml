@@ -1,61 +1,61 @@
 @startuml
 !theme plain
 
-title MeshHook Security Audit Workflow
+title Security Audit Process for MeshHook
 
-actor Auditor as "Security Auditor"
-participant "Audit Tools" as Tools
-database "MeshHook DB" as DB
-participant "MeshHook API" as API
-participant "Frontend (SvelteKit)" as Frontend
-participant "Worker Services" as Workers
-cloud "Supabase" as Supabase
+actor Auditor
+participant "Security Tools" as Tools
+database "MeshHook Codebase" as Codebase
+database "Third-Party Libraries" as Libraries
+participant "MeshHook Components" as Components
+participant "API Endpoints" as API
+participant "Data Models" as DataModels
+cloud "Regulatory Standards" as Standards
 
-group Preparation
-    Auditor -> Tools : Catalog MeshHook components\nDefine audit scope
+== Preparation ==
+Auditor -> Codebase : Catalogue components\nand services
+Auditor -> Components : Define audit scope
+
+== Execution ==
+group Static Analysis
+    Auditor -> Tools : Use static code analysis
+    Tools -> Codebase : Analyze code
+    Tools --> Auditor : Report findings
 end
 
-group Execution
-    loop Static Code Analysis
-        Auditor -> Tools : Run code analysis
-        Tools --> Auditor : Report flaws\nand vulnerabilities
-    end
-    loop Dynamic Analysis & PenTest
-        Auditor -> Tools : Perform dynamic analysis\nand penetration testing
-        Tools --> Auditor : Uncover runtime vulnerabilities
-    end
-    loop Dependency Check
-        Auditor -> Tools : Execute dependency checks
-        Tools --> Auditor : Report vulnerable libraries
-    end
-    loop Security Practices Review
-        Auditor -> API : Review auth, encryption
-        Auditor -> DB : Examine data storage\nand transmission
-        Auditor --> Auditor : Assess compliance\nwith best practices
-    end
+group Dynamic Analysis and Penetration Testing
+    Auditor -> Tools : Conduct dynamic analysis
+    Tools -> Components : Test runtime vulnerabilities
+    Tools --> Auditor : Report findings
 end
 
-group Reporting
-    Auditor -> Auditor : Document findings\nAssign severity ratings
-    Auditor -> Auditor : Recommend mitigation strategies
+group Dependency and Compliance Check
+    Auditor -> Libraries : Check for vulnerabilities
+    Libraries --> Auditor : Report known vulnerabilities
+    Auditor -> Standards : Verify compliance
+    Standards --> Auditor : Compliance status
 end
 
-group Remediation Plan
-    Auditor -> API : Prioritize vulnerabilities
-    Auditor -> Frontend : Outline resolution timeline
-    Auditor -> Workers : Define remediation tasks
+group API and Data Model Evaluation
+    Auditor -> API : Evaluate endpoints
+    API --> Auditor : Endpoint vulnerabilities
+    Auditor -> DataModels : Assess data handling
+    DataModels --> Auditor : Model vulnerabilities
 end
 
-group Validation
-    Auditor -> Tools : Re-evaluate system
-    Tools --> Auditor : Validate fixes
-    Auditor --> Auditor : Update documentation\nand practices
-end
+== Reporting ==
+Auditor -> Components : Document findings
+Auditor -> API : Document findings
+Auditor -> DataModels : Document findings
 
-API --> DB : Data storage\nand management
-API --> Supabase : Real-time updates
-Frontend --> API : User interface operations
-Workers --> API : Task orchestration
-Supabase --> DB : Database management
+== Remediation Plan ==
+Auditor -> Components : Propose mitigation strategies
+Auditor -> API : Propose improvements
+Auditor -> DataModels : Suggest model adjustments
+
+== Validation ==
+Auditor -> Components : Re-assess post-remediation
+Auditor -> API : Re-assess post-remediation
+Auditor -> DataModels : Re-assess post-remediation
 
 @enduml

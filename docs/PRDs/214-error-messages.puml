@@ -1,5 +1,56 @@
 @startuml
 !theme plain
 
+title Enhancing Error Messages for MeshHook
+
+actor User
+actor Developer
+boundary "UI/UX" as UI
+database "Supabase" as Supabase
+database "Postgres" as Postgres
+entity "Error Handling\nService" as ErrorHandler
+entity "Logging\nService" as Logger
+control "SvelteKit Frontend" as SvelteKit
+control "Webhook\nTrigger" as Webhook
+control "DAG Builder" as DAG
+
+User --> SvelteKit : Interacts
+Developer --> Logger : Accesses Logs
+
+SvelteKit --> ErrorHandler : Reports Error
+ErrorHandler --> Supabase : Queries Error Info
+Supabase --> ErrorHandler : Error Details
+ErrorHandler --> SvelteKit : Returns Standardized Error Message
+SvelteKit --> UI : Displays Error Message
+UI --> User : Shows Error
+
+Logger --> Postgres : Stores Logs
+Developer --> Postgres : Queries Logs
+
+note right of ErrorHandler : Standardizes Error Messages\nCategorizes Errors\nPrepares User-Friendly Messages
+note right of Logger : Secures Developer Logs\nExcludes Sensitive Info from User
+
+Webhook --> DAG : Triggers Workflow
+DAG --> ErrorHandler : Execution Errors
+
+group Error Categorization
+    ErrorHandler -> ErrorHandler : Validation Errors
+    ErrorHandler -> ErrorHandler : Execution Errors
+    ErrorHandler -> ErrorHandler : System Errors
+end
+
+note over SvelteKit, ErrorHandler
+  Integration Points:
+  - Error Reporting
+  - Error Handling
+end note
+
+note over ErrorHandler, Logger
+  New Workflow:
+  1. Error Occurs
+  2. Error Reported & Categorized
+  3. User-Friendly Message Prepared
+  4. Detailed Log Stored Securely
+end note
 
 @enduml

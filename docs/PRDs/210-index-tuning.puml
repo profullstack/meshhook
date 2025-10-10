@@ -1,6 +1,38 @@
 @startuml
 !theme plain
 
-package "MeshHook System" {
+title Index Tuning for MeshHook Performance Optimization
+
+actor Developer
+database PostgresDB as "Postgres Database"
+entity "Supabase Management" as Supabase
+cloud "Production Environment" as Production
+cloud "Development Environment" as Development
+rectangle "Index Tuning Process" as Process {
+    node "1. Bottleneck Identification" as Step1
+    node "2. Index Optimization Plan" as Step2
+    node "3. Implementation & Testing" as Step3
+    node "4. Documentation & Rollout" as Step4
+}
+
+Developer --> Step1 : identifies\nslow queries
+Step1 --> Step2 : analyzes and\nplans optimizations
+Step2 --> Step3 : implements\nindex changes
+Step3 --> Step4 : documents and\nprepares rollout
+Step4 --> Developer : updates and\nreviews documentation
+
+PostgresDB -[hidden]-> Supabase
+Supabase -[hidden]-> Production
+Production -[hidden]-> Development
+
+Step1 ..> PostgresDB : uses EXPLAIN & ANALYZE
+Step3 ..> Development : tests in dev environment
+Step4 ..> Production : phased rollout
+
+Supabase ..> PostgresDB : manages
+Development ..> Supabase : mirrors production setup
+Production ..> PostgresDB : applies changes
+
+note right of Production : Monitors performance\nand reverts if necessary
 
 @enduml

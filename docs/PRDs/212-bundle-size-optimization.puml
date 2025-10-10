@@ -1,6 +1,59 @@
 @startuml
 !theme plain
 
-package "MeshHook System" {
+package "MeshHook Frontend" {
+    component [SvelteKit/Svelte 5] as SvelteKit
+    component [Webpack Bundle Analyzer] as WebpackBA
+    component "Dynamic Import\n& Code Splitting" as DynamicImport
+    component "Asset Optimization\n(Image, CSS, JS)" as AssetOptimization
+}
+
+package "MeshHook Backend" {
+    component [Supabase] as Supabase
+    component [Postgres] as Postgres
+    component [Realtime] as Realtime
+    component "Node.js\nDependency Optimization" as NodeOptimization
+}
+
+cloud {
+    component [External Libraries] as Libraries
+}
+
+database "Data Storage" {
+    [Data Model] as DataModel
+}
+
+[WebpackBA] -down-> [SvelteKit] : Analyzes
+[SvelteKit] -down-> [DynamicImport] : Implements
+[DynamicImport] .right.> [AssetOptimization] : Includes
+[Supabase] -down-> [Postgres]
+[Supabase] -down-> [Realtime]
+[Supabase] -left-> [NodeOptimization] : Utilizes
+[Libraries] <-down-> [AssetOptimization] : Compress & Minify
+[Libraries] <-down-> [NodeOptimization] : Replace bulky libraries
+[SvelteKit] <-right-> [DataModel] : Reads/Writes
+[NodeOptimization] <-left-> [DataModel] : Accesses
+
+note right of [DynamicImport]
+  Ensures only necessary code
+  is loaded and executed
+end note
+
+note right of [AssetOptimization]
+  Compress images, minify CSS/JS
+end note
+
+note right of [NodeOptimization]
+  Optimize backend dependencies
+end note
+
+note "No changes to Data Model\nor API Endpoints" as NoteDataModel
+[DataModel] .down.> NoteDataModel
+
+note "Bundle Size Optimization Workflow" as NoteWorkflow
+[WebpackBA] -left-> NoteWorkflow
+[NoteWorkflow] .down.> [DynamicImport]
+[NoteWorkflow] .down.> [AssetOptimization]
+[NoteWorkflow] .down.> [NodeOptimization]
 
 @enduml

@@ -2,5 +2,34 @@
 !theme plain
 
 package "MeshHook System" {
+    [SvelteKit Frontend] as Frontend
+    [API Layer] as API
+    [Supabase Backend] as Backend
+    database "Postgres DB" as DB
+}
+
+package "Caching System" {
+    [Cache Layer] as Cache <<Redis/Memcached>>
+    [Cache Management Tools] as ManagementTools
+    [Monitoring Tools] as Monitoring
+}
+
+Frontend --> API : Uses
+API --> Backend : Communicates
+Backend --> DB : Reads/Writes
+
+API --> Cache : 1. Checks cache before DB query
+Cache --> DB : 2. Fetches from DB on cache miss
+DB --> Cache : 3. Updates cache on data change
+Cache --> API : Returns data
+
+Cache --> ManagementTools : Configures\nTTL, eviction policies
+ManagementTools --> Cache : Manages manual invalidation
+
+Cache --> Monitoring : Sends performance metrics
+Monitoring --> Cache : Monitors hit/miss, size, evictions
+
+note right of Cache : Cache Invalidation\nand Data Consistency
+note right of Monitoring : Observability\nand Error Logging
 
 @enduml

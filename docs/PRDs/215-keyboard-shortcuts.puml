@@ -1,5 +1,58 @@
 @startuml
 !theme plain
 
+title MeshHook Keyboard Shortcuts Implementation
+
+package "MeshHook Frontend" {
+    [Shortcut Registry] as registry
+    [Shortcut Overlay/Modal] as overlay
+    [Workflow Builder UI] as builder
+    [Settings UI] as settings
+    [Logs View UI] as logs
+    component "SvelteKit Event Listeners" as listeners
+}
+
+package "MeshHook Backend" {
+    [Supabase Real-time Updates] as supabase
+    [PostgreSQL Database] as postgres
+    [User Preferences] as preferences
+}
+
+cloud {
+    [Browser] as browser
+}
+
+database {
+    [Shortcut Customization Table] as customization
+}
+
+browser --> listeners : Key Events
+listeners --> registry : Map Key Events\nto Actions
+registry --> overlay : Display Shortcuts
+registry --> builder : Actions (e.g., Ctrl+N, Ctrl+D, Delete)
+registry --> settings : Navigate
+registry --> logs : Navigate
+listeners <.up.> settings : Ctrl+R (Run)\nCtrl+S (Save)
+overlay .down.> [User] : Shift + ?
+
+[User] --> browser : Keyboard Input
+
+Supabase Real-time Updates -[hidden]-> PostgreSQL Database
+
+group Customization
+    preferences --> customization : Store Custom Shortcuts
+    customization --> registry : Load Custom Shortcuts
+end
+
+note right of customization
+Customization is a stretch goal.
+It requires backend changes to store
+user-defined shortcut preferences.
+end note
+
+note over browser, listeners
+Shortcuts must not conflict with
+browser or accessibility defaults.
+end note
 
 @enduml

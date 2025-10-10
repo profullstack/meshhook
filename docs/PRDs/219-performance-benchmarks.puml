@@ -1,70 +1,53 @@
 @startuml
 !theme plain
 
-title Performance Benchmarks for MeshHook
+title MeshHook Performance Benchmarking Framework
 
 package "MeshHook System" {
-    [Webhook Trigger] - [Visual DAG Builder]
-    [Visual DAG Builder] - [Workflow Execution]
-    [Workflow Execution] - [Live Logs Delivery]
-    [Workflow Execution] - [Multi-tenant RLS Security]
-    [Multi-tenant RLS Security] .> [Database]: <<use>>
+    [Webhook Trigger] --> [DAG Builder]: Triggers workflow
+    [DAG Builder] --> [Workflow Executor]: Executes defined workflow
+    [Workflow Executor] --> [Log Delivery]: Streams logs in real-time
+    [Workflow Executor] --> [Multi-Tenant RLS Security]: Ensures secure execution per tenant
 }
 
-package "Benchmarking Suite" {
-    [Benchmark Development]
-    [Automation & Integration]
-    [Metric Collection & Analysis]
-    [Baseline Metrics & Regression Detection]
-
-    [Benchmark Development] --> [Benchmark Execution]
-    [Benchmark Execution] --> [Data Analysis and Optimization]
-    [Data Analysis and Optimization] --> [Integration and Automation]
-    [Integration and Automation] --> [Documentation]
+package "Benchmarking Framework" {
+    [Benchmark Development] --> [Automation & Integration]: Automates benchmarks
+    [Automation & Integration] --> [Metric Collection & Analysis]: Collects and analyzes metrics
+    [Metric Collection & Analysis] --> [Baseline Metrics & Regression Detection]: Establishes baselines and detects regressions
+    [Baseline Metrics & Regression Detection] ..> [Optimization]: Identifies optimizations
+    [Optimization] ..> [Workflow Executor]: Optimizes performance
 }
 
-[Benchmark Development] ..> [Webhook Trigger] : benchmarks
-[Benchmark Development] ..> [Visual DAG Builder] : benchmarks
-[Benchmark Development] ..> [Workflow Execution] : benchmarks
-[Benchmark Development] ..> [Live Logs Delivery] : benchmarks
-[Benchmark Development] ..> [Multi-tenant RLS Security] : benchmarks
-
-database "Supabase (Postgres)" as DB {
-    [Database] <-- [Multi-tenant RLS Security]
+package "CI/CD Pipeline" {
+    [Automation & Integration] -right-> [CI/CD Integration]: Integrates benchmarks
+    [CI/CD Integration] --> [Monitoring & Observability]: Monitors performance metrics
 }
 
-[Automation & Integration] ..> [CI/CD Pipeline] : integrates
-[CI/CD Pipeline] ..> [MeshHook System] : deploys
-
-cloud "CI/CD Pipeline" {
-    [CI/CD Pipeline]
-}
-
-[CI/CD Pipeline] - [Benchmarking Suite]
+[Webhook Trigger] <.. [Benchmark Development]: Benchmarks
+[DAG Builder] <.. [Benchmark Development]: Benchmarks
+[Workflow Executor] <.. [Benchmark Development]: Benchmarks
+[Log Delivery] <.. [Benchmark Development]: Benchmarks
+[Multi-Tenant RLS Security] <.. [Benchmark Development]: Benchmarks
 
 note right of [Benchmark Development]
-  Create and execute benchmarks to measure:
-  - Webhook processing time
+  Develop benchmarks for:
+  - Webhook processing
   - DAG builder responsiveness
-  - Workflow execution time
-  - Live logs delivery latency
-  - RLS security performance
-end note
-
-note right of [Automation & Integration]
-  Integrate benchmarking into the CI/CD pipeline for continuous performance validation.
+  - Workflow execution times
+  - Live log delivery
+  - Multi-tenant RLS security
 end note
 
 note right of [Metric Collection & Analysis]
-  Collect and analyze key performance metrics to identify bottlenecks and optimization opportunities.
+  Collect metrics on:
+  - Execution times
+  - Resource usage
+  - Throughput
 end note
 
-note right of [Baseline Metrics & Regression Detection]
-  Establish performance baselines and detect performance regressions in future updates.
-end note
-
-note right of [Documentation]
-  Document benchmarking approach, tools, findings, and identified optimizations.
+note right of [CI/CD Integration]
+  Continuous performance monitoring
+  and regression detection
 end note
 
 @enduml

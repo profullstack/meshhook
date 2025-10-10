@@ -1,47 +1,38 @@
 @startuml
-!theme amiga
+!theme plain
 
-' Define actors
-actor User
+title Dark Mode Implementation for MeshHook
 
-' Define system boundary
-package "MeshHook UI" {
-    [Dark Mode Toggle]
-    [UI Components]
-    [User Profile Settings]
+package "Frontend (SvelteKit)" {
+    [User Settings UI] as UI
+    [SvelteKit Store] as Store
+    [CSS Custom Properties] as CSS
+    note right of CSS : Defines Dark and Light themes
 }
 
-package "Backend Services" {
-    [Supabase]
+package "Backend (Supabase)" {
+    [user_settings Table] as UserSettings
+    note right of UserSettings : Includes theme_preference attribute
 }
 
-' Define databases
-database "Supabase Database" as DB {
-    [user_settings]
+database "Supabase DB" {
+    table(user_settings) {
+        column : +theme_preference ENUM('dark', 'light')
+    }
 }
 
-' Define relationships and actions
-User --> [Dark Mode Toggle] : toggles theme
-[Dark Mode Toggle] --> [UI Components] : applies theme
-[UI Components] ..> [User Profile Settings] : <<read/write>>
-[User Profile Settings] --> [Supabase] : updates theme preference
-[Supabase] --> DB : stores/retrieves\ntheme_preference
+[User Settings UI] --> Store : 1. Toggle theme preference
+Store --> CSS : 2. Apply theme
+UserSettings --> [User Settings UI] : 3. Load user preference
+[User Settings UI] --> UserSettings : 4. Update theme_preference
 
-' Add notes
-note right of [Dark Mode Toggle]
-  A UI control within the application
-  allowing users to switch between
-  Dark and Light themes.
-end note
+note over [User Settings UI], UserSettings : Synchronization via API calls
 
-note right of DB
-  The "user_settings" table includes a
-  "theme_preference" attribute to store
-  each user's theme choice.
-end note
-
-' Highlight integration points
-[Supabase] ..> [Supabase Database] : <<integrates with>>
-[UI Components] ..> [MeshHook UI] : <<use>>
+legend right
+    1. User interacts with the theme toggle in the UI.
+    2. The store updates and triggers the theme change.
+    3. On login, user's theme preference is loaded.
+    4. User's theme preference is updated in the backend.
+endlegend
 
 @enduml

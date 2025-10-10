@@ -52,6 +52,7 @@ import {
   generatePRDWithAI,
   generatePlantUMLDiagram,
   validateOpenAIConfig,
+  fixPlantUMLWithAI,
 } from "./lib/openai-prd-generator.mjs";
 
 // Load environment variables
@@ -597,7 +598,8 @@ function validatePlantUMLSyntax(pumlFile) {
 }
 
 // Generate PNG from PlantUML using plantuml.jar or online service
-async function generatePNGFromPlantUML(pumlFile, dryRun = false) {
+// Includes retry logic with OpenAI correction if initial conversion fails
+async function generatePNGFromPlantUML(pumlFile, dryRun = false, useAI = false) {
   if (dryRun || !pumlFile) {
     return null;
   }
@@ -619,6 +621,52 @@ async function generatePNGFromPlantUML(pumlFile, dryRun = false) {
     if (!validation.valid) {
       console.error(`  ❌ PlantUML syntax validation failed:`);
       console.error(`     ${validation.error}`);
+      
+      // Attempt to fix with OpenAI if AI mode is enabled
+      if (useAI && validateOpenAIConfig()) {
+        console.log(`  🔄 Attempting to fix PlantUML with OpenAI (retry 1/1)...`);
+        
+        try {
+          // Read the current PlantUML content
+          const pumlContent = readFileSync(pumlFile, 'utf8');
+          
+          // Get fixed PlantUML from OpenAI
+          const fixedPuml = await fixPlantUMLWithAI(pumlContent, validation.error);
+          
+          if (fixedPuml) {
+            // Save the fixed version
+            writeFileSync(pumlFile, fixedPuml, 'utf8');
+            console.log(`  ✓ Saved corrected PlantUML to: ${pumlFile}`);
+            
+            // Validate the fixed version
+            const fixedValidation = validatePlantUMLSyntax(pumlFile);
+            
+            if (fixedValidation.valid) {
+              console.log(`  ✓ Fixed PlantUML syntax is valid`);
+              
+              // Try to generate PNG with fixed version
+              const pngFile = pumlFile.replace('.puml', '.png');
+              
+              try {
+                execSync(`plantuml "${pumlFile}"`, { encoding: "utf8", stdio: 'pipe' });
+                
+                if (existsSync(pngFile)) {
+                  console.log(`  🖼️  Generated PNG from corrected PlantUML: ${pngFile}`);
+                  return pngFile;
+                }
+              } catch (error) {
+                console.error(`  ❌ PNG generation failed even after correction`);
+              }
+            } else {
+              console.error(`  ❌ AI-corrected PlantUML still has syntax errors`);
+              console.error(`     ${fixedValidation.error}`);
+            }
+          }
+        } catch (error) {
+          console.error(`  ❌ Failed to fix PlantUML with AI: ${error.message}`);
+        }
+      }
+      
       console.log(`  💡 Common PlantUML issues:`);
       console.log(`     - Missing @startuml or @enduml tags`);
       console.log(`     - Invalid arrow syntax (use --> or -> for connections)`);
@@ -988,8 +1036,8 @@ async function generateIssuePRDs(args) {
             if (pumlFile) {
               console.log(`  ✓ Saved PlantUML diagram: ${pumlFile}`);
               
-              // Try to generate PNG
-              await generatePNGFromPlantUML(pumlFile, dryRun);
+              // Try to generate PNG (pass useAI flag for retry logic)
+              await generatePNGFromPlantUML(pumlFile, dryRun, useAI);
             }
           }
         } catch (error) {
