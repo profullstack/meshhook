@@ -21,9 +21,9 @@ export const dictionary = {
 		"/runs": [~4],
 		"/runs/[id]": [~5],
 		"/secrets": [~6],
-		"/workflows/index": [~8],
+		"/workflows": [~7],
 		"/workflows/new": [9],
-		"/workflows/[id]/edit": [~7]
+		"/workflows/[id]/edit": [~8]
 	};
 
 export const hooks = {

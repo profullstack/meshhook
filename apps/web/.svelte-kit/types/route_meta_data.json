@@ -42,8 +42,8 @@
 		"src/routes/secrets/+page.server.js",
 		"src/routes/+layout.server.js"
 	],
-	"/workflows/index": [
-		"src/routes/workflows/index/+page.server.js",
+	"/workflows": [
+		"src/routes/workflows/+page.server.js",
 		"src/routes/+layout.server.js"
 	],
 	"/workflows/new": [

@@ -6,135 +6,74 @@
 	let { nodes = $bindable([]), edges = $bindable([]), onNodesChange, onEdgesChange } = $props();
 
 	// State
-	let selectedNode = $state(null);
-	let selectedEdge = $state(null);
+	let reactFlowWrapper = $state(null);
 
-	// Node types configuration
-	const nodeTypes = {
-		httpCall: 'default',
-		transform: 'default',
-		delay: 'default',
-		terminate: 'default',
-		conditional: 'default'
-	};
-
-	// Edge types configuration
-	const edgeTypes = {
-		default: 'smoothstep'
-	};
-
-	// Handle node selection
-	function handleNodeClick(event) {
-		selectedNode = event.detail.node;
-		selectedEdge = null;
+	// Handle drag over (required to enable drop)
+	function handleDragOver(event) {
+		event.preventDefault();
+		event.dataTransfer.dropEffect = 'move';
 	}
 
-	// Handle edge selection
-	function handleEdgeClick(event) {
-		selectedEdge = event.detail.edge;
-		selectedNode = null;
-	}
+	// Handle drop - add new node to canvas
+	function handleDrop(event) {
+		event.preventDefault();
 
-	// Handle pane click (deselect)
-	function handlePaneClick() {
-		selectedNode = null;
-		selectedEdge = null;
-	}
+		// Get the node data from drag event
+		const nodeDataStr = event.dataTransfer.getData('application/reactflow');
+		if (!nodeDataStr) return;
 
-	// Handle connection creation
-	function handleConnect(event) {
-		const { source, target, sourceHandle, targetHandle } = event.detail;
+		try {
+			const nodeData = JSON.parse(nodeDataStr);
+			
+			// Get the bounds of the react flow wrapper
+			const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
+			
+			// Calculate position relative to the wrapper
+			// Simple conversion without zoom/pan for now
+			const position = {
+				x: event.clientX - reactFlowBounds.left,
+				y: event.clientY - reactFlowBounds.top
+			};
 
-		const newEdge = {
-			id: `e${source}-${target}`,
-			source,
-			target,
-			sourceHandle,
-			targetHandle,
-			type: 'smoothstep',
-			animated: true
-		};
+			// Create new node with unique ID
+			const newNode = {
+				id: `${nodeData.type}-${Date.now()}`,
+				type: 'default',
+				position,
+				data: {
+					label: nodeData.label,
+					type: nodeData.type,
+					config: {}
+				}
+			};
 
-		edges = [...edges, newEdge];
+			// Add node to the canvas
+			nodes = [...nodes, newNode];
 
-		if (onEdgesChange) {
-			onEdgesChange(edges);
-		}
-	}
-
-	// Handle node drag
-	function handleNodeDragStop(event) {
-		if (onNodesChange) {
-			onNodesChange(nodes);
-		}
-	}
-
-	// Handle node deletion
-	function handleNodesDelete(event) {
-		const deletedNodes = event.detail.nodes;
-		const deletedNodeIds = new Set(deletedNodes.map((n) => n.id));
-
-		// Remove deleted nodes
-		nodes = nodes.filter((n) => !deletedNodeIds.has(n.id));
-
-		// Remove edges connected to deleted nodes
-		edges = edges.filter((e) => !deletedNodeIds.has(e.source) && !deletedNodeIds.has(e.target));
-
-		if (onNodesChange) {
-			onNodesChange(nodes);
-		}
-		if (onEdgesChange) {
-			onEdgesChange(edges);
-		}
-	}
-
-	// Handle edge deletion
-	function handleEdgesDelete(event) {
-		const deletedEdges = event.detail.edges;
-		const deletedEdgeIds = new Set(deletedEdges.map((e) => e.id));
-
-		edges = edges.filter((e) => !deletedEdgeIds.has(e.id));
-
-		if (onEdgesChange) {
-			onEdgesChange(edges);
+			if (onNodesChange) {
+				onNodesChange(nodes);
+			}
+		} catch (error) {
+			console.error('Error adding node:', error);
 		}
 	}
 </script>
 
-<div class="workflow-editor">
+<div class="workflow-editor" bind:this={reactFlowWrapper} ondrop={handleDrop} ondragover={handleDragOver} role="application">
 	<SvelteFlow
 		{nodes}
 		{edges}
-		{nodeTypes}
-		{edgeTypes}
 		fitView
-		snapToGrid={true}
-		snapGrid={[15, 15]}
 		defaultEdgeOptions={{ type: 'smoothstep', animated: true }}
-		onNodeClick={handleNodeClick}
-		onEdgeClick={handleEdgeClick}
-		onPaneClick={handlePaneClick}
-		onConnect={handleConnect}
-		onNodeDragStop={handleNodeDragStop}
-		onNodesDelete={handleNodesDelete}
-		onEdgesDelete={handleEdgesDelete}
 	>
-		<Background variant="dots" gap={12} size={1} />
+		<Background gap={12} size={1} />
 		<Controls />
 		<MiniMap nodeStrokeWidth={3} zoomable pannable />
 
 		<Panel position="top-left">
 			<div class="info-panel">
 				<h3>Workflow Editor</h3>
-				<p class="hint">
-					{#if selectedNode}
-						Selected: <strong>{selectedNode.data.label}</strong>
-					{:else if selectedEdge}
-						Selected: Edge
-					{:else}
-						Click a node to configure it
-					{/if}
-				</p>
+				<p class="hint">Drag nodes from the palette to the canvas</p>
 			</div>
 		</Panel>
 
