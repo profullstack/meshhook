@@ -1,0 +1,264 @@
+<script>
+	import WorkflowEditor from '$lib/components/WorkflowEditor.svelte';
+	import NodePalette from '$lib/components/NodePalette.svelte';
+	import ValidationPanel from '$lib/components/ValidationPanel.svelte';
+	import { validateWorkflow } from '$lib/utils/workflow-validator.js';
+	import { goto } from '$app/navigation';
+
+	let { data } = $props();
+
+	// Workflow state
+	let nodes = $state(data.workflow?.definition?.nodes || []);
+	let edges = $state(data.workflow?.definition?.edges || []);
+	let workflowName = $state(data.workflow?.name || 'Untitled Workflow');
+	let workflowDescription = $state(data.workflow?.description || '');
+	let workflowStatus = $state(data.workflow?.status || 'draft');
+
+	let saving = $state(false);
+	let validationErrors = $state([]);
+
+	// Validate on changes
+	$effect(() => {
+		const result = validateWorkflow({ nodes, edges });
+		validationErrors = result.errors;
+	});
+
+	// Handle node changes
+	function handleNodesChange(updatedNodes) {
+		nodes = updatedNodes;
+	}
+
+	// Handle edge changes
+	function handleEdgesChange(updatedEdges) {
+		edges = updatedEdges;
+	}
+
+	// Save workflow
+	async function saveWorkflow(publish = false) {
+		try {
+			saving = true;
+
+			// Validate before saving
+			const validation = validateWorkflow({ nodes, edges });
+			if (!validation.isValid && publish) {
+				alert('Cannot publish workflow with validation errors');
+				return;
+			}
+
+			const response = await fetch(`/api/workflows/${data.workflow.id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					name: workflowName,
+					description: workflowDescription,
+					nodes,
+					edges,
+					status: publish ? 'published' : 'draft'
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to save workflow');
+			}
+
+			workflowStatus = publish ? 'published' : 'draft';
+			alert(publish ? 'Workflow published!' : 'Workflow saved as draft');
+		} catch (error) {
+			alert(`Error saving workflow: ${error.message}`);
+		} finally {
+			saving = false;
+		}
+	}
+
+	function handlePublish() {
+		if (confirm('Publish this workflow? Published workflows are immutable.')) {
+			saveWorkflow(true);
+		}
+	}
+</script>
+
+<svelte:head>
+	<title>Edit {workflowName} - MeshHook</title>
+</svelte:head>
+
+<div class="workflows-page">
+	<header class="page-header">
+		<div class="header-content">
+			<div class="header-left">
+				<button class="btn-back" onclick={() => goto('/workflows')}>← Back</button>
+				<div class="workflow-info">
+					<input
+						type="text"
+						bind:value={workflowName}
+						class="workflow-name-input"
+						placeholder="Workflow name"
+					/>
+					<span class="status-badge" class:published={workflowStatus === 'published'}>
+						{workflowStatus}
+					</span>
+				</div>
+			</div>
+			<div class="header-actions">
+				<button class="btn-secondary" onclick={() => saveWorkflow(false)} disabled={saving}>
+					{saving ? 'Saving...' : 'Save Draft'}
+				</button>
+				{#if workflowStatus === 'draft'}
+					<button
+						class="btn-primary"
+						onclick={handlePublish}
+						disabled={saving || validationErrors.length > 0}
+					>
+						Publish
+					</button>
+				{/if}
+			</div>
+		</div>
+	</header>
+
+	<div class="workflow-container">
+		<NodePalette />
+		<div class="editor-container">
+			<WorkflowEditor
+				bind:nodes
+				bind:edges
+				onNodesChange={handleNodesChange}
+				onEdgesChange={handleEdgesChange}
+			/>
+		</div>
+	</div>
+
+	<ValidationPanel errors={validationErrors} />
+</div>
+
+<style>
+	.workflows-page {
+		display: flex;
+		flex-direction: column;
+		height: 100vh;
+		background: #f8f9fa;
+	}
+
+	.page-header {
+		background: white;
+		border-bottom: 1px solid #e0e0e0;
+		padding: 1rem 2rem;
+	}
+
+	.header-content {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		max-width: 100%;
+	}
+
+	.header-left {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex: 1;
+	}
+
+	.btn-back {
+		padding: 0.5rem 1rem;
+		background: white;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.btn-back:hover {
+		background: #f5f5f5;
+	}
+
+	.workflow-info {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex: 1;
+	}
+
+	.workflow-name-input {
+		border: none;
+		font-size: 1.5rem;
+		font-weight: 600;
+		color: #333;
+		padding: 0.25rem 0.5rem;
+		border-radius: 4px;
+		transition: background 0.2s;
+	}
+
+	.workflow-name-input:hover {
+		background: #f5f5f5;
+	}
+
+	.workflow-name-input:focus {
+		outline: none;
+		background: #f5f5f5;
+	}
+
+	.status-badge {
+		padding: 0.25rem 0.75rem;
+		border-radius: 12px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: white;
+		text-transform: uppercase;
+		background: #fbbf24;
+	}
+
+	.status-badge.published {
+		background: #10b981;
+	}
+
+	.header-actions {
+		display: flex;
+		gap: 1rem;
+	}
+
+	button {
+		padding: 0.5rem 1rem;
+		border: none;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.btn-primary {
+		background: var(--color-theme-1);
+		color: white;
+	}
+
+	.btn-primary:hover:not(:disabled) {
+		background: var(--color-theme-2);
+	}
+
+	.btn-secondary {
+		background: white;
+		color: #333;
+		border: 1px solid #ddd;
+	}
+
+	.btn-secondary:hover:not(:disabled) {
+		background: #f5f5f5;
+	}
+
+	button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.workflow-container {
+		display: flex;
+		flex: 1;
+		overflow: hidden;
+	}
+
+	.editor-container {
+		flex: 1;
+		position: relative;
+	}
+</style>
