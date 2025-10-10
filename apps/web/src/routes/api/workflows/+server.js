@@ -9,10 +9,11 @@ export async function GET(event) {
 
 	try {
 		const {
-			data: { session }
-		} = await supabase.auth.getSession();
+			data: { user },
+			error: authError
+		} = await supabase.auth.getUser();
 
-		if (!session) {
+		if (authError || !user) {
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
@@ -38,10 +39,11 @@ export async function POST(event) {
 
 	try {
 		const {
-			data: { session }
-		} = await supabase.auth.getSession();
+			data: { user },
+			error: authError
+		} = await supabase.auth.getUser();
 
-		if (!session) {
+		if (authError || !user) {
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
@@ -53,15 +55,47 @@ export async function POST(event) {
 			return json({ error: 'Workflow name is required' }, { status: 400 });
 		}
 
+		// Get or create default project for user
+		let { data: project, error: projectError } = await supabase
+			.from('projects')
+			.select('id')
+			.eq('owner', user.id)
+			.limit(1)
+			.single();
+
+		// If no project exists, create a default one
+		if (projectError || !project) {
+			const { data: newProject, error: createError } = await supabase
+				.from('projects')
+				.insert({
+					owner: user.id,
+					name: 'Default Project'
+				})
+				.select('id')
+				.single();
+
+			if (createError) {
+				console.error('Error creating default project:', createError);
+				return json({ error: 'Failed to create default project' }, { status: 500 });
+			}
+
+			project = newProject;
+		}
+
+		// Generate slug from name if not provided
+		const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 		// Create workflow
 		const { data, error } = await supabase
 			.from('workflows')
 			.insert({
+				project_id: project.id,
+				slug,
 				name,
 				description,
 				definition: { nodes, edges },
 				status,
-				user_id: session.user.id,
+				user_id: user.id,
 				version: 1
 			})
 			.select()
