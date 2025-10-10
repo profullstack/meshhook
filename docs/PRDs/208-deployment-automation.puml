@@ -1,38 +1,45 @@
 @startuml
 !theme plain
 
-package "CI/CD Pipeline" {
-    [Deployment Automation] as DA
-    [Supabase] as Supabase
-    [Existing Codebase] as Codebase
-    database "Postgres DB" as Postgres
+package "MeshHook CI/CD Pipeline" {
+    [GitHub Actions] as GHA
+    [GitLab CI] as GitLab
+    component [Deployment Automation] as DA
+    database "Supabase" as Supabase {
+        [Postgres]
+        [Realtime]
+        [Storage]
+        [Edge]
+    }
+    [HashiCorp Vault] as Vault
+    [Terraform] as Terraform
+}
+
+cloud {
     [SvelteKit SSR/API] as SvelteKit
-    [HTTP Executor Worker] as Executor
-    [Orchestrator Worker] as Orchestrator
+    [Dedicated Workers] {
+        [Orchestrator]
+        [HTTP Executor]
+    }
 }
 
-package "External Services" {
-    [Supabase Realtime] as Realtime
-    [Supabase Storage] as Storage
-    [Edge Functions] as Edge
-}
+GHA --> DA : Triggers Deployment\non code merge
+GitLab --> DA : Triggers Deployment\non code merge
+DA --> Terraform : Uses for\nIaC
+DA --> Vault : Fetches Secrets
+DA --> Supabase.Postgres : Deploys to\nProduction/Staging
+DA --> Supabase.Realtime : Updates\nDeployment Status
+DA --> Supabase.Storage : Stores\nDeployment Artifacts
+DA --> Supabase.Edge : Sets up\nCron/Timers
+DA --> [Orchestrator] : Deploys & Configures
+DA --> [HTTP Executor] : Deploys & Configures
+SvelteKit --> Supabase.Postgres : Reads/Writes Data
+SvelteKit --> Supabase.Realtime : Subscribes to Updates
+SvelteKit --> Supabase.Storage : Accesses Artifacts
+SvelteKit --> Supabase.Edge : Utilizes for Timed Tasks
 
-Supabase -[hidden]-> Codebase
-Postgres -[hidden]-> Supabase
-
-DA --> Codebase : Analyze & Integrate
-DA --> SvelteKit : Deploy
-DA --> Executor : Deploy
-DA --> Orchestrator : Deploy
-DA --> Postgres : Update Schema (if needed)
-DA --> Supabase : Utilize Services
-Supabase --> Realtime : Log Streaming
-Supabase --> Storage : Store Artifacts
-Supabase --> Edge : Schedule Jobs
-SvelteKit --> Postgres : CRUD Operations
-Executor --> Postgres : Update Job Status
-Orchestrator --> Postgres : Manage Workflows
-
-note right of DA : Implementation Steps\n1. Analysis\n2. Design\n3. Implementation\n4. Integration\n5. Testing\n6. Documentation\n7. Review
+note right of DA : Integrates with existing\nCI/CD workflows and tools
+note right of Vault : Manages Secrets\nand Credentials Securely
+note right of Terraform : Defines Infrastructure\nas Code (IaC)
 
 @enduml

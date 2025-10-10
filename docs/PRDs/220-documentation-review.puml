@@ -1,31 +1,39 @@
 @startuml
 !theme plain
 
-title Documentation Review Process
+title Documentation Review Process for MeshHook Launch Prep
 
-actor Developer
-participant "Documentation\nReview Task" as Task
-participant "GitHub Issue\n#220" as Issue
-participant "PRD Document" as PRD
-database "Supabase\n(Postgres)" as Database
-participant "CI/CD Pipeline" as CICD
-participant "Project Codebase" as Codebase
-participant "Review & Feedback\nSystem" as Review
+actor Developer as dev
+actor Reviewer as rev
+database "MeshHook Codebase" as codebase
+cloud "Supabase" as supabase
+rectangle "Documentation\nTools" as tools
+rectangle "GitHub" as github
+rectangle "Markdown Editor" as markdown
 
-Developer -> Task: Initiates
-Task -> Issue: References
-Issue -> PRD: Links to Full PRD
-PRD -> Database: Queries for\nexisting schemas
-PRD -> Codebase: Checks for\nintegration points
-PRD -> Review: Submits for review
-Review -> Developer: Provides feedback
+dev -> codebase : Audit Existing Documentation
+codebase -> dev : Identify Gaps & Inaccuracies
+dev -> tools : Update Documentation
+tools -right-> markdown : Use Markdown for Updates
+markdown .down.> github : Push Updates
+dev -left-> supabase : Update API Docs
+supabase --> dev : Verify API Documentation
+dev -> rev : Peer Review
+rev -> github : Review & Approve
 
-alt Successful Review
-    Review -> CICD: Triggers
-    CICD -> Codebase: Merges changes
-    CICD -> Developer: Notifies success
-else Review Issues Found
-    Review -> Developer: Requests changes
-end
+note right of github
+  Documentation includes:
+  - API Docs
+  - Architectural Overview
+  - Security Guidelines
+  - Operational Guides
+end note
+
+note left of codebase
+  MeshHook Components:
+  - SvelteKit
+  - Supabase
+  - Workers
+end note
 
 @enduml

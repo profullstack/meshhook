@@ -1,31 +1,41 @@
 @startuml
-!theme plain
+!define DATABASE_MIGRATION_COLOR #FAD7A0
+!define CI_CD_COLOR #ABEBC6
+!define DATABASE_COLOR #85C1E9
+!define TOOL_COLOR #D2B4DE
 
-package "Database Migration Automation" {
-    [Database Migration Service] as DMS
-    [Migration Scripts] as Scripts
-    [CI/CD Pipeline] as CICD
-    [Supabase Postgres] as Postgres
-    [Test Suite] as Tests
-    [Schema.sql] as Schema
+skinparam componentStyle uml2
+
+package "MeshHook CI/CD Pipeline" as CI_CD {
+  [CI/CD Server] as CI_CD_Server <<CI/CD>> #CI_CD_COLOR
+  [GitHub Actions] as GitHub_Actions <<CI/CD>> #CI_CD_COLOR
+  [Migration Tool] as Migration_Tool <<Tool>> #TOOL_COLOR
+  [Test Environment] as Test_Env <<Environment>> #CI_CD_COLOR
 }
 
-package "Existing System" {
-    [Supabase Realtime] as Realtime
-    [SvelteKit Application] as SvelteKit
-    [Orchestrator Worker] as Worker
+package "MeshHook Database" as Database {
+  [Supabase Postgres] as Supabase_Postgres <<Database>> #DATABASE_COLOR
+  [Migration Scripts Table] as Migration_Scripts <<Table>> #DATABASE_COLOR
 }
 
-CICD --> DMS : triggers
-DMS --> Scripts : uses
-Scripts --> Postgres : modifies
-DMS --> Tests : runs
-Tests --> CICD : reports
-CICD --> SvelteKit : deploys
-CICD --> Worker : deploys
-Postgres --> Schema : follows
-Postgres --> Realtime : streams updates
+[MeshHook Codebase] as Codebase <<Application>> #DATABASE_MIGRATION_COLOR
+[Notification System] as Notification <<Service>> #DATABASE_MIGRATION_COLOR
 
-note right of DMS : Analyze, Design, Implement, \nIntegrate, Test, Document
+CI_CD_Server -[hidden]-> GitHub_Actions
+GitHub_Actions -[hidden]-> Migration_Tool
+Migration_Tool -[hidden]-> Test_Env
+Test_Env -[hidden]-> Supabase_Postgres
+Supabase_Postgres -[hidden]-> Migration_Scripts
+Migration_Scripts -[hidden]-> Notification
+
+CI_CD_Server -right-> GitHub_Actions : Triggers
+GitHub_Actions -down-> Migration_Tool : Executes
+Migration_Tool -down-> Supabase_Postgres : Applies\nMigrations
+Supabase_Postgres -down-> Migration_Scripts : Logs\nStatus
+Migration_Scripts -down-> Notification : On\nSuccess/Failure
+
+Codebase .right.> GitHub_Actions : Push\nChanges
+Supabase_Postgres .up.> Test_Env : Validates\nin
+Notification .right.> Codebase : Sends\nOutcome
 
 @enduml

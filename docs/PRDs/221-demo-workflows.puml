@@ -1,48 +1,40 @@
 @startuml
-!define RECTANGLE class
-!define DATABASE entity
-
-title Demo Workflows - Implementation Overview
+!theme plain
 
 package "MeshHook System" {
-    RECTANGLE SvelteKit <<SSR/API>> {
-        note right
-            Webhook intake
-            Workflow CRUD
-            Publish versions
-            Run console
-        end note
-    }
-    DATABASE Supabase <<Database>> {
-        note right
-            Postgres
-            Realtime
-            Storage
-            Edge
-        end note
-    }
-    RECTANGLE Workers <<Service>> {
-        note right
-            Orchestrator
-            HTTP Executor
-        end note
-    }
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase] as Supabase
+    [Workers] as Workers
+    database "Postgres" as Postgres
+    [Realtime] as Realtime
+    [Storage] as Storage
+    [Edge] as Edge
+    [Orchestrator] as Orchestrator
+    [HTTP Executor] as HTTPExecutor
 }
 
-package "External Services" {
-    [External Webhooks] --> SvelteKit : Triggers
-    [Client Browser] --> SvelteKit : UI Operations
+package "Demo Workflows" {
+    [Demo Workflow Creation] as DemoCreation
+    [Documentation and Guides] as Documentation
+    [Ease of Deployment] as Deployment
 }
 
-SvelteKit --> Supabase : Data Operations
-SvelteKit --> Workers : Task Dispatch
-Workers --> Supabase : Update State\nLog Streaming
+SvelteKit --> Supabase : Uses
+Supabase --> Postgres : Includes
+Supabase --> Realtime : Includes
+Supabase --> Storage : Includes
+Supabase --> Edge : Includes
+Workers --> Orchestrator : Includes
+Workers --> HTTPExecutor : Includes
 
-note "Implementation Steps" as N1
-note "1. Analysis\n2. Design\n3. Implementation\n4. Integration\n5. Testing\n6. Documentation\n7. Review" as N2
-note "Key Considerations:\n- Event sourcing\n- Error handling\n- Rate limiting" as N3
+DemoCreation --> SvelteKit : Implements using
+DemoCreation --> Supabase : Utilizes
+DemoCreation --> Workers : Interacts with
+Documentation --> DemoCreation : Documents
+Deployment --> DemoCreation : Simplifies
 
-N1 .. N2
-N2 .. N3
+note right of DemoCreation : Key Use Cases\nDesign Workflows\nDevelop & Test
+note right of Documentation : Detailed Guides\nSetup Instructions\nKey Concepts
+note right of Deployment : Minimal Setup Required\nClear Instructions
 
 @enduml

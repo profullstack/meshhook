@@ -1,51 +1,36 @@
 @startuml
 !theme plain
 
-title Mobile Responsiveness Implementation - MeshHook Project
-
-package "MeshHook System" {
-    [SvelteKit SSR/API] as SvelteKit
-    [Supabase] as Supabase
-    [Workers] as Workers
-    database "Postgres" as Postgres
+package "Mobile Responsiveness Task" {
+    [Mobile Responsiveness\nImplementation] as (impl)
+    [Existing UI Audit] as (audit)
+    [Responsive Design\nMockups] as (mockups)
+    [CSS Flexbox/Grid] as (cssFlexGrid)
+    [Media Queries] as (mediaQueries)
+    [Touch Target Adjustments] as (touchAdjust)
+    [Testing & Optimization] as (testing)
 }
 
-cloud {
-    [External Services] as Externals
+package "Existing System Integration" {
+    [SvelteKit/Svelte 5\nFrontend] as (svelte)
+    [Supabase\n(Postgres, Realtime, Storage)] as (supabase)
+    [Workers\n(Orchestrator & HTTP Executor)] as (workers)
 }
 
-package "Mobile Responsiveness Feature" {
-    [Analysis] as Analysis
-    [Design] as Design
-    [Implementation] as Implementation
-    [Integration] as Integration
-    [Testing] as Testing
-    [Documentation] as Documentation
-    [Review] as Review
-}
+(impl) -down-> (audit)
+(audit) -right-> (mockups)
+(mockups) -down-> (cssFlexGrid)
+(mockups) -down-> (mediaQueries)
+(mockups) -down-> (touchAdjust)
+(cssFlexGrid) -down-> (testing)
+(mediaQueries) -down-> (testing)
+(touchAdjust) -down-> (testing)
 
-SvelteKit --> Analysis : Review & Identify\nIntegration Points
-Analysis --> Design : Detail Technical Design
-Design --> Implementation : Implement Code\n(TDD Approach)
-Implementation --> Integration : Integrate with\nExisting Components
-Integration --> Testing : Comprehensive Testing\n(Unit, Integration, E2E)
-Testing --> Documentation : Update Documentation
-Documentation --> Review : Code Review &\nFeedback Incorporation
-Review --> [Deployment] : Merge to Main &\nCI/CD
+(svelte) <-- (impl)
+(supabase) <-- (impl)
+(workers) <-- (impl)
 
-[Deployment] .down.> SvelteKit : Deploy Updates
-Supabase -right-> [Supabase Realtime] : Log Streaming
-Supabase -right-> [Postgres] : Data Storage
-Supabase -right-> [Storage] : Artifacts
-Supabase -right-> [Edge] : Cron/Timers
-Workers --> Postgres : State Management\n& Scheduling
-Externals --> Supabase : External Data &\nServices Integration
-
-note right of [Deployment]
-  Ready for production
-  - All CI/CD checks passing
-  - Documentation complete
-  - Security & Performance verified
-end note
+note right of (impl) : Core Implementation Tasks
+note right of (testing) : Ensure Compatibility\nand Performance
 
 @enduml

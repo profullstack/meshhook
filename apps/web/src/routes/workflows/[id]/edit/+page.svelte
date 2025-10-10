@@ -1,6 +1,7 @@
 <script>
 	import WorkflowEditor from '$lib/components/WorkflowEditor.svelte';
 	import NodePalette from '$lib/components/NodePalette.svelte';
+	import NodeConfigModal from '$lib/components/NodeConfigModal.svelte';
 	import ValidationPanel from '$lib/components/ValidationPanel.svelte';
 	import { validateWorkflow } from '$lib/utils/workflow-validator.js';
 	import { goto } from '$app/navigation';
@@ -16,6 +17,10 @@
 
 	let saving = $state(false);
 	let validationErrors = $state([]);
+	
+	// Node configuration modal state
+	let selectedNode = $state(null);
+	let showConfigModal = $state(false);
 
 	// Validate on changes
 	$effect(() => {
@@ -31,6 +36,28 @@
 	// Handle edge changes
 	function handleEdgesChange(updatedEdges) {
 		edges = updatedEdges;
+	}
+	
+	// Handle node click - open configuration modal
+	function handleNodeClick(node) {
+		selectedNode = node;
+		showConfigModal = true;
+	}
+	
+	// Handle node configuration save
+	function handleNodeConfigSave(updatedNode) {
+		// Update the node in the nodes array
+		nodes = nodes.map(n =>
+			n.id === updatedNode.id ? updatedNode : n
+		);
+		showConfigModal = false;
+		selectedNode = null;
+	}
+	
+	// Handle modal cancel
+	function handleModalCancel() {
+		showConfigModal = false;
+		selectedNode = null;
 	}
 
 	// Save workflow
@@ -123,11 +150,20 @@
 				bind:edges
 				onNodesChange={handleNodesChange}
 				onEdgesChange={handleEdgesChange}
+				onNodeClick={handleNodeClick}
 			/>
 		</div>
 	</div>
 
 	<ValidationPanel errors={validationErrors} />
+	
+	{#if showConfigModal && selectedNode}
+		<NodeConfigModal
+			node={selectedNode}
+			onSave={handleNodeConfigSave}
+			onCancel={handleModalCancel}
+		/>
+	{/if}
 </div>
 
 <style>

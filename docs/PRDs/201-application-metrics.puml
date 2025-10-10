@@ -2,53 +2,55 @@
 !theme plain
 
 package "MeshHook System" {
-    [SvelteKit SSR/API] as SvelteKit
-    [Supabase Postgres] as Postgres
+    [Webhook Intake] as Webhook
+    [Workflow CRUD API] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
     [Supabase Realtime] as Realtime
-    [Supabase Storage] as Storage
-    [Supabase Edge] as Edge
+    [Postgres] as Postgres
+    [Storage] as Storage
+    [Edge (cron/timers)] as Edge
     [Orchestrator Worker] as Orchestrator
     [HTTP Executor Worker] as Executor
+    [Application Metrics] as Metrics
 }
 
-package "Application Metrics Feature" {
-    [Metrics Collection] as Metrics
-    [Metrics Database] as MetricsDB
-    [Metrics Dashboard] as Dashboard
-    [Alerting System] as Alerts
+database "Supabase" {
+    [Postgres] - [Data + Queues]
+    [Realtime] - [Log Streaming]
+    [Storage] - [Artifacts]
 }
 
-SvelteKit --> Metrics : Triggers & Data Collection
-Orchestrator --> Metrics : Triggers & Data Collection
-Executor --> Metrics : Triggers & Data Collection
-Metrics --> MetricsDB : Stores Metrics Data
-MetricsDB --> Dashboard : Data Visualization
-Metrics --> Alerts : Trigger Alerts based\non Metrics
-Dashboard --> [Admins & Users] : View Metrics & Alerts
-Alerts --> [Admins & Users] : Notify on Critical Events
+[Webhook] --> [Postgres] : Triggers & Data
+[CRUD] --> [Postgres] : Manage Workflows
+[Publish] --> [Postgres] : Version Control
+[Console] --> [Realtime] : Live Logs
+[Orchestrator] --> [Postgres] : State Management
+[Executor] --> [Postgres] : Task Execution
+[Metrics] --> [Postgres] : Stores Metrics Data
+[Metrics] --> [Realtime] : Live Metrics Updates
+[Metrics] .> [Orchestrator] : Monitors & Alerts
+[Metrics] .> [Executor] : Monitors & Alerts
+[Metrics] .> [Edge] : Monitors Scheduled Tasks
+[Metrics] .> [Webhook] : Tracks Trigger Performance
 
-note right of Metrics
-  Core component for gathering
-  application metrics, including
-  performance, errors, and usage.
+note right of [Metrics]
+  Key Metrics:
+  - Response Times
+  - Error Rates
+  - Resource Usage
+  - Trigger Performance
 end note
 
-note right of MetricsDB
-  Stores metrics data for
-  historical analysis and
-  real-time monitoring.
-end note
-
-note right of Dashboard
-  Provides visual representation
-  of metrics for easy understanding
-  and quick decision making.
-end note
-
-note right of Alerts
-  Monitors metrics for anomalies
-  and triggers alerts to notify
-  administrators and users.
+note "Integration Points" as IP
+[Webhook] .. IP
+[CRUD] .. IP
+[Publish] .. IP
+[Console] .. IP
+[Orchestrator] .. IP
+[Executor] .. IP
+[Edge] .. IP
+IP .. [Metrics] : Monitors & Integrates
 end note
 
 @enduml

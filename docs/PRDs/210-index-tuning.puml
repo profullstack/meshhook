@@ -2,48 +2,35 @@
 !theme plain
 
 package "MeshHook System" {
-    [Webhook Intake] - [SvelteKit SSR/API]
-    [Workflow CRUD] - [SvelteKit SSR/API]
-    [Publish Versions] - [SvelteKit SSR/API]
-    [Run Console] - [SvelteKit SSR/API]
-    database "Supabase" {
-        [Postgres] - [Data + Queues]
-        [Realtime] - [Log Streaming]
-        [Storage] - [Artifacts]
-        [Edge] - [Cron/Timers]
-    }
-    [SvelteKit SSR/API] --> [Supabase]
-    [Orchestrator Worker] --> [Supabase]
-    [HTTP Executor Worker] --> [Supabase]
+    [Webhook Triggers] - [Index Tuning]
+    [Visual DAG Builder] - [Index Tuning]
+    [Event Sourcing] - [Index Tuning]
+    [Live Logs] - [Index Tuning]
+    [Multi-tenant RLS Security] - [Index Tuning]
 
-    package "Index Tuning Task" {
-        [Analysis] --> [Design]
-        [Design] --> [Implementation]
-        [Implementation] --> [Integration]
-        [Integration] --> [Testing]
-        [Testing] --> [Documentation]
-        [Documentation] --> [Review]
-        [Review] --> [Deployment]
+    package "Supabase" {
+        [Postgres] - [Index Tuning]
+        [Realtime] - [Live Logs]
+        [Storage] - [Event Sourcing]
+        [Edge] - [Scheduled Tasks]
     }
 
-    [Analysis] .> [Existing Codebase]: Review
-    [Design] .> [Component Architecture]: Consider
-    [Implementation] .> [TDD Approach]: Follow
-    [Integration] .> [Existing Components]: Integrate With
-    [Testing] .> [Comprehensive Testing]: Perform
-    [Documentation] .> [API Docs]: Update
-    [Review] .> [Code Review]: Undergo
-    [Deployment] .> [CI/CD]: Pass Through
+    package "Development Environment" {
+        [Analysis & Design] -right-> [Implementation]
+        [Implementation] -right-> [Testing]
+        [Testing] -right-> [Documentation]
+        [Documentation] -right-> [Review & Merge]
+    }
 
-    [SvelteKit SSR/API] ..> [Index Tuning Task]: Triggers
-    [Supabase] ..> [Index Tuning Task]: Utilizes
+    [Review & Merge] .> [Postgres] : Applies Index Changes
+    [Scheduled Tasks] ..> [Webhook Triggers] : triggers>>
+    [Index Tuning] ..> [Postgres] : optimizes>>
 }
 
-note right of [Index Tuning Task]
-  Task Objective: Index tuning
-  - Analyze and optimize database indexes
-  - Ensure sub-second response times
-  - Maintain system reliability and security
-end note
+actor Developer
+actor DatabaseAdmin
+
+Developer -right-> [Analysis & Design] : performs
+DatabaseAdmin -right-> [Postgres] : manages
 
 @enduml

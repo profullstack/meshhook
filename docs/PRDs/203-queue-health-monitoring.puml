@@ -1,42 +1,50 @@
 @startuml
-!define RECTANGLE class
+!theme plain
 
-RECTANGLE Supabase <<External Service>> {
-    Database: Postgres
-    Realtime: Log Streaming
-    Storage: Artifacts
-    Edge: Cron/Timers
+package "Queue Health Monitoring System" {
+    [Queue Metrics Collector] --> [Supabase Realtime]: Subscribes for queue metrics
+    [Queue Metrics Collector] --> [Alerting Mechanism]: Sends metrics for evaluation
+    [Dashboard] --> [Supabase Realtime]: Fetches real-time metrics
+    [Alerting Mechanism] --> [Notification Service]: Triggers alerts
 }
 
-RECTANGLE SvelteKit <<Web>> {
-    Webhook Intake
-    Workflow CRUD
-    Publish Versions
-    Run Console
+package "Existing MeshHook System" {
+    [Supabase Realtime] <-- [Postgres Queues]: Streams queue events
+    [Workflow Engine] --> [Postgres Queues]: Processes webhook events\nand workflow executions
 }
 
-RECTANGLE Workers <<Service>> {
-    Orchestrator: State Machine + Scheduling
-    HTTPExecutor: Robust HTTP with Retries/Backoff
+database "Postgres Queues" {
+    folder "pg-boss" {
+    }
+    folder "pgmq" {
+    }
 }
 
-RECTANGLE Monitoring <<Monitor>> {
-    Queue Health Monitoring
-}
+[Queue Metrics Collector] ..> [Postgres Queues] : Collects metrics from
+[Dashboard] ..> [Queue Metrics Collector] : Displays metrics from
+[Alerting Mechanism] ..> [Dashboard] : Configures alerts in
 
-database "Postgres (Queues)" as Queues
+[Workflow Engine] -up-> [Supabase]: Utilizes
+[Notification Service] -right-> [Team Members]: Sends alerts to
 
-Supabase -down-> Queues : Uses
-SvelteKit -right-> Supabase : Interacts
-Workers -left-> Supabase : Interacts
-Monitoring -down-> Queues : Monitors
+note right of [Queue Metrics Collector]
+  Collects key metrics like queue length,
+  processing time, and error rates.
+end note
 
-note right of Monitoring : Key Metrics\n- Response Times\n- Error Rates
+note right of [Alerting Mechanism]
+  Evaluates metrics against predefined
+  thresholds to trigger alerts.
+end note
 
-note right of SvelteKit : SvelteKit (SSR/API)\nFor UI and API Management
+note right of [Dashboard]
+  Provides real-time visualization of
+  queue health to the MeshHook team.
+end note
 
-note left of Workers : Workers for\nBackground Processing
-
-note over Supabase : Supabase for\nData Management and Realtime Logs
+note right of [Notification Service]
+  Supports email, SMS, or webhook
+  notifications for critical alerts.
+end note
 
 @enduml

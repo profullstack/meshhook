@@ -1,34 +1,41 @@
 @startuml
 !theme plain
 
-title GitHub Actions Workflows for MeshHook Project
+title GitHub Actions Workflows for MeshHook CI/CD
 
 actor Developer as dev
 boundary GitHub as GH
-control "GitHub Actions" as GHA
-database "Supabase Postgres" as DB
-database "Supabase Realtime" as RT
-database "Supabase Storage" as Storage
-control "SvelteKit SSR/API" as SSR
-control "Orchestrator Worker" as Orch
-control "HTTP Executor Worker" as HTTPExec
+control "CI Workflow" as CI
+control "CD Workflow" as CD
+control "Security Scanning\nWorkflow" as SecScan
+database "Supabase\n(Postgres, Realtime, Storage)" as Supabase
+[Supabase Edge] as Edge
+[Workers] as Workers
+entity "SvelteKit\n(SSR/API)" as SvelteKit
 
-dev --> GH : Push code
-GH --> GHA : Trigger workflow
-GHA --> SSR : Deploy updates
-GHA --> DB : Run migrations
-GHA --> Orch : Deploy new\norchestrator version
-GHA --> HTTPExec : Deploy new\nHTTP executor version
-SSR --> DB : CRUD operations
-SSR --> RT : Log streaming
-Orch --> DB : Update state
-Orch --> HTTPExec : Dispatch tasks
-HTTPExec --> DB : Update task result
-DB --> RT : Update notifications
+dev --> GH : Push code\nCreate PR
+GH --> CI : Trigger on push/PR
+CI --> SvelteKit : Build
+CI --> Supabase : Run Tests
+CI --> GH : Report Status
 
-note right of GHA : CI/CD Pipeline
-note right of SSR : Webhook intake\nWorkflow management
-note left of Orch : Workflow execution
-note left of HTTPExec : HTTP tasks\nwith retries
+dev --> GH : Merge PR
+GH --> CD : Trigger on merge
+CD --> Supabase : Deploy to Staging
+CD --> Edge : Deploy Cron/Timers
+CD ..> GH : Manual Prod Deployment Trigger
+CD --> Supabase : Deploy to Production
+
+GH --> SecScan : Schedule/On Demand
+SecScan --> GH : Alert on Vulnerabilities
+
+note right of CI : Validates\n- Coding standards\n- Linting\n- Unit/Integration tests
+note right of CD : Staging & Production\n- Smoke tests\n- Manual approval for Prod
+note right of SecScan : Weekly + On Demand\n- Static code analysis
+
+SvelteKit --> Supabase : CRUD Operations
+Supabase --> Workers : Queue Tasks
+Workers --> Supabase : Update State
+Workers --> Edge : Schedule Tasks
 
 @enduml

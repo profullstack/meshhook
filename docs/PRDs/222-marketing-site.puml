@@ -1,64 +1,41 @@
 @startuml
 !theme plain
 
-package "MeshHook Marketing Site" {
-    [Marketing Site] as (site)
-    [Supabase Realtime] as (realtime)
-    [Postgres Database] as (db)
-    [SvelteKit SSR/API] as (ssr)
-    [Orchestrator Worker] as (orchestrator)
-    [HTTP Executor Worker] as (httpExecutor)
-    database "Supabase Storage" as (storage)
+package "Marketing Site" {
+    [Content Creation] as CC
+    [Design & User Experience] as DUX
+    [SEO Optimization] as SEO
+    [Analytics Integration] as AI
+    [Contact/Feedback Form] as CFF
 }
 
-cloud {
-    [External Services] as (external)
+package "MeshHook Core" {
+    [SvelteKit SSR/API] as SSR
+    [Supabase] as SB
+    [Workers] as WK
 }
 
-node "Development Environment" {
-    [Local Development] as (dev)
+database "Postgres" as PG {
+    [Data + Queues]
+    [Realtime]
+    [Storage]
 }
 
-[Local Development] ..> [Marketing Site] : Deploys
-[Marketing Site] ..> [SvelteKit SSR/API] : Uses
-[SvelteKit SSR/API] ..> [Supabase Realtime] : Streams logs
-[SvelteKit SSR/API] ..> [Postgres Database] : CRUD operations
-[Orchestrator Worker] ..> [Postgres Database] : Reads/Writes
-[HTTP Executor Worker] ..> [External Services] : Makes requests
-[Supabase Realtime] <.. [Supabase Storage] : Syncs files
-[Postgres Database] ..> [Supabase Storage] : Stores artifacts
+cloud "External Services" {
+    [Vercel/Netlify] as VN
+    [Google Analytics/Plausible] as GA
+}
 
-note right of (site)
-  Marketing site for MeshHook.
-  Showcases features and documentation.
-end note
+SSR --> VN : Deploys to
+SSR --> GA : Embeds analytics
+SSR --> SB : Uses
+SB --> PG : Manages
+WK --> PG : Interacts with
 
-note right of (ssr)
-  SvelteKit for SSR and API endpoints.
-end note
-
-note right of (orchestrator)
-  Manages workflow execution.
-end note
-
-note right of (httpExecutor)
-  Handles HTTP requests with retries.
-end note
-
-note right of (db)
-  Stores data, queues, and logs.
-end note
-
-note right of (realtime)
-  Provides live updates to clients.
-end note
-
-note right of (external)
-  Includes webhook sources and other APIs.
-end note
-
-note right of (dev)
-  Where development and testing occur.
-end note
+CC --> SSR : Content for
+DUX --> SSR : UI/UX Design
+SEO --> SSR : SEO Practices
+AI --> GA : Integrates
+CFF --> SSR : Form implementation
 
 @enduml

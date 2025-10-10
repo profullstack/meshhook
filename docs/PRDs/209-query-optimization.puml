@@ -1,37 +1,49 @@
 @startuml
 !theme plain
 
-title Query Optimization Workflow
+package "MeshHook System" {
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase Postgres] as Postgres
+    [Supabase Realtime] as Realtime
+    [Workflow Engine] as Engine
+    [HTTP Executor] as Executor
+}
 
-actor Developer
-boundary "SvelteKit SSR/API" as SvelteKit
-database "Supabase Postgres" as Postgres
-control "Orchestrator Worker" as Orchestrator
-control "HTTP Executor Worker" as Executor
-queue "Supabase Realtime" as Realtime
-queue "Supabase Storage" as Storage
-cloud "External Services" as External
+database "Postgres DB" as DB {
+    [Queries] as DBQueries
+    [Schema] as DBSchema
+}
 
-Developer --> SvelteKit : Triggers Query Optimization
-SvelteKit --> Orchestrator : Initiates Workflow
-Orchestrator --> Postgres : Fetches Workflow Data
-Postgres --> Orchestrator : Returns Data
-Orchestrator --> Executor : Executes Optimized Query
-Executor --> Postgres : Applies Query
-Postgres --> Executor : Returns Results
-Executor --> Realtime : Streams Logs
-Realtime --> SvelteKit : Displays Live Logs
-SvelteKit --> Developer : Shows Optimization Results
-Executor --> Storage : Saves Execution Artifacts
-Storage --> Developer : Access Artifacts (if needed)
-Executor --> External : Calls External APIs (if needed)
-External --> Executor : Returns API Data
+cloud {
+    [Supabase Services] as Supabase
+}
 
-note right of Postgres : No schema changes\nrequired for optimization
+node "External Tools" {
+    [Performance Analysis Tools] as AnalysisTools
+}
 
-group Integration Points
-    SvelteKit -[hidden]-> Postgres : Existing System Components
-    Orchestrator -[hidden]-> Executor : New Optimization Components
-end group
+[AnalysisTools] .down.> [DBQueries] : Identifies\nslow queries
+DBQueries .right.> [Query Optimization] : Optimization\nstrategies
+[Query Optimization] .down.> [DBSchema] : Applies\nschema changes
+[DBSchema] .down.> [Postgres] : Updates
+[Query Optimization] .down.> [Postgres] : Applies\noptimized queries
+
+SvelteKit -right-> [Engine] : Triggers workflows
+Engine -down-> [Executor] : Orchestrates HTTP calls
+Executor -down-> Postgres : Reads/Writes data
+Postgres -left-> Realtime : Streams logs
+
+Supabase -[hidden]-> DB : Hosts
+Supabase .up.> SvelteKit : Provides services
+Supabase .up.> Realtime : Provides services
+Supabase .up.> Postgres : Provides services
+
+class "Query Optimization" {
+    +Identify slow queries
+    +Develop optimization plan
+    +Implement optimizations
+    +Regression testing
+    +Performance benchmarking
+}
 
 @enduml

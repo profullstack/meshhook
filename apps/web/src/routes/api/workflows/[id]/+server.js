@@ -35,6 +35,7 @@ export async function GET(event) {
 
 /**
  * PUT /api/workflows/[id] - Update a workflow
+ * When publishing (status='published'), creates a new version
  */
 export async function PUT(event) {
 	const supabase = createServerSupabaseClient(event);
@@ -52,33 +53,95 @@ export async function PUT(event) {
 		const body = await event.request.json();
 		const { name, description, nodes, edges, status } = body;
 
-		// Build update object
-		const updates = {
-			updated_at: new Date().toISOString()
-		};
-
-		if (name !== undefined) updates.name = name;
-		if (description !== undefined) updates.description = description;
-		if (nodes !== undefined || edges !== undefined) {
-			updates.definition = { nodes, edges };
-		}
-		if (status !== undefined) updates.status = status;
-
-		const { data, error } = await supabase
-			.from('workflows')
-			.update(updates)
+		// Get current workflow to check if we're publishing
+		const { data: currentWorkflow, error: fetchError } = await supabase
+			.from('workflow_definitions')
+			.select('*')
 			.eq('id', id)
-			.select()
 			.single();
 
-		if (error) {
-			if (error.code === 'PGRST116') {
+		if (fetchError) {
+			if (fetchError.code === 'PGRST116') {
 				return json({ error: 'Workflow not found' }, { status: 404 });
 			}
-			throw error;
+			throw fetchError;
 		}
 
-		return json({ workflow: data });
+		// Check if we're publishing a draft workflow
+		const isPublishing = status === 'published' && currentWorkflow.status === 'draft';
+
+		if (isPublishing) {
+			// When publishing, create a new version
+			// Get the max version for this workflow slug
+			const { data: maxVersionData } = await supabase
+				.from('workflow_definitions')
+				.select('version')
+				.eq('project_id', currentWorkflow.project_id)
+				.eq('slug', currentWorkflow.slug)
+				.order('version', { ascending: false })
+				.limit(1)
+				.single();
+
+			const newVersion = (maxVersionData?.version || 0) + 1;
+
+			// Create new version entry
+			const { data: newVersionData, error: insertError } = await supabase
+				.from('workflow_definitions')
+				.insert({
+					project_id: currentWorkflow.project_id,
+					slug: currentWorkflow.slug,
+					name: name ?? currentWorkflow.name,
+					description: description ?? currentWorkflow.description,
+					version: newVersion,
+					definition: nodes !== undefined || edges !== undefined
+						? { nodes, edges }
+						: currentWorkflow.definition,
+					status: 'published',
+					user_id: currentWorkflow.user_id
+				})
+				.select()
+				.single();
+
+			if (insertError) {
+				throw insertError;
+			}
+
+			// Archive the old draft version
+			await supabase
+				.from('workflow_definitions')
+				.update({ status: 'archived' })
+				.eq('id', id);
+
+			return json({ workflow: newVersionData });
+		} else {
+			// For non-publishing updates (draft edits), update in place
+			const updates = {
+				updated_at: new Date().toISOString()
+			};
+
+			if (name !== undefined) updates.name = name;
+			if (description !== undefined) updates.description = description;
+			if (nodes !== undefined || edges !== undefined) {
+				updates.definition = { nodes, edges };
+			}
+			if (status !== undefined) updates.status = status;
+
+			const { data, error } = await supabase
+				.from('workflow_definitions')
+				.update(updates)
+				.eq('id', id)
+				.select()
+				.single();
+
+			if (error) {
+				if (error.code === 'PGRST116') {
+					return json({ error: 'Workflow not found' }, { status: 404 });
+				}
+				throw error;
+			}
+
+			return json({ workflow: data });
+		}
 	} catch (error) {
 		console.error('Error updating workflow:', error);
 		return json({ error: error.message }, { status: 500 });

@@ -1,38 +1,38 @@
 @startuml
 !theme plain
 
-title Error Message Handling in MeshHook
+title Error Message Enhancement Workflow
 
-package "MeshHook System" {
-    [Webhook Intake] as WI
-    [Workflow CRUD] as WCRUD
-    [Publish Versions] as PV
-    [Run Console] as RC
-    [Error Handling] as EH
-}
+actor User
+boundary "UI (SvelteKit)" as UI
+control "Error Handler" as ErrorHandler
+database "Supabase" as Supabase
+entity "Webhook Triggers" as Webhooks
+entity "Workflow Execution" as WorkflowExec
+entity "Documentation" as Docs
 
-database "Supabase" {
-    [Postgres] as DB
-    [Realtime] as RT
-    [Storage] as S
-    [Edge] as E
-}
+User -> UI: Encounter Error
+UI -> ErrorHandler: Report Error
+ErrorHandler -> Supabase: Log Error
+Supabase --> ErrorHandler: Confirm Logging
+ErrorHandler -> UI: Display Error Message
+UI --> User: Show Error Message & Suggestions
 
-node "Workers" {
-    [Orchestrator] as O
-    [HTTP Executor] as HE
-}
+note right of ErrorHandler: Categorize Errors\nUser, System, Integration
+note right of UI: Suggest Actions or Documentation Links
 
-WI --> EH : triggers\non failure
-WCRUD --> EH : triggers\non failure
-PV --> EH : triggers\non failure
-RC --> EH : triggers\non failure
-O --> EH : triggers\non failure
-HE --> EH : triggers\non failure
+ErrorHandler .down.> Webhooks: Integration Point
+ErrorHandler .down.> WorkflowExec: Integration Point
+UI .right.> Docs: Link to Error Documentation
 
-EH --> DB : logs error\ndetails
-EH --> RT : streams error\nto clients
-
-note right of EH : Error Handling Strategies\n- Log to Postgres\n- Stream via Realtime\n- User Notification
+legend left
+  -- Key Components --
+  User: Initiates the error scenario
+  UI (SvelteKit): Frontend interface
+  Error Handler: Manages error categorization, logging, and response
+  Supabase: Backend service for error logging
+  Webhook Triggers/Workflow Execution: Points of error origination
+  Documentation: Error details and troubleshooting
+endlegend
 
 @enduml
