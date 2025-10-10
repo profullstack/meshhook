@@ -15,8 +15,8 @@ export async function POST({ request, params }) {
     }
   }
 
-  const { db } = await import("@meshhook/shared/lib/db.js");
-  const { enqueueRun } = await import("@meshhook/shared/lib/queue.js");
+  const { db } = await import("../../../../../workers/lib/db.js");
+  const { enqueueRun } = await import("../../../../../workers/lib/queue.js");
 
   const wf = await db.oneOrNone(
     `select id, project_id from workflow_definitions
