@@ -22,14 +22,15 @@
  *   --dry-run  Preview PRDs without saving or updating issues
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, statSync } from "fs";
 import { execSync } from "child_process";
-import { join, dirname } from "path";
+import { join, dirname, extname } from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = join(__dirname, "..");
+const DOCS_DIR = join(PROJECT_ROOT, "docs");
 const PRDS_DIR = join(PROJECT_ROOT, "docs", "PRDs");
 const RATE_LIMIT_DELAY = 2000; // 2 seconds between API calls
 
@@ -53,39 +54,69 @@ function getRepo() {
   }
 }
 
-// Read project context files
+// Recursively read all files from a directory
+function readAllFilesRecursive(dir, fileList = []) {
+  const files = readdirSync(dir);
+
+  for (const file of files) {
+    const filePath = join(dir, file);
+    const stat = statSync(filePath);
+
+    if (stat.isDirectory()) {
+      // Skip PRDs directory to avoid reading generated PRDs
+      if (file !== "PRDs") {
+        readAllFilesRecursive(filePath, fileList);
+      }
+    } else {
+      const ext = extname(file);
+      // Include .md and .puml files
+      if (ext === ".md" || ext === ".puml") {
+        fileList.push(filePath);
+      }
+    }
+  }
+
+  return fileList;
+}
+
+// Read project context files from entire docs directory
 function loadProjectContext() {
   const context = {
-    prd: "",
-    architecture: "",
-    todo: "",
+    files: {},
+    allContent: "",
   };
 
   try {
-    const prdPath = join(PROJECT_ROOT, "docs", "PRD.md");
-    if (existsSync(prdPath)) {
-      context.prd = readFileSync(prdPath, "utf8");
+    // Read all .md and .puml files from docs directory
+    const docFiles = readAllFilesRecursive(DOCS_DIR);
+    
+    console.log(`  📄 Loading ${docFiles.length} documentation files...`);
+    
+    for (const filePath of docFiles) {
+      try {
+        const content = readFileSync(filePath, "utf8");
+        const relativePath = filePath.replace(PROJECT_ROOT + "/", "");
+        context.files[relativePath] = content;
+        context.allContent += `\n\n--- ${relativePath} ---\n\n${content}`;
+      } catch (error) {
+        console.warn(`  ⚠️  Could not read ${filePath}`);
+      }
     }
-  } catch (error) {
-    console.warn("⚠️  Could not read docs/PRD.md");
-  }
 
-  try {
-    const archPath = join(PROJECT_ROOT, "docs", "Architecture.md");
-    if (existsSync(archPath)) {
-      context.architecture = readFileSync(archPath, "utf8");
+    // Also read TODO.md from root
+    try {
+      const todoPath = join(PROJECT_ROOT, "TODO.md");
+      if (existsSync(todoPath)) {
+        const content = readFileSync(todoPath, "utf8");
+        context.files["TODO.md"] = content;
+        context.allContent += `\n\n--- TODO.md ---\n\n${content}`;
+      }
+    } catch (error) {
+      console.warn("  ⚠️  Could not read TODO.md");
     }
-  } catch (error) {
-    console.warn("⚠️  Could not read docs/Architecture.md");
-  }
 
-  try {
-    const todoPath = join(PROJECT_ROOT, "TODO.md");
-    if (existsSync(todoPath)) {
-      context.todo = readFileSync(todoPath, "utf8");
-    }
   } catch (error) {
-    console.warn("⚠️  Could not read TODO.md");
+    console.warn(`  ⚠️  Error loading documentation: ${error.message}`);
   }
 
   return context;
@@ -135,6 +166,15 @@ function parseIssueBody(body) {
   return parsed;
 }
 
+// Sanitize title for filename
+function sanitizeFilename(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .substring(0, 80); // Limit length
+}
+
 // Generate PRD content for an issue
 function generatePRD(issue, context) {
   const { number, title, body, milestone, labels, url } = issue;
@@ -143,12 +183,11 @@ function generatePRD(issue, context) {
   const milestoneName = milestone?.title || "None";
 
   // Extract relevant context from project docs
-  const projectGoals = extractSection(context.prd, "## 2. Goals");
-  const securityNotes = extractSection(context.prd, "## 7. Security");
-  const architectureOverview = extractSection(
-    context.architecture,
-    "## Components"
-  );
+  const prdContent = context.files["docs/PRD.md"] || "";
+  const archContent = context.files["docs/Architecture.md"] || "";
+  const projectGoals = extractSection(prdContent, "## 2. Goals");
+  const securityNotes = extractSection(prdContent, "## 7. Security");
+  const architectureOverview = extractSection(archContent, "## Components");
 
   const prd = `# PRD: ${title}
 
@@ -462,7 +501,7 @@ function generatePrerequisites(parsed, context) {
 }
 
 // Save PRD to file
-function savePRD(issueNumber, content, dryRun = false) {
+function savePRD(issueNumber, issueTitle, content, dryRun = false) {
   if (dryRun) {
     console.log(`\n${"=".repeat(80)}`);
     console.log(`PRD Preview for Issue #${issueNumber}`);
@@ -478,33 +517,35 @@ function savePRD(issueNumber, content, dryRun = false) {
     console.log(`  📁 Created directory: ${PRDS_DIR}`);
   }
 
-  const filename = join(PRDS_DIR, `${issueNumber}.md`);
+  const sanitizedTitle = sanitizeFilename(issueTitle);
+  const filename = join(PRDS_DIR, `${issueNumber}-${sanitizedTitle}.md`);
   writeFileSync(filename, content, "utf8");
 
   return filename;
 }
 
+// Check if issue already has PRD section
+function hasPRDSection(body) {
+  return body?.includes("## 📋 Product Requirements Document") || false;
+}
+
 // Update issue body with PRD content and link
-async function updateIssueBody(repo, issueNumber, originalBody, prdContent, dryRun = false) {
-  const prdLink = `\n\n---\n\n## 📋 Product Requirements Document\n\n**Full PRD:** [docs/PRDs/${issueNumber}.md](../blob/main/docs/PRDs/${issueNumber}.md)\n\n<details>\n<summary>View PRD Content</summary>\n\n${prdContent}\n\n</details>`;
+async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdContent, dryRun = false) {
+  const sanitizedTitle = sanitizeFilename(issueTitle);
+  const prdFilename = `${issueNumber}-${sanitizedTitle}.md`;
+  const prdLink = `\n\n---\n\n## 📋 Product Requirements Document\n\n**Full PRD:** [docs/PRDs/${prdFilename}](https://github.com/${repo}/blob/main/docs/PRDs/${prdFilename})\n\n<details>\n<summary>View PRD Content</summary>\n\n${prdContent}\n\n</details>`;
 
   // Check if PRD section already exists
-  const hasPRDSection = originalBody?.includes("## 📋 Product Requirements Document");
-
-  let newBody;
-  if (hasPRDSection) {
-    // Replace existing PRD section
-    newBody = originalBody.replace(
-      /\n\n---\n\n## 📋 Product Requirements Document[\s\S]*$/,
-      prdLink
-    );
-  } else {
-    // Append PRD section
-    newBody = (originalBody || "") + prdLink;
+  if (hasPRDSection(originalBody)) {
+    console.log(`  ⏭️  Issue #${issueNumber} already has PRD section - skipping update`);
+    return true; // Return true since no update is needed
   }
 
+  // Append PRD section to original body
+  const newBody = (originalBody || "") + prdLink;
+
   if (dryRun) {
-    console.log(`\n  [DRY RUN] Would update issue #${issueNumber} body`);
+    console.log(`  [DRY RUN] Would append PRD section to issue #${issueNumber}`);
     return true;
   }
 
@@ -557,9 +598,10 @@ async function generateIssuePRDs(dryRun = false) {
   }
 
   // Load project context
-  console.log("📖 Loading project context...");
+  console.log("\n📖 Loading project context...");
   const context = loadProjectContext();
-  console.log(`  ✓ Loaded ${context.prd ? "PRD.md" : ""} ${context.architecture ? "Architecture.md" : ""} ${context.todo ? "TODO.md" : ""}`);
+  const fileCount = Object.keys(context.files).length;
+  console.log(`  ✓ Loaded ${fileCount} documentation files`);
 
   // Fetch open issues
   console.log("\n🔍 Fetching open issues...");
@@ -579,26 +621,34 @@ async function generateIssuePRDs(dryRun = false) {
     console.log(`\n📝 Processing Issue #${issue.number}: ${issue.title}`);
 
     try {
+      // Check if issue already has PRD section
+      if (hasPRDSection(issue.body)) {
+        console.log(`  ⏭️  Already has PRD - skipping`);
+        processedCount++;
+        continue;
+      }
+
       // Generate PRD
       const prdContent = generatePRD(issue, context);
 
       // Save PRD to file
-      const filename = savePRD(issue.number, prdContent, dryRun);
+      const filename = savePRD(issue.number, issue.title, prdContent, dryRun);
       if (filename) {
         console.log(`  ✓ Saved PRD to: ${filename}`);
       }
 
-      // Update issue body
+      // Update issue body (append PRD section)
       const updated = await updateIssueBody(
         repo,
         issue.number,
+        issue.title,
         issue.body,
         prdContent,
         dryRun
       );
 
       if (updated) {
-        console.log(`  ✓ Updated issue #${issue.number} with PRD link`);
+        console.log(`  ✓ Appended PRD section to issue #${issue.number}`);
         processedCount++;
       } else {
         errorCount++;

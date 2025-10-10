@@ -421,15 +421,19 @@ async function syncTodoWithGitHub(shouldClean = false) {
   
   let issueCount = 0;
   let skipCount = 0;
+  let taskIndex = 0;
 
   for (const task of tasks) {
+    taskIndex++;
     // Check if exists
     const existing = await issueExists(repo, task.cleanTask);
     if (existing) {
-      console.log(`  ⏭️  Skipping (exists #${existing}): ${task.cleanTask}`);
+      console.log(`  [${taskIndex}/${tasks.length}] ⏭️  Skipping (exists #${existing}): ${task.cleanTask}`);
       skipCount++;
       continue;
     }
+
+    console.log(`  [${taskIndex}/${tasks.length}] Creating: ${task.cleanTask}...`);
 
     // Find milestone number by matching phase
     const milestoneNumber = Array.from(milestoneMap.entries())
@@ -455,7 +459,7 @@ async function syncTodoWithGitHub(shouldClean = false) {
 
     if (issueNum) {
       const prefix = task.indent > 0 ? "  ".repeat(task.indent / 2) + "└─" : "";
-      console.log(`  ${prefix}✓ Created #${issueNum}: ${task.cleanTask}`);
+      console.log(`  ${prefix}✓ Created #${issueNum}`);
       
       // Add milestone separately if available
       if (milestoneNumber) {
