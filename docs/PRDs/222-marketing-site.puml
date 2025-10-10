@@ -1,57 +1,67 @@
 @startuml
-!theme cerulean
+!theme plain
 
-title Marketing Site Architecture for MeshHook
+title Marketing Site Development for MeshHook
 
-package "Frontend - SvelteKit" {
-    [Content Strategy & Creation] as Content
-    [Responsive Design] as Responsive
-    [UI/UX Design Implementation] as UIUX
+package "Marketing Site" {
+    [Content Strategy] as CS
+    [Responsive Web Design] as RWD
     [SEO Optimization] as SEO
+    [Lead Capture Form] as LCF
+    [Social Proof] as SP
+}
+
+package "Technical Specifications" {
+    [SvelteKit] as SK
+    [Vercel/Netlify] as VN
+    [Google Analytics] as GA
+}
+
+database "MeshHook DB" as DB {
+    frame "Content" {
+        [Product Info]
+        [Testimonials]
+        [Case Studies]
+    }
 }
 
 cloud {
-    [Google Analytics] as Analytics
+    [User] as U
 }
 
-database "Hosting - Vercel/Netlify" {
-    [Deployment] as Deploy
-    [SSL & CDN] as SSLCDN
-}
+User --> CS : Views content
+User --> RWD : Accesses via various devices
+User --> SEO : Finds site through search engines
+User --> LCF : Submits inquiries
+User --> SP : Reads reviews and case studies
 
-[Content] --> [UIUX] : Defines\nContent Structure
-[Responsive] .> [UIUX] : Ensures\nResponsive Layouts
-[UIUX] --> [SEO] : Implements\nSEO Best Practices
-[SEO] --> [Analytics] : Tracks\nPage Views & Interactions
-[Analytics] --> [Deploy] : Provides\nInsights for Optimization
-[Deploy] --> [SSLCDN] : Utilizes\nfor Performance & Security
+CS --> SK : Content managed by
+RWD --> SK : Design implemented with
+SEO --> SK : SEO strategies applied
+LCF --> SK : Form built with
+SP --> SK : Showcased via
 
-package "External Integrations" {
-    [Lead Generation Form] as LeadGen
-    [Social Proof Widgets] as SocialProof
-}
+SK --> VN : Deployed on
+VN --> GA : Monitored by
 
-[LeadGen] .> [Analytics] : Captures\nUser Submissions
-[SocialProof] .> [UIUX] : Embeds\nTestimonials & Reviews
+DB --> CS : Provides content
+DB --> SP : Provides testimonials and case studies
 
-note right of [Deploy]
-  - Continuous Deployment
-  - Global Distribution
-  - Automatic HTTPS
+note right of GA
+  Analytics & SEO are crucial for
+  understanding user behavior and
+  improving search rankings.
 end note
 
-note right of [SEO]
-  - Meta Tags
-  - Accessible Content
-  - Structured Data
+note right of VN
+  Deployment platforms like Vercel
+  or Netlify offer global CDN, SSL,
+  and easy deployment processes.
 end note
 
-note over Content, SEO
-  Key Content & SEO Strategies
-end note
-
-note over LeadGen, SocialProof
-  Enhances Credibility & Conversion
+note right of SK
+  SvelteKit offers server-side rendering
+  (SSR) for a performant, SEO-friendly site.
 end note
 
 @enduml

@@ -1,5 +1,29 @@
 @startuml
 !theme plain
 
+title MeshHook Documentation Review Process
+
+actor Developer as dev
+actor Reviewer
+database GitHub as git
+cloud "MeshHook Platform" as meshhook
+rectangle "Documentation\nTools & Platforms" as tools
+rectangle "Markdown\nEditor" as markdown
+rectangle "Documentation\nRepository" as docsRepo
+
+dev --> meshhook : Audit Current Features
+dev --> meshhook : Verify Architectural Details
+dev --> git : Access Codebase & Docs
+dev --> tools : Use Documentation Tools
+tools --> markdown : Create/Update Docs
+markdown --> docsRepo : Update Documentation
+docsRepo --> Reviewer : Review Updated Docs
+Reviewer --> docsRepo : Provide Feedback
+docsRepo --> git : Publish Documentation
+
+meshhook .> git : Reflects Current State
+meshhook .> tools : Based on Architecture & Features
+tools .> markdown : Utilize for Documentation
+markdown .> Reviewer : Ensure Clarity & Accuracy
 
 @enduml

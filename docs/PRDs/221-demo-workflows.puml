@@ -1,3 +1,24 @@
 @startuml
+!theme plain
+
+title MeshHook Demo Workflows
+
+actor User as user
+participant "SvelteKit\nVisual Builder" as builder
+database "Supabase\nRealtime DB" as supabase
+participant "MeshHook\nWorkflow Engine" as engine
+cloud "Webhook Sources" as webhooks
+queue "Live Logs" as logs
+
+user -> builder : Design Workflow
+builder -> engine : Deploy Workflow
+user -> engine : Import Workflow
+engine -> supabase : Fetch Data
+supabase --> engine : Data for Conditions
+webhooks -> engine : Trigger Workflow\nwith Signature
+engine -> logs : Write Execution Logs
+logs --> user : View Logs in Realtime
+engine -> supabase : Update Workflow State
+supabase --> user : Push Updates via Realtime
 
 @enduml

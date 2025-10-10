@@ -1,5 +1,47 @@
 @startuml
-!theme plain
+!theme amiga
 
+' Define actors
+actor User
+
+' Define system boundary
+package "MeshHook UI" {
+    [Dark Mode Toggle]
+    [UI Components]
+    [User Profile Settings]
+}
+
+package "Backend Services" {
+    [Supabase]
+}
+
+' Define databases
+database "Supabase Database" as DB {
+    [user_settings]
+}
+
+' Define relationships and actions
+User --> [Dark Mode Toggle] : toggles theme
+[Dark Mode Toggle] --> [UI Components] : applies theme
+[UI Components] ..> [User Profile Settings] : <<read/write>>
+[User Profile Settings] --> [Supabase] : updates theme preference
+[Supabase] --> DB : stores/retrieves\ntheme_preference
+
+' Add notes
+note right of [Dark Mode Toggle]
+  A UI control within the application
+  allowing users to switch between
+  Dark and Light themes.
+end note
+
+note right of DB
+  The "user_settings" table includes a
+  "theme_preference" attribute to store
+  each user's theme choice.
+end note
+
+' Highlight integration points
+[Supabase] ..> [Supabase Database] : <<integrates with>>
+[UI Components] ..> [MeshHook UI] : <<use>>
 
 @enduml

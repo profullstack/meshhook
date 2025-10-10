@@ -585,7 +585,7 @@ function validatePlantUMLSyntax(pumlFile) {
     const result = execSync(`plantuml -syntax "${pumlFile}"`, { encoding: "utf8" });
     
     // Check if there are any errors in the output
-    if (result.includes('ERROR') || result.includes('Syntax Error')) {
+    if (result.includes('ERROR') || result.includes('Syntax Error') || result.includes('No diagram found')) {
       return { valid: false, error: result };
     }
     

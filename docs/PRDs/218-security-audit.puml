@@ -1,5 +1,49 @@
 @startuml
 !theme plain
 
+title Security Audit Workflow for MeshHook
+
+actor Auditor
+participant "Security Tools" as Tools
+database "Supabase DB" as Supabase
+participant "MeshHook API" as API
+participant "Frontend (SvelteKit)" as Frontend
+participant "Worker Services" as Workers
+cloud "Third-party Libraries" as Libraries
+
+group Preparation
+    Auditor -> Tools : Compile list of components and services
+    Auditor -> Tools : Define audit scope
+end
+
+group Execution
+    Tools -> API : Static code analysis
+    Tools -> API : Dynamic analysis & penetration testing
+    Tools -> Supabase : Data storage analysis
+    Tools -> Libraries : Dependency security check
+    Tools -> Frontend : Review authentication mechanisms
+    Tools -> Workers : Analyze process orchestration security
+end
+
+group Reporting
+    Tools -> Auditor : Document findings with severity ratings
+    Auditor -> API : Propose mitigation strategies
+end
+
+group Remediation Plan
+    Auditor -> API : Prioritize vulnerabilities
+    API -> Supabase : Implement data model changes
+    API -> Frontend : Update API endpoints security
+    API -> Workers : Secure worker service interactions
+end
+
+group Validation
+    Tools -> API : Retest fixed vulnerabilities
+    Auditor -> API : Confirm mitigations
+end
+
+group Documentation Update
+    Auditor -> API : Update security documentation
+end
 
 @enduml
