@@ -71,11 +71,57 @@ PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ORIGIN=https://your-app.railway.app
 ```
 
-### 3. Service Communication
+### 3. Service Communication Architecture
 
-- The Web Application and Orchestrator Worker both connect to the same database
-- They communicate asynchronously through the PGMQ queue system in PostgreSQL
-- No direct HTTP communication is needed between services
+**Important: Services do NOT communicate via HTTP with each other!**
+
+The architecture uses **database-driven async communication**:
+
+```
+┌─────────────────┐         ┌──────────────────┐
+│  Web App        │         │  Orchestrator    │
+│  (Public URL)   │         │  Worker          │
+│                 │         │  (No public URL) │
+└────────┬────────┘         └────────┬─────────┘
+         │                           │
+         │    Both connect to        │
+         │    same database          │
+         │                           │
+         └───────────┬───────────────┘
+                     │
+              ┌──────▼──────┐
+              │  PostgreSQL │
+              │  + PGMQ     │
+              │  (Supabase) │
+              └─────────────┘
+```
+
+**How it works:**
+
+1. **Web App** (needs public domain):
+   - Serves the UI to users
+   - Handles API requests
+   - Writes jobs to PGMQ queue in database
+   - Reads run status from database
+
+2. **Orchestrator Worker** (no public domain needed):
+   - Polls PGMQ queue for jobs
+   - Processes workflow steps
+   - Writes events back to database
+   - Updates run status in database
+
+3. **Communication Flow**:
+   - User triggers workflow → Web app writes to `pgmq.run:orchestrate` queue
+   - Worker polls queue → picks up job → processes it
+   - Worker writes events to `workflow_events` table
+   - Web app reads events via Supabase Realtime for live updates
+
+**Railway Domain Assignment:**
+
+- **Web Service**: Gets a public domain (e.g., `meshhook-web.railway.app`)
+- **Worker Service**: No public domain needed (internal service only)
+
+Both services only need the `DATABASE_URL` environment variable to communicate through the database.
 
 ### 4. Database Setup
 
