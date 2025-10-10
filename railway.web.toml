@@ -1,6 +1,6 @@
 # Railway configuration for the Web Application (SvelteKit)
 [build]
-buildCommand = "pnpm install && cd apps/web && pnpm run build"
+buildCommand = "npm install -g pnpm && pnpm install && cd apps/web && pnpm run build"
 
 [deploy]
 startCommand = "cd apps/web && node build/index.js"

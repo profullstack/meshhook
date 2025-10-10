@@ -150,7 +150,7 @@ After deployment:
 ```toml
 # Railway configuration for the Orchestrator Worker
 [build]
-buildCommand = "pnpm install"
+buildCommand = "npm install -g pnpm && pnpm install"
 
 [deploy]
 startCommand = "node workers/orchestrator.mjs"
@@ -163,7 +163,7 @@ restartPolicyMaxRetries = 10
 ```toml
 # Railway configuration for the Web Application (SvelteKit)
 [build]
-buildCommand = "pnpm install && cd apps/web && pnpm run build"
+buildCommand = "npm install -g pnpm && pnpm install && cd apps/web && pnpm run build"
 
 [deploy]
 startCommand = "cd apps/web && node build/index.js"
@@ -171,7 +171,9 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 ```
 
-**Note:** Node.js version is set via Railway's service settings (Settings → Environment → Node Version = 20).
+**Note:**
+- Railway doesn't have pnpm pre-installed, so we install it globally using npm first
+- Node.js version is set via Railway's service settings (Settings → Environment → Node Version = 20)
 
 ## Troubleshooting
 
