@@ -1,6 +1,8 @@
 <script>
 	import WorkflowEditor from '$lib/components/WorkflowEditor.svelte';
 	import NodePalette from '$lib/components/NodePalette.svelte';
+	import NodeConfigModal from '$lib/components/NodeConfigModal.svelte';
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 
@@ -8,6 +10,12 @@
 	let nodes = $state([]);
 	let edges = $state([]);
 	let workflowName = $state('Untitled Workflow');
+	let saving = $state(false);
+	let saveError = $state('');
+	
+	// Node configuration state
+	let selectedNode = $state(null);
+	let showConfigModal = $state(false);
 
 	// Handle node changes
 	function handleNodesChange(updatedNodes) {
@@ -18,18 +26,62 @@
 	function handleEdgesChange(updatedEdges) {
 		edges = updatedEdges;
 	}
+	
+	// Handle node click to open configuration
+	function handleNodeClick(node) {
+		selectedNode = node;
+		showConfigModal = true;
+	}
+	
+	// Handle node configuration save
+	function handleNodeConfigSave(updatedNode) {
+		nodes = nodes.map(n => n.id === updatedNode.id ? updatedNode : n);
+		showConfigModal = false;
+		selectedNode = null;
+	}
+	
+	// Handle node configuration cancel
+	function handleNodeConfigCancel() {
+		showConfigModal = false;
+		selectedNode = null;
+	}
 
 	// Save workflow
 	async function saveWorkflow() {
-		const workflow = {
-			name: workflowName,
-			nodes,
-			edges,
-			version: 1
-		};
+		if (saving) return;
+		
+		try {
+			saving = true;
+			saveError = '';
+			
+			const response = await fetch('/api/workflows', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					name: workflowName,
+					description: '',
+					nodes,
+					edges,
+					status: 'draft'
+				})
+			});
 
-		console.log('Saving workflow:', workflow);
-		// TODO: Implement API call to save workflow
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.error || 'Failed to save workflow');
+			}
+
+			const result = await response.json();
+			
+			// Redirect to the workflow edit page
+			goto(`/workflows/${result.workflow.id}/edit`);
+		} catch (err) {
+			saveError = err.message;
+			console.error('Error saving workflow:', err);
+			alert(`Error saving workflow: ${err.message}`);
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -60,9 +112,18 @@
 				bind:edges
 				onNodesChange={handleNodesChange}
 				onEdgesChange={handleEdgesChange}
+				onNodeClick={handleNodeClick}
 			/>
 		</div>
 	</div>
+	
+	{#if showConfigModal && selectedNode}
+		<NodeConfigModal
+			node={selectedNode}
+			onSave={handleNodeConfigSave}
+			onCancel={handleNodeConfigCancel}
+		/>
+	{/if}
 </div>
 
 <style>
