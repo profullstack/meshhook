@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+
+title Query Optimization - Workflow
+
+package "MeshHook System" {
+    [Webhook Intake] as Webhook
+    [Workflow CRUD API] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
+    [Realtime Log Streaming] as Logs
+    [Database (Postgres)] as DB
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as Executor
+}
+
+package "Supabase Services" {
+    [Postgres] as SupaDB
+    [Realtime] as SupaRealtime
+    [Storage] as SupaStorage
+    [Edge Functions] as SupaEdge
+}
+
+package "Query Optimization Task" {
+    [Query Analysis] as Analysis
+    [Technical Design] as Design
+    [Implementation] as Implementation
+    [Integration Testing] as Integration
+    [Documentation] as Documentation
+}
+
+Webhook --> SupaDB : Triggers & Data
+CRUD --> SupaDB : CRUD Operations
+Publish --> SupaDB : Version Management
+Console --> SupaRealtime : Fetch Logs
+Logs --> SupaRealtime : Stream Updates
+DB --> SupaDB : Data Storage & Queues
+Orchestrator --> SupaDB : Job Scheduling
+Executor --> SupaDB : HTTP Requests
+
+Analysis --> Design : Define Architecture\n& Data Flow
+Design --> Implementation : Develop Features\n& Optimize Queries
+Implementation --> Integration : Merge & Test\nwith Existing Components
+Integration --> Documentation : Update Docs\n& API References
+
+SupaDB .down.> Analysis : Analyze Existing\nQueries & Performance
+SupaDB .down.> Design : Plan Optimizations\nfor Data Access
+SupaDB .down.> Implementation : Apply Optimizations
+SupaDB .down.> Integration : Test Optimized\nQueries & Performance
+
+@enduml

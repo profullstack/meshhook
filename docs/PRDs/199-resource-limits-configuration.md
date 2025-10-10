@@ -1,173 +1,118 @@
 # PRD: Resource limits configuration
 
-**Issue:** [#199](https://github.com/profullstack/meshhook/issues/199)  
-**Milestone:** Phase 9: Deployment & Operations  
-**Labels:** production-readiness  
-**Phase:** Phase 9  
-**Section:** Production Readiness
+**Issue:** [#199](https://github.com/profullstack/meshhook/issues/199)
+**Milestone:** Phase 9: Deployment & Operations
+**Labels:** production-readiness, hacktoberfest
 
 ---
 
+# PRD: Resource Limits Configuration
+
 ## Overview
 
-This task is part of Phase 9 in the Production Readiness section of the MeshHook project. 
+This task involves the configuration of resource limits within the MeshHook project, a crucial step towards ensuring our system's stability and scalability in production environments. By implementing configurable resource limits, MeshHook will be able to manage system resources effectively, prevent individual tenants from monopolizing shared resources, and maintain optimal performance levels across multi-tenant environments. This feature aligns with MeshHook's core objectives by enhancing the system's reliability, performance, and security, thereby ensuring a seamless and efficient workflow automation experience for all users.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Resource limits configuration
+1. **Resource Limit Configuration:**
+   - Implement a flexible configuration system to set and adjust resource limits for key system components, including but not limited to webhook processing, workflow executions, live log streaming, and database connections.
+   
+2. **Tenant-Specific Limits:**
+   - Enable the configuration of resource limits on a per-tenant basis, allowing for customized allocation based on the specific needs and agreements with each tenant.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+3. **Resource Usage Monitoring:**
+   - Integrate resource usage monitoring capabilities to track the consumption of resources against the configured limits in real-time.
 
-## Requirements
+4. **Limit Enforcement:**
+   - Develop mechanisms to enforce the configured resource limits, ensuring that operations are throttled or paused when limits are reached to prevent system overload.
 
-### Functional Requirements
+5. **Notification System:**
+   - Implement a notification system to alert administrators and/or tenants when resource usage approaches or exceeds configured limits.
 
-1. Implement the core functionality described in the task: "Resource limits configuration"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+6. **Documentation:**
+   - Provide comprehensive documentation on how to configure resource limits, monitor resource usage, and handle limit breaches.
 
+## Non-Functional Requirements
 
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure that the resource limit configuration and enforcement mechanisms do not introduce significant overhead or latency in system operations.
+- **Reliability:** Design the system to gracefully handle situations where resource limits are reached, ensuring that critical operations can continue without disruption.
+- **Security:** Ensure that the resource limit settings cannot be tampered with by unauthorized users, adhering to MeshHook's security standards.
+- **Maintainability:** Write clean, modular code with clear documentation, making future adjustments to resource limits straightforward for developers.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+The resource limits configuration feature will integrate with several components of the MeshHook architecture:
+
+- **Supabase/Postgres:** For storing resource limit configurations and monitoring data.
+- **SvelteKit (SSR/API):** For implementing administrative interfaces to configure and monitor resource limits.
+- **Workers (Orchestrator, HTTP Executor):** To enforce resource limits during workflow execution and webhook processing.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Analysis:** Review the current architecture and identify the best points for integrating resource limit configurations and enforcement.
+2. **Design:**
+   - Define the schema for storing resource limit configurations in Postgres.
+   - Design the API endpoints for configuring and monitoring resource limits.
+   - Outline the mechanism for enforcing resource limits across different components.
+3. **Implementation:**
+   - Implement the database schema changes.
+   - Develop the backend API for resource limit configuration and monitoring.
+   - Integrate resource limit enforcement mechanisms in the workflow and webhook processing pipelines.
+4. **Testing:** Conduct thorough testing, including unit, integration, and load testing, to ensure the feature works as expected and does not introduce regressions.
+5. **Documentation:** Update the system documentation to include detailed guides on configuring and managing resource limits.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+- Add a new table `resource_limits` to store resource limit configurations with columns for `tenant_id`, `resource_type`, `limit_value`, and `last_updated`.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+- `POST /api/resource-limits`: Configure limits for a resource type.
+- `GET /api/resource-limits/{tenant_id}`: Retrieve configured limits for a tenant.
+- `GET /api/resource-usage/{tenant_id}`: Fetch current resource usage against limits for a tenant.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Resource limit configurations can be created, updated, and retrieved through the API.
+- [ ] Resource usage is accurately tracked and compared against configured limits.
+- [ ] The system enforces resource limits appropriately, with operations throttled or paused as configured.
+- [ ] Notifications are triggered when resource usage approaches or exceeds limits.
+- [ ] Documentation is complete and provides clear guidance on using the feature.
+- [ ] All new code is well-tested and adheres to MeshHook's coding standards.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Supabase/Postgres for database changes.
+- Access to the SvelteKit environment for API and frontend development.
+- Coordination with the team responsible for the Workers component.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Use TypeScript for type safety and better maintainability.
+- Follow TDD practices by writing tests before implementing new features.
+- Ensure new APIs are RESTful and use HTTP status codes appropriately.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For individual functions and methods related to resource limit configuration and enforcement.
+- **Integration Tests:** To ensure the feature works end-to-end, from API requests to database updates and resource limit enforcement.
+- **Load Tests:** Simulate high usage scenarios to verify that resource limits are enforced as expected without degrading system performance.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Implement authentication and authorization checks for API endpoints related to resource limits.
+- Store configuration data securely in Postgres, following MeshHook's encryption standards.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
-
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Resource limits configuration
-
-**Full Issue Body:**
-**Phase:** Phase 9
-**Section:** Production Readiness
-
-**Task:** Resource limits configuration
-
----
-_Auto-generated from TODO.md_
+- Integrate with Supabase Realtime for live monitoring of resource usage.
+- Configure alerts based on resource usage metrics to proactively manage capacity and prevent system overloads.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #199*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #199*
+*Generated: 2025-10-10*

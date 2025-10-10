@@ -1,0 +1,37 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] as Intake
+    [Workflow CRUD API] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as Executor
+    database "Supabase Postgres" as DB {
+        folder "Data + Queues" as DataQueues
+        folder "Realtime Log Streaming" as Realtime
+        folder "Storage (Artifacts)" as Storage
+        folder "Edge (Cron/Timers)" as Edge
+    }
+}
+
+node "External Services" {
+    [Supabase Services] as Supabase
+}
+
+[Performance Benchmarks] as Benchmarks
+
+Intake --> Benchmarks : Triggers\nperformance tests
+CRUD --> Benchmarks : Uses API\nfor test setup
+Publish --> Benchmarks : Deploys versions\nfor testing
+Console --> Benchmarks : Monitors\nperformance metrics
+Orchestrator --> Benchmarks : Orchestrates\nbenchmark workflows
+Executor --> Benchmarks : Executes\nHTTP requests
+
+Benchmarks ..> DB : Reads/Writes\ntest data
+Benchmarks ..> Supabase : Utilizes\nSupabase services
+
+Supabase --> DB : Provides
+
+@enduml

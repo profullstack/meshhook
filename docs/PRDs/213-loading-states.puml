@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+
+title Loading States Implementation - Sequence Diagram
+
+actor User
+participant "UI: SvelteKit" as UI
+participant "API Server" as API
+database "Supabase Postgres" as DB
+participant "Realtime Service" as Realtime
+participant "Worker: Orchestrator" as Orchestrator
+participant "Worker: HTTP Executor" as Executor
+
+== User Interacts with UI ==
+User -> UI: Request page/action
+activate UI
+
+UI -> API: Call endpoint
+activate API
+
+API -> DB: Query data
+activate DB
+DB --> API: Return data
+deactivate DB
+
+API --> UI: Response with loading state
+deactivate API
+
+UI -> UI: Render loading state
+deactivate UI
+
+== Background Processing ==
+UI -> Orchestrator: Trigger process
+activate Orchestrator
+
+Orchestrator -> Executor: Execute task
+activate Executor
+Executor -> DB: Update task state
+activate DB
+DB --> Executor: Confirm update
+deactivate DB
+
+Executor --> Realtime: Push update
+activate Realtime
+Realtime --> UI: Stream update
+deactivate Executor
+deactivate Realtime
+
+UI -> UI: Update UI with final state
+
+@enduml

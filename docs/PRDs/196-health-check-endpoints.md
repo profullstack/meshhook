@@ -1,202 +1,134 @@
 # PRD: Health check endpoints
 
-**Issue:** [#196](https://github.com/profullstack/meshhook/issues/196)  
-**Milestone:** Phase 9: Deployment & Operations  
-**Labels:** production-readiness  
-**Phase:** Phase 9  
-**Section:** Production Readiness
+**Issue:** [#196](https://github.com/profullstack/meshhook/issues/196)
+**Milestone:** Phase 9: Deployment & Operations
+**Labels:** production-readiness, hacktoberfest
 
 ---
 
+# PRD: Health Check Endpoints
+
 ## Overview
 
-This task is part of Phase 9 in the Production Readiness section of the MeshHook project. 
+The introduction of health check endpoints is a critical enhancement for MeshHook, targeting improved operational visibility and reliability in production environments. This task aligns with MeshHook's commitment to providing a robust, Postgres-native workflow engine that combines the visual simplicity of n8n with the durability of Temporal, all while maintaining an open licensing model. Implementing health check endpoints will ensure that MeshHook's services are continuously monitored for availability, performance, and security, facilitating prompt detection and resolution of issues.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Objectives
 
-**Task Objective:** Health check endpoints
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+- Integrate health check endpoints to monitor the operational status of MeshHook's services.
+- Ensure these endpoints are lightweight, secure, and minimally impactful on performance.
+- Align the implementation with MeshHook's core goals, including multi-tenant security and live log updates via Supabase Realtime.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Health check endpoints"
-2. Create RESTful API endpoint(s) following project conventions
-3. Implement proper request validation and error handling
-4. Return appropriate HTTP status codes and response formats
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Health Check Endpoints**: Implement RESTful API endpoints to report the health status of critical MeshHook components, including the webhook intake, workflow engine, and external dependencies like Supabase and Postgres.
+2. **Health Status Schema**: Define a clear, standardized response schema for health check responses, including service name, status (healthy/unhealthy), and any relevant error messages or codes.
+3. **Authentication**: Ensure these endpoints are secure, accessible only to authenticated users or systems with appropriate permissions.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance**: Ensure health checks are lightweight and do not significantly impact the overall performance of the system.
+- **Reliability**: Achieve 99.9% uptime for the health check endpoints.
+- **Security**: Protect endpoints against unauthorized access and ensure they do not expose sensitive information about the system's internal state or configuration.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a combination of SvelteKit for its SSR/API layer, Supabase for database and realtime functionalities, and a worker-based architecture for orchestration and HTTP execution. Health check endpoints should integrate seamlessly into this architecture, providing a real-time overview of the system's health without introducing significant load or complexity.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Analysis**: Review the current MeshHook architecture to identify critical components and dependencies that require health monitoring.
+2. **Design**:
+   - Design a health check API schema that includes endpoint paths, request parameters (if any), and response formats.
+   - Plan the integration of health check logic into the existing SvelteKit API layer.
+3. **Implementation**:
+   - Develop the health check endpoints following the RESTful standards adopted by MeshHook.
+   - Implement logic to assess the health of critical components, including database connectivity, external dependencies' availability, and internal service status.
+   - Ensure authentication mechanisms are in place to secure these endpoints.
+4. **Testing**: Write and execute unit and integration tests to validate the functionality and security of the health check endpoints.
+5. **Documentation**: Update the project's API documentation to include details about the new health check endpoints.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No changes to the data model are required for the implementation of health check endpoints.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-Define API endpoints:
-
-### Endpoint 1: [Method] /path/to/endpoint
-
-**Request:**
-```json
-{
-  "field": "value"
-}
-```
+#### Endpoint: `GET /api/health`
 
 **Response:**
 ```json
 {
-  "status": "success",
-  "data": {}
+  "status": "healthy",
+  "components": [
+    {
+      "name": "Database",
+      "status": "healthy"
+    },
+    {
+      "name": "Supabase Realtime",
+      "status": "healthy"
+    },
+    {
+      "name": "Workflow Engine",
+      "status": "unhealthy",
+      "error": "Scheduler not responding"
+    }
+  ]
 }
 ```
 
 **Error Responses:**
-- 400: Bad Request - Invalid input
 - 401: Unauthorized - Authentication required
-- 403: Forbidden - Insufficient permissions
-- 404: Not Found - Resource not found
-- 500: Internal Server Error - Server error
-
-Add additional endpoints as needed.
+- 500: Internal Server Error - Server error or cannot connect to critical service
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Health check endpoints are implemented and return the correct status of all critical MeshHook components.
+- [ ] Endpoints are secured and do not expose sensitive information.
+- [ ] All new code is covered by unit and integration tests, ensuring error cases and success cases are handled correctly.
+- [ ] Documentation is updated to include information about the health check endpoints.
+- [ ] The implementation follows MeshHook's coding standards and best practices.
 
 ## Dependencies
 
 ### Technical Dependencies
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- Access to MeshHook's existing SvelteKit setup for API endpoint integration.
+- Knowledge of Supabase and Postgres for database health checks.
+- Authentication mechanisms currently used by MeshHook.
 
 ### Prerequisite Tasks
 
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Ensure all team members have access to the latest MeshHook codebase and documentation.
+- Review existing authentication patterns for securing new endpoints.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow MeshHook's existing coding conventions and folder structure for API implementations.
+- Use asynchronous patterns where applicable to avoid blocking operations during health checks.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests**: For each component checked by the health endpoints, mock failures and verify responses.
+- **Integration Tests**: Test the endpoint in a deployed environment with actual service dependencies to ensure accurate health reporting.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Implement rate limiting on the health check endpoint to prevent abuse.
+- Ensure that the health check responses do not leak sensitive information about the system's internal configuration or state.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
-
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Health check endpoints
-
-**Full Issue Body:**
-**Phase:** Phase 9
-**Section:** Production Readiness
-
-**Task:** Health check endpoints
-
----
-_Auto-generated from TODO.md_
+- Integrate endpoint metrics (response time, status codes) into MeshHook's existing monitoring tools.
+- Set up alerts based on the health endpoint responses, especially for critical components reporting unhealthy status.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #196*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #196*
+*Generated: 2025-10-10*

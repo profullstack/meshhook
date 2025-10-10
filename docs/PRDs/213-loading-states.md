@@ -1,172 +1,120 @@
 # PRD: Loading states
 
+**Issue:** [#213](https://github.com/profullstack/meshhook/issues/213)
+**Milestone:** Phase 10: Polish & Launch
+**Labels:** ux-improvements, hacktoberfest
+
+---
+
+# PRD: Implementing Loading States
+
 **Issue:** [#213](https://github.com/profullstack/meshhook/issues/213)  
 **Milestone:** Phase 10: Polish & Launch  
-**Labels:** ux-improvements  
+**Labels:** ux-improvements, hacktoberfest  
 **Phase:** Phase 10  
-**Section:** UX Improvements
+**Section:** UX Improvements  
 
 ---
 
 ## Overview
 
-This task is part of Phase 10 in the UX Improvements section of the MeshHook project. 
+The purpose of this task is to enhance the user experience of MeshHook by implementing intuitive and informative loading states across the platform. This initiative aligns with our project goals of delivering a visually simple and durable workflow engine by ensuring users are kept informed about the system status during operations, thereby improving overall usability and satisfaction.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+**Objective:** Implement loading states to provide feedback to users during all asynchronous operations.
 
-**Task Objective:** Loading states
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+This task supports MeshHook's core features by improving the user interface's responsiveness and transparency during operations such as webhook triggers, DAG building, and live log streaming.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Loading states"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Loading Indicators:** Implement loading indicators for all asynchronous operations including but not limited to:
+   - Webhook triggers processing.
+   - DAG builder loading and operations.
+   - Live log updates.
+2. **Feedback Mechanism:** Provide immediate visual feedback when an operation is initiated.
+3. **Error States:** Implement error states for failed operations with an option for users to retry the operation if applicable.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure loading states do not negatively impact the overall performance of the application.
+- **Accessibility:** Loading indicators must be accessible, providing textual descriptions for screen readers.
+- **Consistency:** Loading states should be consistent in design and behavior across the application.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a SvelteKit front-end and Supabase for real-time data updates. Loading states should be seamlessly integrated with these existing components without significant architectural changes.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Analysis:** Review the user interactions across the application to identify areas where loading states are required.
+2. **Design:** Develop a consistent design for loading indicators that aligns with MeshHook's visual language. This includes defining animations, colors, and positioning.
+3. **Implementation:** 
+   - Use Svelte's reactive declarations to manage loading states.
+   - Integrate loading indicators with existing async operations.
+   - Ensure that loading states are accessible.
+4. **Testing:** Test loading states across different devices and network conditions to ensure they are displayed correctly and timely.
+5. **Documentation:** Update the component library and UX guidelines with the new loading state designs and usage instructions.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No changes to the data model are required for this task.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+No new API endpoints are required for this task.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Loading indicators are present for all asynchronous operations.
+- [ ] Loading states are consistent in design across the application.
+- [ ] Performance benchmarks are met, with loading states not introducing significant delays.
+- [ ] Accessibility standards are adhered to, with loading states being screen-reader friendly.
+- [ ] Manual and automated tests confirm loading states behave as expected across supported browsers and devices.
+- [ ] Documentation is updated to reflect the implementation of loading states.
 
 ## Dependencies
 
 ### Technical Dependencies
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- SvelteKit for front-end development.
+- Supabase for real-time data.
 
 ### Prerequisite Tasks
 
-- Project setup and infrastructure (if not already complete)
-- Database schema initialized
-- Development environment configured
+- Review of the current UI components and operations that require loading states.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Utilize Svelte's reactivity to manage state transitions.
+- Follow the existing coding standards for CSS and JS in the project.
+- Implement responsive designs for loading states to ensure compatibility with mobile devices.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Verify that loading states are triggered and dismissed as expected.
+- **Integration Tests:** Ensure that loading states integrate well with existing async operations and APIs.
+- **Accessibility Tests:** Use tools like axe-core to validate that loading states meet accessibility standards.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+Loading states should not expose any sensitive information about the underlying processes or data.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+While loading states primarily impact the front-end, it's crucial to monitor for any unexpected performance degradation associated with these changes.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Loading states
-
-**Full Issue Body:**
-**Phase:** Phase 10
-**Section:** UX Improvements
-
-**Task:** Loading states
-
----
-_Auto-generated from TODO.md_
+- [Svelte Documentation](https://svelte.dev/docs) for reactive statements and accessibility guidelines.
+- [Supabase Realtime](https://supabase.io/docs/reference/javascript/subscribe) for integrating real-time updates with loading states.
+- [MeshHook Component Library](#) (URL Placeholder) for design guidelines and component usage.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #213*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #213*
+*Generated: 2025-10-10*

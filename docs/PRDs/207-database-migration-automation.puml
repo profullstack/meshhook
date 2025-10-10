@@ -1,0 +1,46 @@
+@startuml
+!theme plain
+
+package "MeshHook CI/CD Pipeline" {
+    [CI/CD Tools] as CICD
+    [Supabase] as Supabase
+    [SvelteKit SSR/API] as SvelteKit
+    [Database Migration Automation] as Migration
+    [Existing Codebase] as Codebase
+    [Test Suite] as Tests
+}
+
+database "Postgres" as Postgres {
+    folder "schema.sql" {
+        [Tables]
+        [Indexes]
+        [RLS Policies]
+    }
+}
+
+node "External Services" {
+    [Supabase Realtime] as Realtime
+    [Supabase Storage] as Storage
+    [Edge (cron/timers)] as Edge
+}
+
+[CI/CD Tools] --> Migration : triggers
+Migration --> [Tables] : creates/modifies
+Migration --> [Indexes] : creates
+Migration --> [RLS Policies] : defines
+Migration --> Tests : executes
+Tests --> [CI/CD Tools] : reports
+Codebase --> Migration : integrates
+SvelteKit --> Supabase : interacts
+Supabase --> Postgres : manages
+Realtime -up-> Supabase : streams logs
+Storage -up-> Supabase : stores artifacts
+Edge -up-> Supabase : schedules jobs
+
+note right of Migration : Core Implementation \n- Analysis \n- Design \n- Implementation \n- Integration \n- Testing \n- Documentation
+
+note right of Tests : Unit, Integration, \nE2E Tests
+
+note over Supabase, Postgres : Supabase Managed Services
+
+@enduml

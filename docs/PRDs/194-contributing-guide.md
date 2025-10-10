@@ -1,176 +1,109 @@
 # PRD: Contributing guide
 
-**Issue:** [#194](https://github.com/profullstack/meshhook/issues/194)  
-**Milestone:** Phase 8: Documentation  
-**Labels:** developer-documentation  
-**Phase:** Phase 8  
-**Section:** Developer Documentation
+**Issue:** [#194](https://github.com/profullstack/meshhook/issues/194)
+**Milestone:** Phase 8: Documentation
+**Labels:** developer-documentation, hacktoberfest
 
 ---
 
+# PRD: Contributing Guide
+
+**Issue:** [#194: Contributing guide](https://github.com/profullstack/meshhook/issues/194)  
+**Milestone:** Phase 8: Documentation  
+**Labels:** developer-documentation, hacktoberfest  
+**Phase:** Phase 8  
+**Section:** Developer Documentation
+
 ## Overview
 
-This task is part of Phase 8 in the Developer Documentation section of the MeshHook project. 
-
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
-
-**Task Objective:** Contributing guide
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+The objective of this task is to develop a comprehensive Contributing Guide for the MeshHook project. This guide aims to standardize the contribution process, making it easier for developers to understand how they can contribute to the project effectively. Aligning with MeshHook's core goals, this document should facilitate contributions that enhance the project's webhook triggers, visual DAG builder, durability, live logging capabilities, and security features.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Contributing guide"
-2. Create reusable Svelte 5 components
-3. Implement responsive design for mobile and desktop
-4. Follow project UI/UX patterns and styling
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Guide Structure:** Structure the guide to include introduction, setup instructions, contribution process, coding standards, and how to submit a pull request.
+2. **Setup Instructions:** Provide detailed setup instructions for local development, including required software and environment setup.
+3. **Contribution Process:** Outline the steps for making contributions, including branching strategies, commit message conventions, and pull request guidelines.
+4. **Coding Standards:** Document coding standards specific to SvelteKit/Svelte 5, Postgres, and other technologies used in the project.
+5. **Testing Guidelines:** Include guidelines for writing tests, along with how to run and verify them before submission.
+6. **Documentation Standards:** Set expectations for documenting new features or changes to the API and codebase.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Usability:** The guide should be clear, concise, and easy to follow for contributors with various levels of experience.
+- **Accessibility:** Ensure the contributing guide is accessible to a diverse group of developers, including those using assistive technologies.
+- **Maintainability:** The guide should be easy to update as project standards and technologies evolve.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+The Contributing Guide does not directly impact the architecture of MeshHook but is crucial for maintaining the project's overall quality and consistency. It should align with the technical stack of MeshHook, including SvelteKit/Svelte 5 for the frontend, Postgres for data storage, and Supabase for real-time capabilities.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Research:** Review contributing guides from similar open-source projects to identify best practices.
+2. **Drafting:** Start with a basic structure and iteratively add sections focusing on setup, contribution process, coding standards, testing, and documentation.
+3. **Feedback Loop:** Share drafts with the core development team to gather feedback and make adjustments.
+4. **Finalization:** Incorporate all feedback, ensuring the guide is comprehensive and aligns with project goals.
+5. **Publishing:** Make the guide available in the project's repository and ensure it's easily discoverable for new contributors.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+N/A
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+N/A
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Contributing guide includes all sections as outlined in the functional requirements.
+- [ ] The guide is reviewed and approved by the project's core development team.
+- [ ] The guide is committed to the project's repository in an easily discoverable location.
+- [ ] The guide meets usability and accessibility standards, ensuring it is clear and easy to follow.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- **Technical Dependencies:** Familiarity with the project's existing documentation structure and standards.
+- **Prerequisite Tasks:** None.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Use Markdown format for the guide to ensure it's readable both in plaintext and rendered on GitHub.
+- Include examples where applicable, especially for complex setup instructions or contribution steps.
+- Ensure all instructions are tested to prevent errors or confusion.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Peer Review:** Have multiple project contributors follow the guide to set up their development environment and make a sample contribution.
+- **Iteration:** Use feedback from the testing phase to refine and update the guide.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Highlight security practices contributors should follow, especially regarding handling secrets or sensitive information.
+- Include guidelines for responsible disclosure of security vulnerabilities.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+N/A
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
+- [MeshHook — PRD](../PRD.md)
 - [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
+- [Security & Multi-Tenancy](../Security.md)
 
 ## Task Details
 
-**Original Task Description:**
-Contributing guide
+**Original Task Description:** Contributing guide
 
-**Full Issue Body:**
-**Phase:** Phase 8
-**Section:** Developer Documentation
-
-**Task:** Contributing guide
-
----
-_Auto-generated from TODO.md_
+*This PRD was carefully crafted to ensure that the Contributing Guide will be an invaluable resource for new and existing contributors, fostering a collaborative and productive development environment for the MeshHook project.*
 
 ---
 
-*This PRD was auto-generated from GitHub issue #194*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #194*
+*Generated: 2025-10-10*

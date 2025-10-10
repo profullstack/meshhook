@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+
+title Marketing Site Implementation for MeshHook
+
+package "MeshHook System" {
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase Postgres] as Postgres
+    [Supabase Realtime] as Realtime
+    [Supabase Storage] as Storage
+    [Supabase Edge] as Edge
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as HTTPExecutor
+}
+
+package "Marketing Site" {
+    [Marketing Site Code] as MarketingCode
+    [Static Content] as StaticContent
+    [Live Logs] as LiveLogs
+    [API Documentation] as APIDocs
+}
+
+MarketingCode --> SvelteKit : Renders using
+StaticContent --> [CDN] : Served through
+LiveLogs --> Realtime : Streams from
+APIDocs --> Postgres : Retrieves from
+
+SvelteKit --> Postgres : CRUD Operations
+SvelteKit --> Realtime : Subscribes for updates
+Orchestrator --> Postgres : Updates workflow states
+HTTPExecutor --> [External APIs] : Makes requests
+
+note right of MarketingCode : SvelteKit/Svelte 5 based
+note right of StaticContent : Includes images, CSS, JS
+note right of LiveLogs : Supabase Realtime for updates
+note right of APIDocs : Auto-generated from code
+
+note right of Postgres : Central DB for data and queues
+note right of Realtime : For live log streaming
+note right of Storage : Stores artifacts
+note right of Edge : Manages cron/timers
+
+note right of Orchestrator : State machine + scheduling
+note right of HTTPExecutor : Robust HTTP with retries/backoff
+
+[CDN] --> [User Browser] : Serves site
+[User Browser] --> MarketingCode : Visits site
+[User Browser] --> LiveLogs : Views logs
+[User Browser] --> APIDocs : Accesses docs
+
+@enduml

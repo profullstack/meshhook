@@ -1,0 +1,28 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase] <<Database>> as Supabase
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as HTTPExecutor
+}
+
+package "Health Check Feature" {
+    [Health Check Endpoint] as HealthCheck
+    [Integration Testing] as IntegrationTest
+    [Unit Testing] as UnitTest
+}
+
+SvelteKit --> HealthCheck : <<invoke>>
+HealthCheck --> Supabase : <<query>> \nCheck DB Connection
+HealthCheck --> Orchestrator : <<query>> \nCheck Worker Status
+HealthCheck --> HTTPExecutor : <<query>> \nCheck Worker Status
+HealthCheck --> [Client] : <<respond>> \nAPI Health Status
+
+IntegrationTest .down.> HealthCheck : <<test>>
+UnitTest .down.> HealthCheck : <<test>>
+
+note right of HealthCheck : RESTful API Endpoint\n/api/health
+
+@enduml

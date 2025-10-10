@@ -1,172 +1,127 @@
 # PRD: Marketing site
 
-**Issue:** [#222](https://github.com/profullstack/meshhook/issues/222)  
-**Milestone:** Phase 10: Polish & Launch  
-**Labels:** launch-prep  
-**Phase:** Phase 10  
-**Section:** Launch Prep
+**Issue:** [#222](https://github.com/profullstack/meshhook/issues/222)
+**Milestone:** Phase 10: Polish & Launch
+**Labels:** launch-prep, hacktoberfest
 
 ---
 
+# PRD: Marketing Site for MeshHook
+
+**Issue:** [#222](https://github.com/profullstack/meshhook/issues/222)  
+**Milestone:** Phase 10: Polish & Launch  
+**Labels:** launch-prep, hacktoberfest  
+**Owner:** Anthony Ettinger (Profullstack)  
+**License:** MIT
+
 ## Overview
 
-This task is part of Phase 10 in the Launch Prep section of the MeshHook project. 
+As MeshHook approaches its launch phase, a compelling marketing site is crucial to communicate its value proposition, features, and differentiators effectively to the target audience. This site will serve as the primary digital touchpoint for prospective users, providing insights into MeshHook’s capabilities, including webhook triggers with signature verification, a visual DAG builder, and multi-tenant RLS security, among others.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+**Objective:** Develop a marketing site that aligns with MeshHook's branding and technical sophistication, showcasing its features and benefits to engage and convert site visitors into users.
 
-**Task Objective:** Marketing site
+## Functional Requirements
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+1. **Content Creation:** Develop web content that outlines MeshHook’s features, advantages, and use cases.
+2. **Design and Branding:** Implement a responsive web design that is consistent with MeshHook's branding guidelines.
+3. **Feature Highlight:** Integrate interactive sections to demonstrate the visual DAG builder and live logs capabilities.
+4. **Lead Generation:** Incorporate a contact form for lead generation and inquiries.
+5. **SEO Optimization:** Ensure the site is optimized for search engines to improve visibility.
+6. **Analytics:** Integrate web analytics to track visitor behavior and conversions.
 
-## Requirements
+## Non-Functional Requirements
 
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Marketing site"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Achieve a sub-2-second load time for all pages on the site.
+- **Reliability:** Ensure 99.9% site uptime outside of scheduled maintenance windows.
+- **Security:** Implement secure handling and storage of user data collected through the site.
+- **Maintainability:** Code should be clean, well-documented, and easy to update with new content or features.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Frontend:** SvelteKit for a dynamic, server-side rendered experience.
+- **Hosting/CDN:** Supabase Edge for global content delivery and performance.
+- **Analytics:** Plausible for privacy-friendly, GDPR-compliant web analytics.
+- **SEO:** Implementation of structured data (schema.org) for enhanced search engine visibility.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Design Mockups:** Create and approve web design mockups that align with MeshHook's branding.
+2. **Content Development:** Collaborate with product and marketing teams to develop engaging content.
+3. **Development:**
+   - Setup SvelteKit project with TypeScript and ESLint/Prettier for code quality.
+   - Implement responsive UI based on approved design mockups.
+   - Develop interactive demos for the DAG builder and live logs feature.
+4. **SEO and Analytics Setup:**
+   - Configure Plausible for analytics.
+   - Implement SEO best practices, including meta tags and structured data.
+5. **Testing and Optimization:**
+   - Conduct performance testing and optimization (e.g., image optimization, lazy loading).
+   - Ensure accessibility and responsive design across devices.
+6. **Launch:**
+   - Set up domain and SSL.
+   - Deploy site to Supabase Edge.
+7. **Post-Launch:**
+   - Monitor site performance and user feedback.
+   - Iterate based on analytics and user suggestions.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No changes to the existing MeshHook data model are required for this task.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+No new API endpoints are required for this task. However, the contact form will utilize a serverless function for submissions, which will temporarily store data in Supabase before being processed and moved to a CRM or email marketing service.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Marketing site reflects MeshHook's branding and technical capabilities.
+- [ ] Interactive demos for the DAG builder and live logs are functional and engaging.
+- [ ] Site is mobile-responsive and passes Google's mobile-friendly test.
+- [ ] Load time is under 2 seconds for the main landing page.
+- [ ] SEO basics (meta tags, schema.org markup) are implemented.
+- [ ] Analytics show user engagement with the site content and features.
+- [ ] Contact form submissions are captured and processed correctly.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Project setup and infrastructure (if not already complete)
-- Database schema initialized
-- Development environment configured
+- Branding guidelines and assets from the MeshHook design team.
+- Content and feature descriptions from the product team.
+- Supabase project setup for hosting and serverless functions.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Use SvelteKit with TypeScript for development.
+- Follow mobile-first design principles.
+- Prioritize web accessibility from the start.
+- Implement a git workflow with feature branches and pull requests.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For custom components and utility functions.
+- **Integration Tests:** For serverless API integrations.
+- **Performance Testing:** Using Lighthouse and WebPageTest.
+- **Manual Testing:** Across different devices and browsers.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure that the contact form is protected against spam and bot submissions (e.g., using CAPTCHA or honeypot techniques).
+- Implement best practices for secure handling of user data collected through the site.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Monitor website uptime and performance through Supabase monitoring tools.
+- Set up alerts in Plausible for significant changes in traffic or user behavior patterns.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Marketing site
-
-**Full Issue Body:**
-**Phase:** Phase 10
-**Section:** Launch Prep
-
-**Task:** Marketing site
-
----
-_Auto-generated from TODO.md_
+**Definition of Done:**
+- The website is live and accessible at the designated domain.
+- All acceptance criteria are met.
+- Documentation (if any) is updated to reflect any new processes or tools introduced.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #222*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #222*
+*Generated: 2025-10-10*

@@ -1,0 +1,34 @@
+@startuml
+!theme plain
+
+title Error Message Handling in MeshHook
+
+package "MeshHook System" {
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase] as Supabase
+    [Workers] as Workers
+    database "Postgres" as Postgres
+}
+
+package "Error Handling Feature" {
+    [Error Logger] as ErrorLogger
+    [Error Handler] as ErrorHandler
+    [Error Messages] as ErrorMessages
+    [API Documentation] as APIDocs
+}
+
+SvelteKit --> ErrorHandler : triggers error\non failure
+Supabase --> ErrorHandler : triggers error\non failure
+Workers --> ErrorHandler : triggers error\non failure
+ErrorHandler --> ErrorLogger : logs error details
+ErrorHandler --> ErrorMessages : fetches user-friendly messages
+ErrorMessages --> SvelteKit : returns message\nto user interface
+ErrorMessages --> Supabase : stores error logs
+ErrorLogger --> Postgres : stores logged errors
+APIDocs ..> ErrorHandler : documents error\nhandling approach
+
+note right of ErrorMessages : Centralized error\nmessage management
+note right of ErrorHandler : Implements comprehensive\nerror handling strategy
+note right of ErrorLogger : Persistent error logging
+
+@enduml

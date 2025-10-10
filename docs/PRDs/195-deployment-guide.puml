@@ -1,0 +1,72 @@
+@startuml
+!theme plain
+
+package "MeshHook Project" {
+    [Deployment Guide] as (DG)
+    [Supabase\n(Postgres, Realtime, Storage)] as Supabase
+    [SvelteKit\n(SSR/API)] as SvelteKit
+    [Existing Codebase] as Codebase
+    [Database\n(schema.sql)] as DB
+    [Workers\n(Orchestrator, HTTP Executor)] as Workers
+    [External Services] as ExtServices
+}
+
+cloud {
+    [Supabase] 
+}
+
+node "Development Environment" {
+    [Codebase]
+    [DB]
+}
+
+[DG] -down-> [SvelteKit] : Implements\nDeployment Logic
+[SvelteKit] -right-> [Supabase] : Uses
+[DG] -down-> [Workers] : Configures
+[Workers] -left-> [Supabase] : Interacts
+[DG] -left-> [Codebase] : Updates
+[Codebase] -down-> [DB] : Modifies
+[DG] -down-> [ExtServices] : Integrates
+
+note right of [DG]
+  Key Steps:
+  1. Analysis
+  2. Design
+  3. Implementation
+  4. Integration
+  5. Testing
+  6. Documentation
+  7. Review
+end note
+
+note left of [SvelteKit]
+  - Webhook Intake
+  - Workflow CRUD
+  - Publish Versions
+  - Run Console
+end note
+
+note right of [Workers]
+  - State Machine
+  - Scheduling
+  - HTTP Execution
+end note
+
+note on link [DG] - [SvelteKit]
+  Visual DAG Builder
+  Using Svelte
+end note
+
+note on link [DG] - [Workers]
+  Durable, Replayable Runs
+end note
+
+note on link [DG] - [Codebase]
+  Follows Project Coding Standards
+end note
+
+note on link [DG] - [ExtServices]
+  Supabase Realtime for Live Logs
+end note
+
+@enduml

@@ -1,0 +1,42 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Supabase\n(Postgres, Realtime, Storage)] as Supabase
+    [SvelteKit\n(SSR/API)] as SvelteKit
+    [Orchestrator\n(Workers)] as Orchestrator
+    [HTTP Executor\n(Workers)] as HTTPExecutor
+    [Webhook Triggers\nwith Signature Verification] as Webhooks
+    [Visual DAG Builder\n(Svelte 5)] as DAGBuilder
+    [Event Sourcing\nfor Runs] as EventSourcing
+    [Live Logs\nvia Supabase Realtime] as LiveLogs
+    [Multi-tenant RLS Security] as RLS
+}
+
+package "Caching Strategy" {
+    [Cache Invalidation] as CacheInvalidation
+    [Cache Storage] as CacheStorage
+    [Cache Population] as CachePopulation
+    [Cache Retrieval] as CacheRetrieval
+}
+
+Supabase --> SvelteKit : Data & Queue Operations
+Supabase --> LiveLogs : Log Streaming
+SvelteKit --> Webhooks : Receives Webhooks
+SvelteKit --> DAGBuilder : CRUD Operations
+Orchestrator --> EventSourcing : Manages State & Scheduling
+HTTPExecutor --> Supabase : HTTP Requests with Retries
+RLS --> Supabase : Security Layer
+CacheInvalidation .down.> CacheStorage : Invalidates outdated cache
+CachePopulation .down.> CacheStorage : Populates with fresh data
+CacheRetrieval .down.> CacheStorage : Fetches data
+CacheStorage .right.> Supabase : Syncs with persistent storage
+
+note right of CacheStorage
+  Cache Strategy:
+  - In-memory caching for fast retrieval
+  - Persistent caching in Supabase for durability
+  - Cache invalidation on data change events
+end note
+
+@enduml

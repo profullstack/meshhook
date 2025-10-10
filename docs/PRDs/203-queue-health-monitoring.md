@@ -1,173 +1,126 @@
 # PRD: Queue health monitoring
 
+**Issue:** [#203](https://github.com/profullstack/meshhook/issues/203)
+**Milestone:** Phase 9: Deployment & Operations
+**Labels:** monitoring, hacktoberfest
+
+---
+
+# PRD: Queue Health Monitoring
+
 **Issue:** [#203](https://github.com/profullstack/meshhook/issues/203)  
 **Milestone:** Phase 9: Deployment & Operations  
-**Labels:** monitoring  
+**Labels:** monitoring, hacktoberfest  
 **Phase:** Phase 9  
-**Section:** Monitoring
+**Section:** Monitoring  
 
 ---
 
 ## Overview
 
-This task is part of Phase 9 in the Monitoring section of the MeshHook project. 
+In the MeshHook project, a webhook-first, deterministic, Postgres-native workflow engine, queue health monitoring is an essential feature for ensuring the reliability and efficiency of workflow execution. This task aims to implement comprehensive monitoring of the queue system to detect, alert, and potentially auto-mitigate common issues that may impact performance or lead to failures in workflow processing. Aligning with MeshHook's goals, this feature will enhance the observability and operational robustness of the system.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
-
-**Task Objective:** Queue health monitoring
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+**Objective:** Implement a queue health monitoring system that integrates seamlessly with MeshHook's architecture, providing real-time insights into queue performance and health.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Queue health monitoring"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. Real-time monitoring of the queue length to detect backlogs.
+2. Monitoring of queue processing times to identify performance degradation.
+3. Automated alerts for critical queue health issues, such as processing delays and backlogged jobs.
+4. A dashboard or reporting interface for visualizing queue health metrics.
+5. Ability to configure thresholds for alerts based on queue metrics.
+6. Support for multi-tenant environments, ensuring that monitoring respects RLS policies.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The monitoring system must operate with minimal overhead to avoid impacting the overall system performance.
+- **Reliability:** Must provide consistent and accurate monitoring data, with failover capabilities for high availability.
+- **Security:** Must comply with MeshHook's security guidelines, especially in handling and displaying sensitive metric data.
+- **Maintainability:** Code should be clean, well-documented, and easy to extend or modify.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook uses **pg-boss** or **pgmq** for Postgres-based durable queues. The monitoring system must integrate with these components without requiring significant modifications to their core functionality. It should leverage existing data flow and storage mechanisms in Supabase and SvelteKit where applicable.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Analysis:** Assess current queue architecture to identify key metrics and data points for monitoring.
+2. **Design:**
+   - Define metrics to be collected, such as queue length, job processing times, and error rates.
+   - Design a system for collecting, storing, and querying these metrics efficiently.
+   - Create a design for the alerting mechanism, including integration with existing notification systems if available.
+   - Plan the user interface for the dashboard/reporting tool.
+3. **Implementation:**
+   - Implement metrics collection in the queue processing workflow.
+   - Develop the backend for storing and querying metrics, using Supabase Postgres where suitable.
+   - Build the alerting mechanism based on configured thresholds.
+   - Create the frontend for the monitoring dashboard using SvelteKit.
+4. **Integration:** Ensure the monitoring system is fully integrated with the existing queue and workflow systems.
+5. **Testing:** Perform comprehensive tests to ensure accuracy and reliability of the monitoring data.
+6. **Documentation:** Update project documentation to include details of the monitoring system.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No initial data model changes are anticipated. Any required changes identified during implementation should be documented and reviewed.
 
 ### API Endpoints (if applicable)
 
-No new API endpoints required for this task.
+- `GET /api/queue/health`: Fetch current queue health metrics.
+- `POST /api/queue/health/alerts/config`: Configure alert thresholds.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Real-time queue health monitoring implemented and operational.
+- [ ] Alerting mechanism for critical issues in place and functional.
+- [ ] Dashboard for monitoring queue health developed and accessible.
+- [ ] Documentation for the monitoring system is comprehensive and clear.
+- [ ] Security review completed, ensuring sensitive data is handled according to guidelines.
+- [ ] Performance benchmarks confirm minimal impact on overall system performance.
 
 ## Dependencies
 
 ### Technical Dependencies
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- **pg-boss** or **pgmq** for queue management.
+- **Supabase** for data storage and real-time capabilities.
+- **SvelteKit** for frontend development.
 
 ### Prerequisite Tasks
 
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Ensure all components are updated to the latest versions compatible with the monitoring system requirements.
+- Access to monitoring and alerting infrastructure (e.g., email server, Slack webhooks).
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the ESM module system and utilize modern JavaScript features for implementation.
+- Adhere to MeshHook's coding standards and best practices for security and performance.
+- Implement error handling comprehensively across all new components.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For individual functions and modules handling metrics collection and alerting logic.
+- **Integration Tests:** To verify the integration with the queue system and Supabase.
+- **E2E Tests:** For the monitoring dashboard and alerting system.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all API endpoints are protected according to RLS policies.
+- Securely handle and store sensitive metric data, following MeshHook's encryption and data handling guidelines.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Leverage the implemented queue health monitoring system for observing its own performance and reliability.
+- Set up alerts for the monitoring system's operational issues to ensure continuous health monitoring.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Queue health monitoring
-
-**Full Issue Body:**
-**Phase:** Phase 9
-**Section:** Monitoring
-
-**Task:** Queue health monitoring
-
----
-_Auto-generated from TODO.md_
+**Last Updated:** 2023-12-01
 
 ---
 
-*This PRD was auto-generated from GitHub issue #203*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #203*
+*Generated: 2025-10-10*

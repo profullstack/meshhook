@@ -1,0 +1,70 @@
+@startuml
+!theme cerulean
+
+package "MeshHook System" {
+    [API Gateway] - [SvelteKit SSR/API]
+    [SvelteKit SSR/API] - [Supabase]
+    [SvelteKit SSR/API] - [Workers]
+    [Supabase] --> [Postgres]
+    [Supabase] --> [Realtime]
+    [Supabase] --> [Storage]
+    [Supabase] --> [Edge]
+    [Workers] --> [Orchestrator]
+    [Workers] --> [HTTP Executor]
+
+    package "Mobile Responsiveness Task" {
+        [Analysis] --> [Design]
+        [Design] --> [Implementation]
+        [Implementation] --> [Integration]
+        [Integration] --> [Testing]
+        [Testing] --> [Documentation]
+        [Documentation] --> [Review]
+        [Review] --> [Deployment]
+
+        [SvelteKit SSR/API] --> [Analysis]
+        [Integration] --> [SvelteKit SSR/API]
+        [Deployment] --> [SvelteKit SSR/API]
+    }
+}
+
+[Supabase] ..> [External Services] : Uses
+[API Gateway] ..> [External Clients] : Exposes
+[Postgres] ..> [Database Schema] : Implements
+[Deployment] ..> [CI/CD Pipeline] : Triggers
+
+note right of [Analysis]
+  Review existing codebase
+  Identify integration points
+end note
+
+note right of [Design]
+  Consider data structures, API contracts,
+  component architecture, and error handling
+end note
+
+note right of [Implementation]
+  Follow TDD approach
+end note
+
+note right of [Integration]
+  Ensure seamless integration with existing components
+end note
+
+note right of [Testing]
+  Unit, Integration, E2E tests
+end note
+
+note right of [Documentation]
+  Update code comments, README, API docs
+end note
+
+note right of [Review]
+  Code review and feedback incorporation
+end note
+
+note right of [Deployment]
+  Merge to main branch
+  Pass all CI/CD checks
+end note
+
+@enduml

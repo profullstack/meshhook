@@ -1,0 +1,53 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Service] 
+    [Workflow Engine] 
+    [Database]
+    [Monitoring Service]
+    [Supabase Realtime]
+    [API Gateway]
+}
+
+package "External Services" {
+    [Supabase Postgres] 
+    [Supabase Storage] 
+    [Edge Computing]
+}
+
+[Database] --> [Supabase Postgres] : Uses
+[Monitoring Service] --> [Database] : Monitors\nperformance
+[Monitoring Service] --> [Supabase Realtime] : Streams\nlogs
+[Webhook Service] --> [Workflow Engine] : Triggers workflows
+[Workflow Engine] --> [Database] : Reads/Writes data
+[API Gateway] --> [Webhook Service] : Routes webhooks
+[API Gateway] --> [Workflow Engine] : Manages CRUD operations
+[Supabase Storage] --> [Workflow Engine] : Stores artifacts
+[Edge Computing] --> [Workflow Engine] : Schedules cron/timers
+
+note right of [Monitoring Service]
+  Key Features:
+  - Performance metrics tracking
+  - Error rate monitoring
+  - Alerting for critical failures
+  - Live log streaming via Supabase Realtime
+end note
+
+note "Database Schema & Indexes" as NoteDatabase
+  - Tables for workflows, runs
+  - Indexes for performance
+  - RLS policies for security
+end note
+
+[Database] .. NoteDatabase
+
+note "Integration Points" as NoteIntegration
+  - Supabase for data storage and realtime updates
+  - Existing MeshHook components for workflow management
+end note
+
+[Monitoring Service] .. NoteIntegration
+NoteDatabase .. NoteIntegration
+
+@enduml

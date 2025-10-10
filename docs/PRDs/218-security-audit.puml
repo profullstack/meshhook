@@ -1,0 +1,28 @@
+@startuml
+!theme plain
+
+title Security Audit Process
+
+actor Auditor
+participant "Security Guidelines" as Guidelines
+participant "Codebase" as Codebase
+database "Supabase" as Supabase
+participant "CI/CD Pipeline" as CICD
+participant "Monitoring & Observability" as Monitoring
+
+Auditor -> Guidelines : Review
+Auditor -> Codebase : Analyze\nCode & Integrations
+Codebase -> Supabase : Validate\nData Handling
+Codebase -> CICD : Check\nTesting & Deployment
+CICD -> Monitoring : Verify\nLogging & Metrics
+Monitoring -> Auditor : Provide\nMetrics & Logs
+
+note right of Supabase : Includes Postgres,\nRealtime, Storage
+
+note over CICD : Ensures\n- All tests passing\n- No linting errors
+
+note over Monitoring : Tracks\n- Response times\n- Error rates\n- Critical failures
+
+Auditor -> Auditor : Evaluate\nSecurity & Performance
+
+@enduml
