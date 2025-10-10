@@ -1,0 +1,42 @@
+@startuml
+
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] <<SvelteKit>>
+    [Workflow CRUD API] <<SvelteKit>>
+    [Publish Versions] <<SvelteKit>>
+    [Run Console] <<SvelteKit>>
+    database "Supabase" {
+        [Postgres]
+        [Realtime]
+        [Storage]
+        [Edge]
+    }
+    [Orchestrator Worker] <<Worker>>
+    [HTTP Executor Worker] <<Worker>>
+}
+
+package "Unit Testing" {
+    [Worker Logic Tests] <<Test>>
+}
+
+[Worker Logic Tests] .down.> [Orchestrator Worker] : tests
+[Worker Logic Tests] .down.> [HTTP Executor Worker] : tests
+
+[Webhook Intake] -right-> [Postgres] : writes to\nqueues
+[Workflow CRUD API] -right-> [Postgres] : CRUD operations
+[Publish Versions] -right-> [Postgres] : version management
+[Run Console] -right-> [Realtime] : subscribes to\nlog streams
+[Orchestrator Worker] -right-> [Postgres] : reads from\nqueues
+[Orchestrator Worker] -down-> [HTTP Executor Worker] : dispatches HTTP tasks
+[HTTP Executor Worker] -down-> [Edge] : executes cron/timers
+
+note right of [Worker Logic Tests]
+  - Write tests first (TDD)
+  - Test individual functions and modules (Unit Tests)
+  - Test component interactions (Integration Tests)
+  - Ensure all tests pass before merging
+end note
+
+@enduml

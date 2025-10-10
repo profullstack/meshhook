@@ -1,0 +1,32 @@
+@startuml
+!theme plain
+
+title Run Success/Failure Rates Implementation Flow
+
+actor Developer
+boundary "Webhook API" as Webhook
+control "Orchestrator Worker" as Orchestrator
+database "Postgres DB" as DB
+boundary "Supabase Realtime" as Realtime
+control "HTTP Executor Worker" as Executor
+database "Logs Storage" as Logs
+
+Developer -> Webhook : Trigger workflow
+Webhook -> Orchestrator : Initiate run
+Orchestrator -> DB : Fetch workflow definition
+DB -> Orchestrator : Return definition
+Orchestrator -> Executor : Execute steps
+Executor -> DB : Update step status
+DB -> Realtime : Stream updates
+Realtime -> Developer : Show live logs
+Executor -> Logs : Store execution logs
+Orchestrator -> DB : Update run status
+DB -> Orchestrator : Run status updated
+Orchestrator --> Webhook : Notify completion
+Webhook -> Developer : Return run result
+
+note right of DB : Stores workflows,\nruns, and execution logs
+note right of Realtime : Provides live updates\nto the developer
+note right of Executor : Handles retries\nand backoffs
+
+@enduml

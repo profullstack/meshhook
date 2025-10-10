@@ -1,0 +1,45 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] as Intake
+    [Workflow Engine] as Engine
+    [Failure Alert System] as Alert
+    database "Supabase" {
+        [Postgres DB] as DB
+        [Realtime] as Realtime
+        [Storage] as Storage
+    }
+    [HTTP Executor] as Executor
+    [Orchestrator] as Orchestrator
+}
+
+cloud {
+    [External Alerting Services] as ExternalAlerts
+}
+
+Intake --> Engine : triggers workflow
+Engine --> DB : logs state
+Engine --> Alert : detects failure
+Alert --> Realtime : streams failure log
+Alert --> ExternalAlerts : sends failure notification
+DB --> Orchestrator : stores state
+Orchestrator --> Executor : schedules retry
+Executor --> Engine : executes HTTP tasks
+
+note right of Alert
+  Failure detection and
+  notification logic
+end note
+
+note over DB, Realtime
+  Supabase Services
+end note
+
+note right of ExternalAlerts
+  Integrates with external
+  services like email, SMS,
+  or Slack for alerts
+end note
+
+@enduml

@@ -1,0 +1,41 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] as WI
+    [Workflow CRUD API] as WCAPI
+    [Publish Versions] as PV
+    [Run Console] as RC
+    [Log Streaming] as LS
+}
+
+database "Supabase" {
+    [Postgres] as DB
+    [Realtime] as RT
+    [Storage] as ST
+    [Edge] as ED
+}
+
+node "Workers" {
+    [Orchestrator] as O
+    [HTTP Executor] as HE
+}
+
+[Log Retention Policy Manager] as LRPM
+
+WI --> DB : triggers & logs
+WCAPI --> DB : CRUD operations
+PV --> DB : versioning
+RC --> RT : fetch logs
+LS --> RT : stream logs
+DB --> LRPM : log data
+LRPM --> DB : delete based on policy
+O --> DB : state changes
+HE --> DB : HTTP requests & retries
+
+LRPM .> [Supabase] : uses
+LRPM .> [Workers] : interacts
+
+note right of LRPM : Implements log retention\npolicies across the system
+
+@enduml

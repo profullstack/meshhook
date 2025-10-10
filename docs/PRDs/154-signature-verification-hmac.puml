@@ -1,0 +1,30 @@
+@startuml
+!theme plain
+
+title Signature Verification (HMAC) Process Flow
+
+actor "Webhook Provider" as provider
+boundary "MeshHook Webhook System" as system
+control "Webhook Receiver" as receiver
+database "Supabase Postgres" as db
+entity "Existing Workflow Engine" as engine
+participant "Signature Validator" as validator
+participant "Workflow Executor" as executor
+
+provider -> receiver : Sends webhook with HMAC signature
+receiver -> validator : Extracts HMAC signature\nand payload
+validator -> db : Fetches secret key for HMAC
+db --> validator : Returns secret key
+validator -> validator : Computes HMAC with secret\nand compares to received signature
+alt HMAC signature valid
+    validator -> executor : Initiates workflow execution
+    executor -> engine : Triggers configured workflow
+    engine --> executor : Workflow execution result
+    executor --> system : Responds with success\nand execution details
+    system --> provider : Acknowledges receipt
+else HMAC signature invalid
+    validator --> system : Responds with error\n(signature mismatch)
+    system --> provider : Notifies about invalid signature
+end
+
+@enduml

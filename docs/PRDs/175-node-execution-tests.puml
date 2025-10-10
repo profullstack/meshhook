@@ -1,0 +1,75 @@
+@startuml
+' Define skin and styling
+skinparam componentStyle uml2
+skinparam monochrome true
+
+' Define components
+component "Node Execution Test Suite" as TestSuite {
+  [Unit Tests] as UT
+  [Integration Tests] as IT
+  [End-to-End Tests] as E2E
+}
+
+component "Existing System" as Existing {
+  [Webhook Intake] as Webhook
+  [Workflow CRUD API] as CRUD
+  [Publish Versions] as Publish
+  [Run Console] as Console
+}
+
+component Supabase {
+  [Postgres] as DB
+  [Realtime] as Realtime
+  [Storage] as Storage
+  [Edge] as Edge
+}
+
+component "External Services" {
+  [HTTP Executor] as HTTPExecutor
+  [Orchestrator Workers] as Workers
+}
+
+' Define relationships
+TestSuite ..> Existing : <<test>>
+TestSuite ..> Supabase : <<test>>
+TestSuite ..> "External Services" : <<test>>
+
+UT -[hidden]-> IT -[hidden]-> E2E
+
+Webhook -[hidden]-> CRUD -[hidden]-> Publish -[hidden]-> Console
+
+DB -[hidden]-> Realtime -[hidden]-> Storage -[hidden]-> Edge
+
+' Define data flow or sequence of operations
+[UT] --> [IT] : Test Data Flow
+[IT] --> [E2E] : Test Integration
+[E2E] --> [Webhook] : Trigger Workflow
+[Webhook] --> [CRUD] : Create/Update/Delete
+[CRUD] --> [Publish] : Publish Workflow
+[Publish] --> [Console] : Execute Workflow
+[Console] --> [HTTPExecutor] : HTTP Requests
+[Console] --> [Workers] : Task Scheduling
+[Workers] --> [DB] : Update State
+[DB] --> [Realtime] : Log Streaming
+
+' Add notes
+note right of [E2E]
+  End-to-End Tests validate
+  the complete workflow execution
+  and its integration with external
+  services and Supabase.
+end note
+
+note right of Supabase
+  Supabase provides the database,
+  real-time updates, storage, and
+  edge functions for the system.
+end note
+
+note right of [HTTPExecutor]
+  HTTP Executor handles robust
+  HTTP requests with retries and
+  backoff strategies.
+end note
+
+@enduml

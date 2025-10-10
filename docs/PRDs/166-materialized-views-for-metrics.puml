@@ -1,0 +1,52 @@
+@startuml
+!define RECTANGLE class
+!define DATABASE entity
+
+skinparam rectangle {
+    BackgroundColor<<Metrics>> Wheat
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam database {
+    BackgroundColor<<Database>> LightYellow
+    BorderColor Black
+    ArrowColor Black
+}
+
+rectangle "MeshHook System" as MeshHook {
+    RECTANGLE "Webhook Intake\n(SvelteKit)" as Webhook <<Metrics>>
+    RECTANGLE "Workflow CRUD\n(SvelteKit)" as CRUD <<Metrics>>
+    RECTANGLE "Publish Versions\n(SvelteKit)" as Publish <<Metrics>>
+    RECTANGLE "Run Console\n(SvelteKit)" as Console <<Metrics>>
+    DATABASE "Postgres\n(Supabase)" as Postgres <<Database>>
+    RECTANGLE "Realtime Logs\n(Supabase Realtime)" as Realtime <<Metrics>>
+    RECTANGLE "Orchestrator\n(Worker)" as Orchestrator <<Metrics>>
+    RECTANGLE "HTTP Executor\n(Worker)" as Executor <<Metrics>>
+}
+
+rectangle "Materialized Views\nfor Metrics" as MaterializedViews {
+    DATABASE "Metrics View\n(Postgres)" as MetricsView <<Database>>
+}
+
+Webhook -[hidden]-> CRUD
+CRUD -[hidden]-> Publish
+Publish -[hidden]-> Console
+Console -[hidden]-> Realtime
+Realtime -[hidden]-> Orchestrator
+Orchestrator -[hidden]-> Executor
+
+Postgres -[hidden]-> MaterializedViews
+
+Webhook --> Postgres : triggers & data
+CRUD --> Postgres : manage workflows
+Publish --> Postgres : versioning
+Console --> Postgres : run data
+Realtime --> Postgres : log streaming
+Orchestrator --> Postgres : state & scheduling
+Executor --> Postgres : HTTP tasks
+
+Postgres --> MetricsView : aggregates data
+MetricsView --> Realtime : updates metrics
+
+@enduml

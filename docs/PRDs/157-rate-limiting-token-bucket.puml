@@ -1,0 +1,33 @@
+@startuml
+
+title Rate Limiting Implementation (Token Bucket)
+
+actor Client
+boundary WebhookAPI
+control TokenBucketRateLimiter
+database PostgresDB
+
+Client -> WebhookAPI : Request Webhook Trigger
+WebhookAPI -> TokenBucketRateLimiter : Check Rate Limit
+TokenBucketRateLimiter -> PostgresDB : Fetch Bucket State
+PostgresDB --> TokenBucketRateLimiter : Return Bucket State
+TokenBucketRateLimiter -> TokenBucketRateLimiter : Calculate Tokens
+alt Tokens Available
+    TokenBucketRateLimiter --> WebhookAPI : Allow Request
+    WebhookAPI -> PostgresDB : Log Request
+    PostgresDB --> WebhookAPI : Acknowledge Log
+    WebhookAPI --> Client : Deliver Webhook Response
+else Tokens Exhausted
+    TokenBucketRateLimiter --> WebhookAPI : Deny Request
+    WebhookAPI --> Client : Error 429 (Too Many Requests)
+end
+
+note right of TokenBucketRateLimiter : Token calculation\nbased on time and\nprevious requests
+
+legend left
+  |<#FFAAAA>| External System
+  |<#AAFFAA>| MeshHook Component
+  |<#AAAAFF>| Database
+endlegend
+
+@enduml

@@ -1,0 +1,30 @@
+@startuml
+!theme plain
+
+title Payload Validation Process
+
+actor Client as client
+boundary "Webhook API" as webhookAPI
+control "Validation Service" as validationService
+database "Supabase Postgres" as supabaseDB
+control "Workflow Engine" as workflowEngine
+control "Logger" as logger
+
+client -> webhookAPI : Sends payload
+webhookAPI -> validationService : Validates payload
+validationService --> webhookAPI : Validation result
+
+alt If payload is valid
+    validationService -> supabaseDB : Store payload
+    supabaseDB --> validationService : Acknowledge storage
+    validationService -> workflowEngine : Trigger workflow
+    workflowEngine -> logger : Log workflow start
+    logger --> workflowEngine : Acknowledge log
+    workflowEngine -> client : Respond with workflow initiated
+else If payload is invalid
+    validationService -> logger : Log validation error
+    logger --> validationService : Acknowledge log
+    validationService -> client : Respond with error
+end
+
+@enduml

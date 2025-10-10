@@ -1,0 +1,48 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Intake] 
+    [Workflow CRUD API] 
+    [Publish Versions] 
+    [Run Console] 
+    [Event Sourcing] 
+    [Supabase Realtime]
+    [Postgres Database]
+    [Orchestrator Worker]
+    [HTTP Executor Worker]
+}
+
+package "Transform/JMESPath Tests" {
+    [Unit Tests] - [Integration Tests] 
+    [Integration Tests] - [E2E Tests]
+    [Test Runner]
+    [Test Data]
+    [Test Scenarios]
+    [Test Documentation]
+}
+
+[Webhook Intake] --> [Event Sourcing]: Triggers
+[Workflow CRUD API] --> [Event Sourcing]: Updates
+[Publish Versions] --> [Event Sourcing]: Versioning
+[Run Console] --> [Supabase Realtime]: Live Logs
+[Event Sourcing] --> [Postgres Database]: Stores State
+[Orchestrator Worker] --> [HTTP Executor Worker]: Dispatches Tasks
+[Orchestrator Worker] --> [Event Sourcing]: Manages State
+[HTTP Executor Worker] --> [Webhook Intake]: Callbacks
+
+' Integration with existing components
+[Test Runner] --> [Unit Tests]
+[Test Runner] --> [Integration Tests]
+[Test Runner] --> [E2E Tests]
+
+[Unit Tests] .right.> [Event Sourcing]: Validates
+[Integration Tests] .right.> [Orchestrator Worker]: Validates Integration
+[E2E Tests] .right.> [Webhook Intake]: Validates Flow
+
+note right of [Test Documentation]
+  Document test scenarios,
+  edge cases, and public APIs
+end note
+
+@enduml

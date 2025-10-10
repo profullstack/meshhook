@@ -1,0 +1,35 @@
+@startuml
+!define RECTANGLE class
+!define DATABASE entity
+
+RECTANGLE UserInterface <<Webhook Management UI>> {
+    :+ Create Webhook
+    :+ Update Webhook
+    :+ Delete Webhook
+}
+
+RECTANGLE WebhookService {
+    :+ validateRequest()
+    :+ saveWebhookData()
+    :+ triggerWorkflow()
+}
+
+RECTANGLE WorkflowEngine <<Workers>> {
+    :+ executeWorkflow()
+}
+
+DATABASE Supabase <<Database>> {
+    :Postgres
+    :Realtime
+    :Storage
+}
+
+UserInterface --> WebhookService : Uses
+WebhookService --> Supabase : Reads/Writes
+WebhookService --> WorkflowEngine : Triggers
+WorkflowEngine --> Supabase : Updates State
+
+note right of WebhookService : Core Webhook\nConfiguration Logic
+note right of WorkflowEngine : Handles Workflow\nExecution Logic
+
+@enduml

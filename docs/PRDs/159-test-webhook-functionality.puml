@@ -1,0 +1,42 @@
+@startuml
+!theme plain
+
+title Webhook Functionality Testing Flow
+
+actor Tester
+entity "Webhook Management UI" as UI
+control "Webhook Service" as Service
+database "Supabase Postgres" as DB
+boundary "Supabase Realtime" as Realtime
+boundary "HTTP Executor" as Executor
+
+== Test Preparation ==
+Tester -> UI : Navigate to Webhook Test UI
+UI -> Service : Request existing webhook configurations
+Service -> DB : Query webhook configurations
+DB --> Service : Return configurations
+Service --> UI : Display webhook configurations
+Tester -> UI : Select webhook to test
+
+== Test Execution ==
+Tester -> UI : Trigger webhook test
+UI -> Service : Initiate webhook test
+Service -> Executor : Send test webhook payload
+Executor -> Service : Webhook execution result
+Service --> UI : Display test results
+
+== Test Verification ==
+Tester -> UI : Request test logs
+UI -> Service : Query test execution logs
+Service -> DB : Retrieve logs from database
+DB --> Service : Return logs
+Service --> UI : Display logs
+UI --> Tester : Show test logs and results
+
+== Real-time Monitoring ==
+Service -> Realtime : Subscribe to webhook logs
+Tester -> UI : Monitor real-time logs
+Realtime --> UI : Stream logs in real-time
+UI --> Tester : Display live log updates
+
+@enduml

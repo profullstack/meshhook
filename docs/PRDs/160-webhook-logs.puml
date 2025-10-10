@@ -1,0 +1,23 @@
+@startuml
+!theme plain
+
+title Webhook Logs Implementation Flow
+
+actor User as user
+boundary "Webhook Management UI" as UI
+control "Webhook Service" as Service
+database "Supabase Postgres" as DB
+collections "Supabase Realtime" as Realtime
+
+user -> UI : Access logs
+UI -> Service : Request logs
+Service -> DB : Query log data
+DB --> Service : Return logs
+Service -> Realtime : Subscribe to log updates
+Realtime --> UI : Stream updates
+UI --> user : Display logs
+
+note right of Service : Integration Points:\n- Query existing Postgres schema for logs\n- Subscribe to Supabase Realtime for live updates
+note left of UI : SvelteKit (SSR/API) handles rendering and API requests
+
+@enduml

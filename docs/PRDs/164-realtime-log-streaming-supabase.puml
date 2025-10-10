@@ -1,0 +1,56 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    component [SvelteKit SSR/API] as SvelteKit
+    component [Supabase Realtime] as SupabaseRealtime
+    component [Postgres Database] as Postgres
+    component [Orchestrator Worker] as Orchestrator
+    component [HTTP Executor Worker] as HTTPExecutor
+    database [Artifacts Storage] as Storage
+}
+
+cloud {
+    [External Services] as External
+}
+
+node "Supabase" {
+    [Supabase Postgres] - [Supabase Realtime]
+    [Supabase Storage]
+    [Supabase Edge]
+}
+
+[Supabase Realtime] - [External Services] : Streams logs\nin real-time
+[SvelteKit] - [Supabase Postgres] : Queries &\nUpdates
+[SvelteKit] --> [Supabase Realtime] : Subscribes to\nlog updates
+[Orchestrator] --> [Supabase Postgres] : Manages state\n& scheduling
+[HTTPExecutor] --> [Supabase Postgres] : Executes HTTP\nwith retries
+[Postgres] .> [Supabase Postgres] : Mirrors\nData & Queues
+[Storage] .> [Supabase Storage] : Syncs\nArtifacts
+[Orchestrator] .> [Supabase Edge] : Triggers via\ncron/timers
+
+note right of [Supabase Realtime]
+  Realtime log streaming
+  is facilitated by Supabase
+  for live log updates.
+end note
+
+note left of [SvelteKit]
+  SvelteKit handles webhooks,
+  workflow CRUD, and serves
+  the run console.
+end note
+
+note right of [Orchestrator]
+  Orchestrator handles
+  state machine logic and
+  scheduling of tasks.
+end note
+
+note left of [HTTPExecutor]
+  HTTP Executor robustly manages
+  HTTP requests with retries
+  and backoff strategies.
+end note
+
+@enduml

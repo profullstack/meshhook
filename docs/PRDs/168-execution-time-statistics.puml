@@ -1,0 +1,44 @@
+@startuml
+!theme plain
+
+title Execution Time Statistics
+
+package "MeshHook System" {
+    [Webhook Intake] 
+    [Workflow CRUD API] 
+    [Publish Versions] 
+    [Run Console] 
+    database "Supabase" {
+        [Postgres]
+        [Realtime]
+        [Storage]
+        [Edge]
+    }
+    [Orchestrator Worker]
+    [HTTP Executor Worker]
+}
+
+package "Execution Time Statistics Feature" {
+    [Execution Time Collector] <<Component>>
+    [Statistics Aggregator] <<Component>>
+    [Statistics API] <<Component>>
+    [Statistics Dashboard] <<Component>>
+}
+
+[Webhook Intake] --> [Execution Time Collector] : triggers & collects execution times
+[Orchestrator Worker] --> [Execution Time Collector] : sends execution times
+[HTTP Executor Worker] --> [Execution Time Collector] : sends execution times
+[Execution Time Collector] --> [Statistics Aggregator] : sends raw execution times
+[Statistics Aggregator] --> [Postgres] : stores aggregated statistics
+[Statistics API] --> [Postgres] : queries aggregated statistics
+[Statistics Dashboard] --> [Statistics API] : fetches displayed statistics
+
+note right of [Statistics API]
+  Provides endpoints for\nfetching execution time statistics\nfor different workflows.
+end note
+
+note right of [Statistics Dashboard]
+  Visualizes execution time statistics\nwith charts and graphs for analysis.
+end note
+
+@enduml

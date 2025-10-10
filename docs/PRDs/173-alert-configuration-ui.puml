@@ -1,0 +1,50 @@
+@startuml
+!theme plain
+
+package "Alert Configuration UI" {
+    [AlertConfigUI] as (ui)
+    [Svelte 5 Components] as (components)
+    [Responsive Design] as (responsive)
+    [UI/UX Patterns] as (patterns)
+    [Public API Documentation] as (apiDoc)
+}
+
+package "MeshHook Backend" {
+    [Supabase Realtime] as (realtime)
+    [Postgres] as (postgres)
+    [SvelteKit SSR/API] as (sveltekit)
+    [Workers] as (workers)
+}
+
+package "Testing & Documentation" {
+    [Unit Tests] as (unitTests)
+    [Integration Tests] as (integrationTests)
+    [E2E Tests] as (e2eTests)
+    [Code Review] as (codeReview)
+    [Documentation] as (documentation)
+}
+
+(ui) -down-> (components) : Uses
+(ui) -down-> (responsive) : Implements
+(ui) -down-> (patterns) : Follows
+(ui) -down-> (apiDoc) : Generates
+
+(components) .right.> (sveltekit) : Integrates With
+(responsive) .right.> (sveltekit) : Integrates With
+(patterns) .right.> (sveltekit) : Integrates With
+
+(sveltekit) -down-> (realtime) : Uses
+(sveltekit) -down-> (postgres) : Uses
+(sveltekit) -down-> (workers) : Coordinates
+
+(realtime) .left.> (ui) : Updates
+(postgres) .left.> (ui) : Stores Configs
+(workers) .left.> (ui) : Triggers Alerts
+
+(ui) -right-> (unitTests) : Tested By
+(ui) -right-> (integrationTests) : Tested By
+(ui) -right-> (e2eTests) : Tested By
+(ui) -right-> (codeReview) : Reviewed By
+(ui) -right-> (documentation) : Documented In
+
+@enduml

@@ -1,0 +1,28 @@
+@startuml
+!theme plain
+
+title Webhook for Alerts - Sequence Diagram
+
+actor User as user
+boundary "Webhook API" as webhook
+control "Webhook Controller" as controller
+database "Supabase Postgres" as db
+entity "Orchestrator Worker" as worker
+control "HTTP Executor" as httpExecutor
+boundary "External Alerting Service" as externalService
+
+user -> webhook : Sends alert payload
+webhook -> controller : Validates & processes payload
+controller -> db : Logs incoming webhook
+db --> controller : Acknowledgement
+controller -> worker : Triggers alert processing
+worker -> httpExecutor : Calls HTTP Executor with alert details
+httpExecutor -> externalService : Sends alert notification
+externalService --> httpExecutor : Acknowledgement
+httpExecutor --> worker : Notification status
+worker --> db : Updates alert status
+db --> worker : Acknowledgement
+worker -> db : Logs processing outcome
+db --> worker : Acknowledgement
+
+@enduml

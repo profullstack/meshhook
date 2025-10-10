@@ -1,0 +1,46 @@
+@startuml
+!theme plain
+
+title Error Rate Tracking Implementation
+
+package "MeshHook System" {
+    [Webhook Intake] <<SvelteKit>>
+    [Workflow CRUD] <<SvelteKit>>
+    [Publish Versions] <<SvelteKit>>
+    [Run Console] <<SvelteKit>>
+    [Orchestrator Worker] <<Worker>>
+    [HTTP Executor Worker] <<Worker>>
+    database "Supabase" {
+        [Postgres Data + Queues]
+        [Realtime Log Streaming]
+        [Storage Artifacts]
+        [Edge Cron/Timers]
+    }
+}
+
+package "Error Rate Tracking Feature" {
+    [Error Rate Tracker] <<Component>>
+    [Error Logger] <<Component>>
+    [Metrics Dashboard] <<Component>>
+    [Alert System] <<Component>>
+}
+
+[Webhook Intake] --> [Error Logger] : Logs errors
+[Orchestrator Worker] --> [Error Logger] : Logs errors
+[HTTP Executor Worker] --> [Error Logger] : Logs errors
+[Error Logger] --> [Postgres Data + Queues] : Stores error logs
+[Error Logger] --> [Error Rate Tracker] : Sends error data
+[Error Rate Tracker] --> [Metrics Dashboard] : Updates error metrics
+[Error Rate Tracker] --> [Alert System] : Triggers alerts on threshold
+[Metrics Dashboard] ..> [Supabase] : Fetches updated metrics
+[Alert System] ..> [Supabase] : Registers alerts
+
+note right of [Error Rate Tracker]
+  Key Considerations:
+  - Maintain backward compatibility
+  - Follow event sourcing patterns
+  - Implement proper error handling and logging
+  - Consider rate limiting and resource constraints
+end note
+
+@enduml

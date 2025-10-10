@@ -1,0 +1,34 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    component [SvelteKit SSR/API] as SvelteKit
+    component [Supabase\nPostgres + Realtime + Storage + Edge] as Supabase
+    component [Workers\nOrchestrator + HTTP Executor] as Workers
+    database [Postgres DB] as Postgres
+    [Structured Logging] as StructuredLogging
+}
+
+cloud {
+    [External Services] as ExtServices
+}
+
+SvelteKit --> Supabase : Uses for data & log streaming
+Workers --> Supabase : Uses for job scheduling & execution
+Supabase --> Postgres : Persists data & logs
+StructuredLogging .> SvelteKit : Implements logging
+StructuredLogging .> Workers : Implements logging
+StructuredLogging ..> Supabase : Streams logs in realtime
+StructuredLogging ..> Postgres : Writes logs
+
+Supabase --> ExtServices : Interacts with\n(Supabase services)
+StructuredLogging --> ExtServices : Utilizes for external logging
+
+note right of StructuredLogging
+  Structured logging implementation includes:
+  - Consistent log format
+  - Error handling & reporting
+  - Integration with Supabase Realtime for live updates
+end note
+
+@enduml

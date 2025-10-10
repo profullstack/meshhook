@@ -1,0 +1,37 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Receiver] - [Queue System]
+    [Queue System] - [Queue Depth Monitor]
+    [Queue Depth Monitor] - [Alerting Service]
+    [Queue System] - [Worker Orchestrator]
+    [Worker Orchestrator] - [HTTP Executor]
+    [HTTP Executor] --> [External Systems]
+    database "Supabase" {
+        [Postgres]
+        [Realtime]
+        [Storage]
+    }
+    [Queue System] --> [Postgres]
+    [Realtime] - [Queue Depth Monitor]
+}
+
+[Queue Depth Monitor] .right.> [Supabase] : Uses
+[Queue Depth Monitor] .down.> [Alerting Service] : Triggers
+[Queue Depth Monitor] .left.> [Webhook Receiver] : Monitors
+[Alerting Service] .right.> [External Systems] : Notifies
+
+note right of [Queue Depth Monitor] : Monitors queue depth\nand triggers alerts\non threshold breach.
+
+note right of [Alerting Service] : Sends notifications\nto configured endpoints\nor email addresses.
+
+note left of [Webhook Receiver] : Receives incoming\nwebhook requests.
+
+note left of [Worker Orchestrator] : Manages job distribution\nand execution state.
+
+note over [Postgres] : Stores queue data\nand execution logs.
+
+note over [HTTP Executor] : Executes outbound\nHTTP requests with\nretries and backoff.
+
+@enduml

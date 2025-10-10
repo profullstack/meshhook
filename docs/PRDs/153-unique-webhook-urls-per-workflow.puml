@@ -1,0 +1,29 @@
+@startuml
+!theme plain
+
+title Unique Webhook URLs per Workflow Implementation
+
+package "MeshHook System" {
+    [Webhook Service] as Webhook
+    [Workflow Engine] as Engine
+    [Database] as DB
+    [Supabase Realtime] as Realtime
+    [API Gateway] as Gateway
+}
+
+package "External Systems" {
+    [Client Application] as Client
+}
+
+Client --> Gateway : Request to create\nunique webhook URL
+Gateway --> Webhook : Generate unique URL
+Webhook --> DB : Store webhook URL\nand workflow mapping
+DB --> Webhook : Confirm storage
+Webhook --> Gateway : Return unique URL
+Client --> Webhook : Trigger webhook\nwith payload
+Webhook --> Engine : Initiate workflow\nwith payload
+Engine --> DB : Update workflow state
+DB --> Realtime : Stream log updates
+Realtime -right-> Client : Display live logs
+
+@enduml

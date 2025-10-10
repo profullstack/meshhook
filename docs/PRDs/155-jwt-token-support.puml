@@ -1,0 +1,25 @@
+@startuml
+!theme plain
+
+title JWT Token Support - Sequence Diagram
+
+actor User as user
+participant "Webhook Trigger" as webhook
+database "Supabase Postgres" as db
+participant "JWT Service" as jwt
+participant "Workflow Engine" as engine
+
+user -> webhook: Sends request\nwith JWT
+webhook -> jwt: Validates JWT
+alt JWT Valid
+    jwt -> db: Fetches user/project data
+    db --> jwt: User/Project data
+    jwt --> webhook: JWT Valid
+    webhook -> engine: Triggers workflow
+    engine --> user: Workflow executed
+else JWT Invalid
+    jwt --> webhook: JWT Invalid/Error
+    webhook --> user: Returns error response
+end
+
+@enduml
