@@ -10,9 +10,6 @@ const config = {
 			$stores: './src/lib/stores',
 			$utils: './src/lib/utils'
 		}
-	},
-	compilerOptions: {
-		runes: true
 	}
 };
 
