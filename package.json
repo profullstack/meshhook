@@ -7,6 +7,7 @@
     "postinstall": "echo \"✅ MeshHook workspace installed\"",
     "format": "prettier -w .",
     "setup": "node scripts/setup.js",
+    "build": "cd apps/web && pnpm run build",
     "db:migrate": "node scripts/db-migrate.js",
     "db:migrate:local": "pnpx supabase migrations up",
     "db:migrate:production": "pnpx supabase db push --linked --include-all",
