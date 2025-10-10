@@ -1,103 +1,57 @@
 @startuml
-!theme plain
+!theme cerulean
 
-<<<<<<< HEAD
-package "Marketing Site" {
-    [Content Creation] as CC
-    [Design & User Experience] as DUX
+title Marketing Site Architecture for MeshHook
+
+package "Frontend - SvelteKit" {
+    [Content Strategy & Creation] as Content
+    [Responsive Design] as Responsive
+    [UI/UX Design Implementation] as UIUX
     [SEO Optimization] as SEO
-    [Analytics Integration] as AI
-    [Contact/Feedback Form] as CFF
-}
-
-package "MeshHook Core" {
-    [SvelteKit SSR/API] as SSR
-    [Supabase] as SB
-    [Workers] as WK
-}
-
-database "Postgres" as PG {
-    [Data + Queues]
-    [Realtime]
-    [Storage]
-}
-
-cloud "External Services" {
-    [Vercel/Netlify] as VN
-    [Google Analytics/Plausible] as GA
-}
-
-SSR --> VN : Deploys to
-SSR --> GA : Embeds analytics
-SSR --> SB : Uses
-SB --> PG : Manages
-WK --> PG : Interacts with
-
-CC --> SSR : Content for
-DUX --> SSR : UI/UX Design
-SEO --> SSR : SEO Practices
-AI --> GA : Integrates
-CFF --> SSR : Form implementation
-=======
-package "MeshHook Marketing Site" {
-    [Marketing Site] as (site)
-    [Supabase Realtime] as (realtime)
-    [Postgres Database] as (db)
-    [SvelteKit SSR/API] as (ssr)
-    [Orchestrator Worker] as (orchestrator)
-    [HTTP Executor Worker] as (httpExecutor)
-    database "Supabase Storage" as (storage)
 }
 
 cloud {
-    [External Services] as (external)
+    [Google Analytics] as Analytics
 }
 
-node "Development Environment" {
-    [Local Development] as (dev)
+database "Hosting - Vercel/Netlify" {
+    [Deployment] as Deploy
+    [SSL & CDN] as SSLCDN
 }
 
-[Local Development] ..> [Marketing Site] : Deploys
-[Marketing Site] ..> [SvelteKit SSR/API] : Uses
-[SvelteKit SSR/API] ..> [Supabase Realtime] : Streams logs
-[SvelteKit SSR/API] ..> [Postgres Database] : CRUD operations
-[Orchestrator Worker] ..> [Postgres Database] : Reads/Writes
-[HTTP Executor Worker] ..> [External Services] : Makes requests
-[Supabase Realtime] <.. [Supabase Storage] : Syncs files
-[Postgres Database] ..> [Supabase Storage] : Stores artifacts
+[Content] --> [UIUX] : Defines\nContent Structure
+[Responsive] .> [UIUX] : Ensures\nResponsive Layouts
+[UIUX] --> [SEO] : Implements\nSEO Best Practices
+[SEO] --> [Analytics] : Tracks\nPage Views & Interactions
+[Analytics] --> [Deploy] : Provides\nInsights for Optimization
+[Deploy] --> [SSLCDN] : Utilizes\nfor Performance & Security
 
-note right of (site)
-  Marketing site for MeshHook.
-  Showcases features and documentation.
+package "External Integrations" {
+    [Lead Generation Form] as LeadGen
+    [Social Proof Widgets] as SocialProof
+}
+
+[LeadGen] .> [Analytics] : Captures\nUser Submissions
+[SocialProof] .> [UIUX] : Embeds\nTestimonials & Reviews
+
+note right of [Deploy]
+  - Continuous Deployment
+  - Global Distribution
+  - Automatic HTTPS
 end note
 
-note right of (ssr)
-  SvelteKit for SSR and API endpoints.
+note right of [SEO]
+  - Meta Tags
+  - Accessible Content
+  - Structured Data
 end note
 
-note right of (orchestrator)
-  Manages workflow execution.
+note over Content, SEO
+  Key Content & SEO Strategies
 end note
 
-note right of (httpExecutor)
-  Handles HTTP requests with retries.
+note over LeadGen, SocialProof
+  Enhances Credibility & Conversion
 end note
-
-note right of (db)
-  Stores data, queues, and logs.
-end note
-
-note right of (realtime)
-  Provides live updates to clients.
-end note
-
-note right of (external)
-  Includes webhook sources and other APIs.
-end note
-
-note right of (dev)
-  Where development and testing occur.
-end note
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

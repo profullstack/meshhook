@@ -578,6 +578,24 @@ function savePlantUMLDiagram(issueNumber, issueTitle, diagramCode, dryRun = fals
   return filename;
 }
 
+// Validate PlantUML syntax
+function validatePlantUMLSyntax(pumlFile) {
+  try {
+    // Use plantuml -syntax to check syntax without generating output
+    const result = execSync(`plantuml -syntax "${pumlFile}"`, { encoding: "utf8" });
+    
+    // Check if there are any errors in the output
+    if (result.includes('ERROR') || result.includes('Syntax Error')) {
+      return { valid: false, error: result };
+    }
+    
+    return { valid: true };
+  } catch (error) {
+    // If plantuml command fails, return the error
+    return { valid: false, error: error.message };
+  }
+}
+
 // Generate PNG from PlantUML using plantuml.jar or online service
 async function generatePNGFromPlantUML(pumlFile, dryRun = false) {
   if (dryRun || !pumlFile) {
@@ -585,16 +603,53 @@ async function generatePNGFromPlantUML(pumlFile, dryRun = false) {
   }
 
   try {
-    // Try to use local plantuml.jar if available
-    const pngFile = pumlFile.replace('.puml', '.png');
-    
+    // Check if plantuml is available
     try {
-      execSync(`plantuml "${pumlFile}"`, { encoding: "utf8" });
-      console.log(`  🖼️  Generated PNG: ${pngFile}`);
-      return pngFile;
+      execSync('plantuml -version', { encoding: "utf8", stdio: 'pipe' });
     } catch (error) {
       console.log(`  ℹ️  plantuml not found locally, skipping PNG generation`);
       console.log(`     Install PlantUML to generate PNG diagrams: https://plantuml.com/download`);
+      return null;
+    }
+
+    // Validate PlantUML syntax first
+    console.log(`  🔍 Validating PlantUML syntax...`);
+    const validation = validatePlantUMLSyntax(pumlFile);
+    
+    if (!validation.valid) {
+      console.error(`  ❌ PlantUML syntax validation failed:`);
+      console.error(`     ${validation.error}`);
+      console.log(`  💡 Common PlantUML issues:`);
+      console.log(`     - Missing @startuml or @enduml tags`);
+      console.log(`     - Invalid arrow syntax (use --> or -> for connections)`);
+      console.log(`     - Unclosed quotes or brackets`);
+      console.log(`     - Invalid participant or component names`);
+      console.log(`  📝 Check the .puml file at: ${pumlFile}`);
+      return null;
+    }
+    
+    console.log(`  ✓ PlantUML syntax valid`);
+    
+    // Try to generate PNG
+    const pngFile = pumlFile.replace('.puml', '.png');
+    
+    try {
+      const output = execSync(`plantuml "${pumlFile}"`, { encoding: "utf8", stdio: 'pipe' });
+      
+      // Check if PNG was actually created
+      if (existsSync(pngFile)) {
+        console.log(`  🖼️  Generated PNG: ${pngFile}`);
+        return pngFile;
+      } else {
+        console.error(`  ⚠️  PlantUML command succeeded but PNG was not created`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`  ❌ PlantUML PNG generation failed:`);
+      console.error(`     ${error.message}`);
+      if (error.stderr) {
+        console.error(`     ${error.stderr}`);
+      }
       return null;
     }
   } catch (error) {

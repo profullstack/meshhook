@@ -1,15 +1,10 @@
 <script>
 	import WorkflowEditor from '$lib/components/WorkflowEditor.svelte';
 	import NodePalette from '$lib/components/NodePalette.svelte';
-<<<<<<< HEAD
 	import NodeConfigModal from '$lib/components/NodeConfigModal.svelte';
 	import ValidationPanel from '$lib/components/ValidationPanel.svelte';
 	import { validateWorkflow } from '$lib/utils/workflow-validator.js';
 	import { organizeCanvas } from '$lib/utils/layout-organizer.js';
-=======
-	import ValidationPanel from '$lib/components/ValidationPanel.svelte';
-	import { validateWorkflow } from '$lib/utils/workflow-validator.js';
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 	import { goto } from '$app/navigation';
 
 	let { data } = $props();
@@ -23,13 +18,10 @@
 
 	let saving = $state(false);
 	let validationErrors = $state([]);
-<<<<<<< HEAD
 	
 	// Node configuration modal state
 	let selectedNode = $state(null);
 	let showConfigModal = $state(false);
-=======
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 	// Validate on changes
 	$effect(() => {
@@ -46,7 +38,6 @@
 	function handleEdgesChange(updatedEdges) {
 		edges = updatedEdges;
 	}
-<<<<<<< HEAD
 	
 	// Handle node click - open configuration modal
 	function handleNodeClick(node) {
@@ -69,8 +60,6 @@
 		showConfigModal = false;
 		selectedNode = null;
 	}
-=======
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 	// Save workflow
 	async function saveWorkflow(publish = false) {
@@ -114,7 +103,6 @@
 			saveWorkflow(true);
 		}
 	}
-<<<<<<< HEAD
 
 	// Handle organize canvas
 	function handleOrganizeCanvas() {
@@ -139,8 +127,6 @@
 			alert('Failed to organize canvas');
 		}
 	}
-=======
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 </script>
 
 <svelte:head>
@@ -165,7 +151,6 @@
 				</div>
 			</div>
 			<div class="header-actions">
-<<<<<<< HEAD
 				<button
 					class="btn-organize"
 					onclick={handleOrganizeCanvas}
@@ -174,8 +159,6 @@
 				>
 					🎯 Organize Canvas
 				</button>
-=======
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 				<button class="btn-secondary" onclick={() => saveWorkflow(false)} disabled={saving}>
 					{saving ? 'Saving...' : 'Save Draft'}
 				</button>
@@ -200,16 +183,12 @@
 				bind:edges
 				onNodesChange={handleNodesChange}
 				onEdgesChange={handleEdgesChange}
-<<<<<<< HEAD
 				onNodeClick={handleNodeClick}
-=======
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 			/>
 		</div>
 	</div>
 
 	<ValidationPanel errors={validationErrors} />
-<<<<<<< HEAD
 	
 	{#if showConfigModal && selectedNode}
 		<NodeConfigModal
@@ -218,8 +197,6 @@
 			onCancel={handleModalCancel}
 		/>
 	{/if}
-=======
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 </div>
 
 <style>
@@ -338,7 +315,6 @@
 		background: #f5f5f5;
 	}
 
-<<<<<<< HEAD
 	.btn-organize {
 		background: #8b5cf6;
 		color: white;
@@ -349,8 +325,6 @@
 		background: #7c3aed;
 	}
 
-=======
->>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 	button:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
