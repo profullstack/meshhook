@@ -34,6 +34,31 @@
 				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Condition description' }
 			]
 		},
+		branch: {
+			fields: [
+				{ name: 'branches', label: 'Number of Branches', type: 'number', required: true, placeholder: '2', min: 2, max: 10 },
+				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Branch description (e.g., "Broadcast to Discord and Slack")' }
+			]
+		},
+		loop: {
+			fields: [
+				{ name: 'items', label: 'Items Expression (JMESPath)', type: 'textarea', required: true, placeholder: 'data.items[*]' },
+				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Loop description' }
+			]
+		},
+		webhook: {
+			fields: [
+				{ name: 'path', label: 'Webhook Path', type: 'text', required: true, placeholder: '/hooks/my-workflow' },
+				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Webhook description' }
+			]
+		},
+		schedule: {
+			fields: [
+				{ name: 'cron', label: 'Cron Expression', type: 'text', required: true, placeholder: '0 0 * * *' },
+				{ name: 'timezone', label: 'Timezone', type: 'text', placeholder: 'America/Los_Angeles' },
+				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Schedule description' }
+			]
+		},
 		terminate: {
 			fields: [
 				{ name: 'reason', label: 'Termination Reason', type: 'text', placeholder: 'Workflow completed' },
@@ -99,6 +124,8 @@
 							bind:value={config[field.name]}
 							placeholder={field.placeholder || ''}
 							required={field.required}
+							min={field.min}
+							max={field.max}
 						/>
 					{:else if field.type === 'textarea'}
 						<textarea
@@ -224,6 +251,7 @@
 		font-size: 0.875rem;
 		font-family: inherit;
 		transition: border-color 0.2s;
+		box-sizing: border-box;
 	}
 	
 	input:focus,
