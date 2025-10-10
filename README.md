@@ -106,6 +106,7 @@
 ## Documentation
 
 - [`./docs/Environment-Setup.md`](./docs/Environment-Setup.md) - Detailed environment setup guide
+- [`./docs/Event-Partitioning.md`](./docs/Event-Partitioning.md) - Event partitioning strategy and maintenance
 - [`./docs/PRD.md`](./docs/PRD.md) - Product requirements
 - [`./docs/Architecture.md`](./docs/Architecture.md) - System architecture
 - [`./docs/diagrams/*.puml`](./docs/diagrams/) - PlantUML diagrams

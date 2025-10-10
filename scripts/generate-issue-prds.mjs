@@ -10,16 +10,23 @@
  * - Saves PRDs to docs/PRDs/{issue-number}.md
  * - Updates issue bodies with PRD content and links
  * - Supports --dry-run mode for preview
+ * - Can add labels to issues
  *
  * Prerequisites:
  *   - GitHub CLI installed: https://cli.github.com/
  *   - Authenticated: gh auth login
  *
  * Usage:
- *   node scripts/generate-issue-prds.mjs [--dry-run]
+ *   node scripts/generate-issue-prds.mjs [--dry-run] [--labels label1,label2,...]
  *
  * Options:
- *   --dry-run  Preview PRDs without saving or updating issues
+ *   --dry-run           Preview PRDs without saving or updating issues
+ *   --labels <labels>   Comma-separated list of labels to add to all issues
+ *
+ * Examples:
+ *   node scripts/generate-issue-prds.mjs --dry-run
+ *   node scripts/generate-issue-prds.mjs --labels hacktoberfest,good-first-issue
+ *   node scripts/generate-issue-prds.mjs --dry-run --labels hacktoberfest
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, statSync } from "fs";
@@ -524,9 +531,70 @@ function savePRD(issueNumber, issueTitle, content, dryRun = false) {
   return filename;
 }
 
+// Parse command line arguments
+function parseArgs() {
+  const args = {
+    dryRun: false,
+    labels: [],
+  };
+
+  for (let i = 2; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+    
+    if (arg === "--dry-run") {
+      args.dryRun = true;
+    } else if (arg === "--labels" && i + 1 < process.argv.length) {
+      // Parse comma-separated labels
+      args.labels = process.argv[i + 1]
+        .split(",")
+        .map((label) => label.trim())
+        .filter((label) => label.length > 0);
+      i++; // Skip next arg since we consumed it
+    }
+  }
+
+  return args;
+}
+
 // Check if issue already has PRD section
 function hasPRDSection(body) {
   return body?.includes("## 📋 Product Requirements Document") || false;
+}
+
+// Add labels to an issue
+async function addLabelsToIssue(repo, issueNumber, labels, dryRun = false) {
+  if (!labels || labels.length === 0) {
+    return true;
+  }
+
+  if (dryRun) {
+    console.log(`  [DRY RUN] Would add labels: ${labels.join(", ")}`);
+    return true;
+  }
+
+  try {
+    // Get existing labels
+    const existingLabelsJson = gh(
+      `api repos/${repo}/issues/${issueNumber} --jq '.labels[].name'`
+    );
+    const existingLabels = existingLabelsJson
+      .split("\n")
+      .filter((l) => l.trim().length > 0);
+
+    // Combine with new labels (avoid duplicates)
+    const allLabels = [...new Set([...existingLabels, ...labels])];
+
+    // Add labels to issue
+    const labelArgs = allLabels.map((l) => `-a labels="${l}"`).join(" ");
+    gh(`api repos/${repo}/issues/${issueNumber} ${labelArgs} -X PATCH`);
+
+    return true;
+  } catch (error) {
+    console.error(
+      `  ⚠️  Could not add labels to issue #${issueNumber}: ${error.message}`
+    );
+    return false;
+  }
 }
 
 // Update issue body with PRD content and link
@@ -566,7 +634,9 @@ async function updateIssueBody(repo, issueNumber, issueTitle, originalBody, prdC
 }
 
 // Main function
-async function generateIssuePRDs(dryRun = false) {
+async function generateIssuePRDs(args) {
+  const { dryRun, labels } = args;
+  
   console.log("📋 GitHub Issue PRD Generator\n");
 
   // Check gh CLI
@@ -592,10 +662,14 @@ async function generateIssuePRDs(dryRun = false) {
   console.log(`📦 Repository: ${repo}`);
 
   if (dryRun) {
-    console.log("🔍 DRY RUN MODE - No changes will be made\n");
-  } else {
-    console.log();
+    console.log("🔍 DRY RUN MODE - No changes will be made");
   }
+  
+  if (labels.length > 0) {
+    console.log(`🏷️  Labels to add: ${labels.join(", ")}`);
+  }
+  
+  console.log();
 
   // Load project context
   console.log("\n📖 Loading project context...");
@@ -649,10 +723,25 @@ async function generateIssuePRDs(dryRun = false) {
 
       if (updated) {
         console.log(`  ✓ Appended PRD section to issue #${issue.number}`);
-        processedCount++;
       } else {
         errorCount++;
       }
+
+      // Add labels if specified
+      if (labels.length > 0) {
+        const labelsAdded = await addLabelsToIssue(
+          repo,
+          issue.number,
+          labels,
+          dryRun
+        );
+        
+        if (labelsAdded) {
+          console.log(`  ✓ Added labels: ${labels.join(", ")}`);
+        }
+      }
+
+      processedCount++;
 
       // Rate limiting delay
       if (!dryRun && issues.indexOf(issue) < issues.length - 1) {
@@ -682,8 +771,8 @@ async function generateIssuePRDs(dryRun = false) {
 }
 
 // Run the generator
-const dryRun = process.argv.includes("--dry-run");
-generateIssuePRDs(dryRun).catch((error) => {
+const args = parseArgs();
+generateIssuePRDs(args).catch((error) => {
   console.error("❌ PRD generation failed:", error.message);
   process.exit(1);
 });
