@@ -1,6 +1,7 @@
 @startuml
 !theme plain
 
+<<<<<<< HEAD
 package "MeshHook System" {
     [SvelteKit SSR/API] as SvelteKit
     [Supabase Postgres] as Postgres
@@ -45,5 +46,39 @@ class "Query Optimization" {
     +Regression testing
     +Performance benchmarking
 }
+=======
+title Query Optimization Workflow
+
+actor Developer
+boundary "SvelteKit SSR/API" as SvelteKit
+database "Supabase Postgres" as Postgres
+control "Orchestrator Worker" as Orchestrator
+control "HTTP Executor Worker" as Executor
+queue "Supabase Realtime" as Realtime
+queue "Supabase Storage" as Storage
+cloud "External Services" as External
+
+Developer --> SvelteKit : Triggers Query Optimization
+SvelteKit --> Orchestrator : Initiates Workflow
+Orchestrator --> Postgres : Fetches Workflow Data
+Postgres --> Orchestrator : Returns Data
+Orchestrator --> Executor : Executes Optimized Query
+Executor --> Postgres : Applies Query
+Postgres --> Executor : Returns Results
+Executor --> Realtime : Streams Logs
+Realtime --> SvelteKit : Displays Live Logs
+SvelteKit --> Developer : Shows Optimization Results
+Executor --> Storage : Saves Execution Artifacts
+Storage --> Developer : Access Artifacts (if needed)
+Executor --> External : Calls External APIs (if needed)
+External --> Executor : Returns API Data
+
+note right of Postgres : No schema changes\nrequired for optimization
+
+group Integration Points
+    SvelteKit -[hidden]-> Postgres : Existing System Components
+    Orchestrator -[hidden]-> Executor : New Optimization Components
+end group
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

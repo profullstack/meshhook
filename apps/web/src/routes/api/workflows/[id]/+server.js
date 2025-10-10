@@ -35,7 +35,10 @@ export async function GET(event) {
 
 /**
  * PUT /api/workflows/[id] - Update a workflow
+<<<<<<< HEAD
  * When publishing (status='published'), creates a new version
+=======
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
  */
 export async function PUT(event) {
 	const supabase = createServerSupabaseClient(event);
@@ -53,6 +56,7 @@ export async function PUT(event) {
 		const body = await event.request.json();
 		const { name, description, nodes, edges, status } = body;
 
+<<<<<<< HEAD
 		// Get current workflow to check if we're publishing
 		const { data: currentWorkflow, error: fetchError } = await supabase
 			.from('workflow_definitions')
@@ -142,6 +146,35 @@ export async function PUT(event) {
 
 			return json({ workflow: data });
 		}
+=======
+		// Build update object
+		const updates = {
+			updated_at: new Date().toISOString()
+		};
+
+		if (name !== undefined) updates.name = name;
+		if (description !== undefined) updates.description = description;
+		if (nodes !== undefined || edges !== undefined) {
+			updates.definition = { nodes, edges };
+		}
+		if (status !== undefined) updates.status = status;
+
+		const { data, error } = await supabase
+			.from('workflows')
+			.update(updates)
+			.eq('id', id)
+			.select()
+			.single();
+
+		if (error) {
+			if (error.code === 'PGRST116') {
+				return json({ error: 'Workflow not found' }, { status: 404 });
+			}
+			throw error;
+		}
+
+		return json({ workflow: data });
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 	} catch (error) {
 		console.error('Error updating workflow:', error);
 		return json({ error: error.message }, { status: 500 });

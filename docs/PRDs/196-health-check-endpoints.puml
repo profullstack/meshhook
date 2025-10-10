@@ -2,6 +2,7 @@
 !theme plain
 
 package "MeshHook System" {
+<<<<<<< HEAD
     [Supabase\n(Postgres + Realtime)] as Supabase
     [SvelteKit\n(SSR/API)] as SvelteKit
     [Workers\n(Orchestrator + HTTP Executor)] as Workers
@@ -64,5 +65,29 @@ note over Metrics & Logging, AlertingSystem
   Monitoring systems log health check activities
   and alert on critical failures.
 end note
+=======
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase] <<Database>> as Supabase
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as HTTPExecutor
+}
+
+package "Health Check Feature" {
+    [Health Check Endpoint] as HealthCheck
+    [Integration Testing] as IntegrationTest
+    [Unit Testing] as UnitTest
+}
+
+SvelteKit --> HealthCheck : <<invoke>>
+HealthCheck --> Supabase : <<query>> \nCheck DB Connection
+HealthCheck --> Orchestrator : <<query>> \nCheck Worker Status
+HealthCheck --> HTTPExecutor : <<query>> \nCheck Worker Status
+HealthCheck --> [Client] : <<respond>> \nAPI Health Status
+
+IntegrationTest .down.> HealthCheck : <<test>>
+UnitTest .down.> HealthCheck : <<test>>
+
+note right of HealthCheck : RESTful API Endpoint\n/api/health
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

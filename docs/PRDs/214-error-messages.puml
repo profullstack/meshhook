@@ -1,6 +1,7 @@
 @startuml
 !theme plain
 
+<<<<<<< HEAD
 title Error Message Enhancement Workflow
 
 actor User
@@ -34,5 +35,40 @@ legend left
   Webhook Triggers/Workflow Execution: Points of error origination
   Documentation: Error details and troubleshooting
 endlegend
+=======
+title Error Message Handling in MeshHook
+
+package "MeshHook System" {
+    [Webhook Intake] as WI
+    [Workflow CRUD] as WCRUD
+    [Publish Versions] as PV
+    [Run Console] as RC
+    [Error Handling] as EH
+}
+
+database "Supabase" {
+    [Postgres] as DB
+    [Realtime] as RT
+    [Storage] as S
+    [Edge] as E
+}
+
+node "Workers" {
+    [Orchestrator] as O
+    [HTTP Executor] as HE
+}
+
+WI --> EH : triggers\non failure
+WCRUD --> EH : triggers\non failure
+PV --> EH : triggers\non failure
+RC --> EH : triggers\non failure
+O --> EH : triggers\non failure
+HE --> EH : triggers\non failure
+
+EH --> DB : logs error\ndetails
+EH --> RT : streams error\nto clients
+
+note right of EH : Error Handling Strategies\n- Log to Postgres\n- Stream via Realtime\n- User Notification
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

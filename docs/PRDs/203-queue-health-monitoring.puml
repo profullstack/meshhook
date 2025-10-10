@@ -1,4 +1,5 @@
 @startuml
+<<<<<<< HEAD
 !theme plain
 
 package "Queue Health Monitoring System" {
@@ -46,5 +47,46 @@ note right of [Notification Service]
   Supports email, SMS, or webhook
   notifications for critical alerts.
 end note
+=======
+!define RECTANGLE class
+
+RECTANGLE Supabase <<External Service>> {
+    Database: Postgres
+    Realtime: Log Streaming
+    Storage: Artifacts
+    Edge: Cron/Timers
+}
+
+RECTANGLE SvelteKit <<Web>> {
+    Webhook Intake
+    Workflow CRUD
+    Publish Versions
+    Run Console
+}
+
+RECTANGLE Workers <<Service>> {
+    Orchestrator: State Machine + Scheduling
+    HTTPExecutor: Robust HTTP with Retries/Backoff
+}
+
+RECTANGLE Monitoring <<Monitor>> {
+    Queue Health Monitoring
+}
+
+database "Postgres (Queues)" as Queues
+
+Supabase -down-> Queues : Uses
+SvelteKit -right-> Supabase : Interacts
+Workers -left-> Supabase : Interacts
+Monitoring -down-> Queues : Monitors
+
+note right of Monitoring : Key Metrics\n- Response Times\n- Error Rates
+
+note right of SvelteKit : SvelteKit (SSR/API)\nFor UI and API Management
+
+note left of Workers : Workers for\nBackground Processing
+
+note over Supabase : Supabase for\nData Management and Realtime Logs
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

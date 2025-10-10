@@ -1,6 +1,7 @@
 @startuml
 !theme plain
 
+<<<<<<< HEAD
 package "MeshHook System" {
     [Webhook Triggers] -down-> [DAG Builder]
     [DAG Builder] -down-> [Workflow Engine]
@@ -64,6 +65,84 @@ note right of [Benchmark Scripts]
   performance testing
   process, covering key
   components and operations.
+=======
+title Performance Benchmarks - MeshHook Project
+
+package "MeshHook System" {
+    [Webhook Intake] <<SvelteKit>>
+    [Workflow CRUD API] <<SvelteKit>>
+    [Publish Versions] <<SvelteKit>>
+    [Run Console] <<SvelteKit>>
+    [Orchestrator Worker]
+    [HTTP Executor Worker]
+    database "Supabase Postgres" {
+        [Data + Queues]
+        [Realtime Log Streaming]
+        [Storage Artifacts]
+    }
+    [Edge Cron/Timers] <<Supabase Edge>>
+}
+
+cloud {
+    [External Services]
+}
+
+[Webhook Intake] --> [Data + Queues] : Uses
+[Workflow CRUD API] --> [Data + Queues] : Uses
+[Publish Versions] --> [Data + Queues] : Uses
+[Run Console] --> [Realtime Log Streaming] : Uses
+[Orchestrator Worker] --> [Data + Queues] : Uses
+[HTTP Executor Worker] --> [Data + Queues] : Uses
+[Edge Cron/Timers] --> [Orchestrator Worker] : Triggers
+[Orchestrator Worker] --> [HTTP Executor Worker] : Orchestrates
+[Data + Queues] --> [Storage Artifacts] : Stores
+[External Services] --> [HTTP Executor Worker] : Communicates
+
+package "Performance Benchmarks" {
+    [Benchmark Analysis] --> [Existing Codebase] : Reviews integration points
+    [Technical Design] --> [Benchmark Analysis] : Follows analysis
+    [Implementation & Testing] --> [Technical Design] : Implements & tests based on design
+    [Documentation] --> [Implementation & Testing] : Documents APIs and interfaces
+    [Review & Integration] --> [Documentation] : Reviews and integrates with existing components
+    [Deployment] --> [Review & Integration] : Deploys to production
+}
+
+[Existing Codebase] <.. [Webhook Intake] : Includes
+[Existing Codebase] <.. [Workflow CRUD API] : Includes
+[Existing Codebase] <.. [Publish Versions] : Includes
+[Existing Codebase] <.. [Run Console] : Includes
+[Existing Codebase] <.. [Orchestrator Worker] : Includes
+[Existing Codebase] <.. [HTTP Executor Worker] : Includes
+
+note right of [Benchmark Analysis]
+  Ensure compatibility and
+  identify performance metrics
+end note
+
+note right of [Technical Design]
+  Consider data structures,
+  API contracts, and error handling
+end note
+
+note right of [Implementation & Testing]
+  Follow TDD approach
+  and project coding standards
+end note
+
+note right of [Documentation]
+  Update README, API docs,
+  and code comments
+end note
+
+note right of [Review & Integration]
+  Incorporate feedback and
+  ensure seamless integration
+end note
+
+note right of [Deployment]
+  Ready for production
+  with all CI/CD checks passing
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 end note
 
 @enduml

@@ -1,6 +1,7 @@
 @startuml
 !theme plain
 
+<<<<<<< HEAD
 title Security Audit Process for MeshHook
 
 actor Auditor
@@ -34,5 +35,26 @@ end
 note right of AuditTeam : Reporting &\nRecommendations
 
 AuditTeam --> Auditor : Document Findings\n& Recommendations
+=======
+title Security Audit Process Flow
+
+actor Auditor as "Security Auditor"
+participant "Security Guidelines" as Guidelines
+participant "Codebase" as Codebase
+participant "Database\nSchema" as DBSchema
+participant "Supabase\nServices" as Supabase
+participant "Test Suites" as Tests
+database "schema.sql" as SchemaSQL
+
+Auditor -> Codebase : Review Codebase\nfor Security Practices
+Codebase -> Guidelines : Validate Against\nSecurity Guidelines
+Auditor -> DBSchema : Review Database\nSchema Changes
+DBSchema -> SchemaSQL : Check for\nSchema Updates
+DBSchema --> Auditor : Report on\nDatabase Security
+Auditor -> Supabase : Verify Integration with\nSupabase Services
+Supabase --> Auditor : Validate Service\nConfigurations
+Auditor -> Tests : Run Security\nTest Suites
+Tests --> Auditor : Report Test\nResults
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

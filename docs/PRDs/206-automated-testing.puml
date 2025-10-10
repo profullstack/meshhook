@@ -1,6 +1,7 @@
 @startuml
 !theme plain
 
+<<<<<<< HEAD
 package "MeshHook CI/CD Pipeline" {
     [GitHub Actions] as CI
     [Supabase Realtime] as Realtime
@@ -36,5 +37,33 @@ Workers --> DB : Uses for\nTask Execution
 
 note right of CI : Runs on every\npush & pull request
 note right of TF : Selected based on\ncompatibility with\nproject stack
+=======
+title Automated Testing Workflow - CI/CD Process
+
+actor Developer
+boundary "CI/CD Pipeline" as CICD
+control "Test Orchestrator" as Orchestrator
+database "Supabase\n(Postgres)" as Supabase
+entity "Existing Codebase" as Codebase
+collections "Test Suites" as Tests
+control "SvelteKit (SSR/API)" as SvelteKit
+control "Workers\n(Orchestrator & Executor)" as Workers
+cloud "External Services\n(Supabase Realtime, Storage)" as ExternalServices
+
+Developer --> CICD : Pushes code
+CICD --> Orchestrator : Triggers automated tests
+Orchestrator --> Tests : Fetches test suites
+Tests --> Orchestrator : Returns test scenarios
+Orchestrator --> SvelteKit : Integrates for SSR/API testing
+Orchestrator --> Workers : Orchestrates state machine & scheduling
+Orchestrator --> Supabase : Uses for data & queues
+Orchestrator --> ExternalServices : Utilizes for logs & artifacts
+Orchestrator --> CICD : Reports test results
+CICD --> Developer : Feedback (pass/fail)
+
+note right of CICD : Ensures all tests pass\nbefore merging
+note right of Supabase : No new data model changes\nrequired for this task
+note over ExternalServices : Includes live log streaming\nand artifact storage
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

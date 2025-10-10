@@ -1,6 +1,7 @@
 @startuml
 !theme plain
 
+<<<<<<< HEAD
 title GitHub Actions Workflows for MeshHook CI/CD
 
 actor Developer as dev
@@ -37,5 +38,36 @@ SvelteKit --> Supabase : CRUD Operations
 Supabase --> Workers : Queue Tasks
 Workers --> Supabase : Update State
 Workers --> Edge : Schedule Tasks
+=======
+title GitHub Actions Workflows for MeshHook Project
+
+actor Developer as dev
+boundary GitHub as GH
+control "GitHub Actions" as GHA
+database "Supabase Postgres" as DB
+database "Supabase Realtime" as RT
+database "Supabase Storage" as Storage
+control "SvelteKit SSR/API" as SSR
+control "Orchestrator Worker" as Orch
+control "HTTP Executor Worker" as HTTPExec
+
+dev --> GH : Push code
+GH --> GHA : Trigger workflow
+GHA --> SSR : Deploy updates
+GHA --> DB : Run migrations
+GHA --> Orch : Deploy new\norchestrator version
+GHA --> HTTPExec : Deploy new\nHTTP executor version
+SSR --> DB : CRUD operations
+SSR --> RT : Log streaming
+Orch --> DB : Update state
+Orch --> HTTPExec : Dispatch tasks
+HTTPExec --> DB : Update task result
+DB --> RT : Update notifications
+
+note right of GHA : CI/CD Pipeline
+note right of SSR : Webhook intake\nWorkflow management
+note left of Orch : Workflow execution
+note left of HTTPExec : HTTP tasks\nwith retries
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

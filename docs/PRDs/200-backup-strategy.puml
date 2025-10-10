@@ -1,6 +1,7 @@
 @startuml
 !theme plain
 
+<<<<<<< HEAD
 title Backup Strategy Implementation Flow
 
 actor "Developer" as dev
@@ -28,5 +29,74 @@ end
 
 note right of backupSys : Backups are encrypted and stored securely
 note right of monitor : Alerts for monitoring backup success/failure rates
+=======
+title Backup Strategy for MeshHook Project
+
+package "MeshHook Core" {
+    [Webhook Intake] as WI
+    [Workflow CRUD] as WCRUD
+    [Publish Versions] as PV
+    [Run Console] as RC
+}
+
+package "Supabase" {
+    [Postgres] as DB
+    [Realtime] as RT
+    [Storage] as ST
+    [Edge] as ED
+}
+
+package "Workers" {
+    [Orchestrator] as ORC
+    [HTTP Executor] as HTTP
+}
+
+node "Backup System" {
+    [Backup Scheduler] as BS
+    [Backup Executor] as BE
+    [Backup Storage] as BStorage
+}
+
+WI --> DB : Triggers & Data
+WCRUD --> DB : CRUD Operations
+PV --> DB : Version Management
+RC --> RT : Log Streaming
+
+ORC --> DB : State Management
+HTTP --> DB : HTTP Requests Log
+DB --> RT : Data Changes Stream
+
+BS --> BE : Schedule Backups
+BE --> DB : Fetch Data
+DB --> BStorage : Backup Data
+BE --> ST : Backup Logs & Artifacts
+
+note right of BStorage : Backup includes\nPostgres Data,\nLogs, and Artifacts
+
+BE .up.> ORC : <<use>>
+BE .up.> HTTP : <<use>>
+
+note "Integration Points" as IP
+IP ..> DB : Data Backup
+IP ..> ST : Log & Artifact Backup
+
+class BStorage {
+    +Data Snapshots
+    +Log Archives
+    +Artifact Copies
+}
+
+class BE {
+    +Schedule Execution
+    +Data Fetching
+    +Error Handling
+    +Notification
+}
+
+note "Technical Dependencies" as TD
+TD ..> DB : Postgres Schema
+TD ..> ST : Storage Access
+TD ..> RT : Realtime Updates
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

@@ -3,6 +3,7 @@
 
 package "MeshHook System" {
     [Webhook Intake] <<SvelteKit>>
+<<<<<<< HEAD
     [Workflow CRUD API] <<SvelteKit>>
     [Publish Versions] <<SvelteKit>>
     [Run Console] <<SvelteKit>>
@@ -11,6 +12,16 @@ package "MeshHook System" {
         [Realtime Log Streaming]
         [Storage Artifacts]
         [Edge Cron/Timers]
+=======
+    [Workflow CRUD] <<SvelteKit>>
+    [Publish Versions] <<SvelteKit>>
+    [Run Console] <<SvelteKit>>
+    database "Supabase" {
+        [Postgres]
+        [Realtime]
+        [Storage]
+        [Edge]
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
     }
     [Orchestrator Worker]
     [HTTP Executor Worker]
@@ -18,6 +29,7 @@ package "MeshHook System" {
 
 package "Connection Pooling Optimization" {
     [Connection Pool Manager] #LightGreen
+<<<<<<< HEAD
     [Resource Monitor] #LightGreen
     [Load Balancer] #LightGreen
 }
@@ -50,5 +62,32 @@ note right of [Load Balancer]
   of database connections based on
   current load and resource availability.
 end note
+=======
+    [Database Connection Pool] #LightGreen
+    [Resource Monitor] #LightGreen
+}
+
+[Connection Pool Manager] --> [Database Connection Pool] : Manages
+[Database Connection Pool] --> [Postgres] : Connects
+[Resource Monitor] --> [Database Connection Pool] : Monitors & Adjusts
+
+[Webhook Intake] --> [Connection Pool Manager] : Uses
+[Workflow CRUD] --> [Connection Pool Manager] : Uses
+[Publish Versions] --> [Connection Pool Manager] : Uses
+[Run Console] --> [Connection Pool Manager] : Uses
+
+note right of [Database Connection Pool]
+  Optimizes database connections
+  to maintain performance and
+  manage resource constraints.
+end note
+
+note "Integration with Supabase Postgres for data operations and queues. Utilizes existing database schema without changes." as N1
+[Connection Pooling Optimization] . N1
+N1 . [Supabase]
+
+note "Monitors connection usage and dynamically adjusts pool size based on load." as N2
+[Resource Monitor] . N2
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

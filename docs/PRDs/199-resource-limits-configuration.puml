@@ -2,6 +2,7 @@
 !theme plain
 
 package "MeshHook System" {
+<<<<<<< HEAD
     [Supabase\n(Postgres, Realtime, Storage)] as Supabase
     [SvelteKit\n(SSR/API)] as SvelteKit
     [Workers\n(Orchestrator, HTTP Executor)] as Workers
@@ -40,5 +41,35 @@ note right of DBSchema
   for this task. If changes are needed,
   update here and document changes.
 end note
+=======
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase Postgres] as Postgres
+    [Supabase Realtime] as Realtime
+    [Supabase Storage] as Storage
+    [Supabase Edge] as Edge
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as Executor
+}
+
+package "Resource Limits Configuration" {
+    [Resource Limits Service] as Limits
+    [Schema.sql] as Schema
+}
+
+SvelteKit --> Limits : Triggers Configuration\nUpdates
+Limits --> Postgres : Reads/Writes\nResource Limits
+Limits --> Realtime : Publishes\nLimit Updates
+Limits --> Orchestrator : Informs about\nResource Limits
+Orchestrator --> Executor : Controls based on\nResource Limits
+
+note right of Limits : No new data model\nchanges required
+
+class Schema {
+    +No changes for this task
+}
+
+note over SvelteKit, Executor : Existing System Components
+note over Limits : New Component for\nResource Configuration
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

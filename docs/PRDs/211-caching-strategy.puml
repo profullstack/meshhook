@@ -2,6 +2,7 @@
 !theme plain
 
 package "MeshHook System" {
+<<<<<<< HEAD
     [Webhook Processor] - [Caching Layer]
     [Workflow Executor] - [Caching Layer]
     [API Server] - [Caching Layer]
@@ -48,5 +49,44 @@ note right of [Monitoring & Logging]
 end note
 
 [Caching Layer] ..> [External Services] : integrates with\nexisting architecture
+=======
+    [Webhook Intake] - [SvelteKit SSR/API]
+    [Workflow CRUD] - [SvelteKit SSR/API]
+    [Publish Versions] - [SvelteKit SSR/API]
+    [Run Console] - [SvelteKit SSR/API]
+    
+    package "Supabase" {
+        [Postgres] - [Data + Queues]
+        [Realtime] - [Log Streaming]
+        [Storage] - [Artifacts]
+        [Edge] - [Cron/Timers]
+    }
+    
+    package "Workers" {
+        [Orchestrator] - [State Machine + Scheduling]
+        [HTTP Executor] - [Robust HTTP with Retries/Backoff]
+    }
+    
+    [SvelteKit SSR/API] --> [Supabase] : Uses
+    [SvelteKit SSR/API] --> [Workers] : Uses
+    [Supabase] --> [Workers] : Triggers & Data Flow
+}
+
+package "Caching Strategy" {
+    [Cache Component] - [Cache Invalidation]
+    [Cache Component] --> [Data + Queues] : Caches Data
+    [Cache Invalidation] --> [Data + Queues] : Invalidates Cache
+    [Cache Component] --> [Realtime] : Updates on Changes
+    [Cache Invalidation] --> [Realtime] : Triggers on Update/Delete
+}
+
+[Cache Component] .up.> [SvelteKit SSR/API] : Integrates
+[Cache Component] .right.> [Orchestrator] : Caches Workflows
+[Cache Invalidation] .right.> [HTTP Executor] : Invalidates on HTTP Response
+
+note "Caching Strategy Implementation Steps" as N1
+note "1. Analysis\n2. Design\n3. Implementation\n4. Integration\n5. Testing\n6. Documentation\n7. Review" as N2
+N1 .. N2
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

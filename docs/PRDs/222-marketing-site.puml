@@ -1,6 +1,7 @@
 @startuml
 !theme plain
 
+<<<<<<< HEAD
 package "Marketing Site" {
     [Content Creation] as CC
     [Design & User Experience] as DUX
@@ -37,5 +38,66 @@ DUX --> SSR : UI/UX Design
 SEO --> SSR : SEO Practices
 AI --> GA : Integrates
 CFF --> SSR : Form implementation
+=======
+package "MeshHook Marketing Site" {
+    [Marketing Site] as (site)
+    [Supabase Realtime] as (realtime)
+    [Postgres Database] as (db)
+    [SvelteKit SSR/API] as (ssr)
+    [Orchestrator Worker] as (orchestrator)
+    [HTTP Executor Worker] as (httpExecutor)
+    database "Supabase Storage" as (storage)
+}
+
+cloud {
+    [External Services] as (external)
+}
+
+node "Development Environment" {
+    [Local Development] as (dev)
+}
+
+[Local Development] ..> [Marketing Site] : Deploys
+[Marketing Site] ..> [SvelteKit SSR/API] : Uses
+[SvelteKit SSR/API] ..> [Supabase Realtime] : Streams logs
+[SvelteKit SSR/API] ..> [Postgres Database] : CRUD operations
+[Orchestrator Worker] ..> [Postgres Database] : Reads/Writes
+[HTTP Executor Worker] ..> [External Services] : Makes requests
+[Supabase Realtime] <.. [Supabase Storage] : Syncs files
+[Postgres Database] ..> [Supabase Storage] : Stores artifacts
+
+note right of (site)
+  Marketing site for MeshHook.
+  Showcases features and documentation.
+end note
+
+note right of (ssr)
+  SvelteKit for SSR and API endpoints.
+end note
+
+note right of (orchestrator)
+  Manages workflow execution.
+end note
+
+note right of (httpExecutor)
+  Handles HTTP requests with retries.
+end note
+
+note right of (db)
+  Stores data, queues, and logs.
+end note
+
+note right of (realtime)
+  Provides live updates to clients.
+end note
+
+note right of (external)
+  Includes webhook sources and other APIs.
+end note
+
+note right of (dev)
+  Where development and testing occur.
+end note
+>>>>>>> 3986f768f8c9ca7736e6e459fcb7b247cbf96501
 
 @enduml

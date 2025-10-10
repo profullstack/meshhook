@@ -1,0 +1,28 @@
+@startuml
+!theme plain
+
+title Webhook Endpoint Creation Workflow
+
+actor Developer
+boundary "Webhook API" as API
+control "Validation Service" as Validator
+database "Supabase Postgres" as DB
+entity "Existing System Components" as ExistingSystem
+control "Webhook Orchestrator" as Orchestrator
+
+Developer -> API : Request to create webhook endpoint
+API -> Validator : Validate request
+Validator -> DB : Check existing endpoints
+DB --> Validator : Validation result
+Validator --> API : Validation response
+API -> Orchestrator : Create endpoint
+Orchestrator -> DB : Store new endpoint data
+DB --> Orchestrator : Confirmation
+Orchestrator --> API : Endpoint creation status
+API --> Developer : Response (success/failure)
+
+note right of DB : Uses existing schema
+note left of Orchestrator : Integrates with\nexisting workflow engine
+note over API, Validator : RESTful API endpoint(s)
+
+@enduml
