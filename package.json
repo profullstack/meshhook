@@ -20,5 +20,8 @@
     "inquirer": "^12.9.6",
     "pg": "^8.16.3",
     "prettier": "^3.3.3"
+  },
+  "dependencies": {
+    "jmespath": "^0.16.0"
   }
 }
