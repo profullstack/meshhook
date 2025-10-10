@@ -150,17 +150,12 @@ After deployment:
 ```toml
 # Railway configuration for the Orchestrator Worker
 [build]
-builder = "RAILPACKS"
 buildCommand = "pnpm install"
 
 [deploy]
 startCommand = "node workers/orchestrator.mjs"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-
-[env]
-NODE_VERSION = "20"
-PNPM_VERSION = "9"
 ```
 
 ### railway.web.toml (Web Application)
@@ -168,18 +163,15 @@ PNPM_VERSION = "9"
 ```toml
 # Railway configuration for the Web Application (SvelteKit)
 [build]
-builder = "RAILPACKS"
 buildCommand = "pnpm install && cd apps/web && pnpm run build"
 
 [deploy]
 startCommand = "cd apps/web && node build/index.js"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-
-[env]
-NODE_VERSION = "20"
-PNPM_VERSION = "9"
 ```
+
+**Note:** Node.js version is set via Railway's service settings (Settings → Environment → Node Version = 20).
 
 ## Troubleshooting
 
