@@ -1,0 +1,28 @@
+@startuml
+!theme plain
+
+title Save/Load Workflow Definitions - Sequence Diagram
+
+actor User as user
+participant "Frontend\n(SvelteKit)" as frontend
+database "Supabase\n(Postgres)" as database
+participant "Workflow\nCRUD API" as crudAPI
+participant "Realtime\nService" as realtime
+
+== Save Workflow Definition ==
+user -> frontend : Save Workflow
+frontend -> crudAPI : POST /workflows
+crudAPI -> database : Insert Workflow Definition
+database --> crudAPI : Success Response
+crudAPI --> frontend : Workflow Saved
+frontend --> user : Confirmation
+
+== Load Workflow Definition ==
+user -> frontend : Load Workflow
+frontend -> crudAPI : GET /workflows/{id}
+crudAPI -> database : Fetch Workflow Definition
+database --> crudAPI : Workflow Data
+crudAPI --> frontend : Return Workflow Data
+frontend --> user : Display Workflow
+
+@enduml

@@ -11,111 +11,102 @@
 ## 1. Overview
 
 ### 1.1 Purpose
-
-The objective of this task is to enhance the security and privacy of the MeshHook workflow engine by implementing automatic redaction of Personally Identifiable Information (PII) in logs. This feature aligns with our commitment to security, privacy, and compliance, ensuring that sensitive information is protected across all operational logs.
+The purpose of this feature development is to implement an automatic redaction system within MeshHook’s logging facilities to ensure that Personally Identifiable Information (PII) is detected and redacted from logs before they are stored or displayed. This initiative is critical for enhancing privacy and compliance with data protection regulations across MeshHook’s operations, particularly in multi-tenant environments where data segregation and privacy are paramount.
 
 ### 1.2 Alignment with Project Goals
-
-This task directly supports MeshHook's core goals by enhancing the security layer of our multi-tenant architecture and ensuring that our logging mechanisms adhere to best practices for PII handling. By integrating automatic redaction capabilities, we further solidify our promise of providing a secure, reliable, and privacy-compliant workflow engine.
+This feature directly contributes to MeshHook's overarching goals of delivering a secure, privacy-compliant, and reliable workflow engine. By adding automatic log redaction capabilities, we reinforce our commitment to security and privacy, ensuring MeshHook remains a trusted tool for developers, automation engineers, and enterprise teams dealing with sensitive information.
 
 ## 2. Functional Requirements
 
-1. **Automatic Detection and Redaction:** The system must automatically detect and redact PII information from all log entries before they are stored or displayed.
-2. **Customizable Redaction Rules:** Support customizable redaction rules to allow for the flexibility of defining what constitutes PII, accommodating different regulatory requirements.
-3. **Audit Trail:** Maintain an audit trail of redaction actions, including metadata about the redaction without storing the redacted information.
-4. **Minimal Performance Impact:** Implement the redaction mechanism in a way that minimizes the impact on logging performance.
-5. **API Documentation:** Update the API documentation to include details about the redaction process, available customization, and configuration options.
+1. **Automatic Detection and Redaction:** Automatically identify and redact PII in logs, using predefined patterns and heuristics, before storage or display.
+2. **Customizable Redaction Rules:** Allow administrators to define custom redaction rules, accommodating various data protection requirements and compliance standards.
+3. **Audit Trail:** Implement an audit trail for redaction activities, capturing the occurrence of redaction without storing the original PII.
+4. **Performance:** The redaction process must operate with minimal latency, ensuring log processing remains efficient.
+5. **API for Redaction Rule Management:** Provide API endpoints for managing redaction rules, including creation, listing, and deletion.
 
 ## 3. Non-Functional Requirements
 
-- **Performance:** Ensure that the log redaction process adds no more than a 10% overhead to the log processing time.
-- **Reliability:** Guarantee a 99.9% success rate in detecting and redacting PII from logs.
-- **Security:** Adhere to the latest security standards for PII detection and redaction, ensuring that redacted logs cannot be reverse-engineered to expose sensitive information.
-- **Maintainability:** Code related to log redaction should be modular, well-documented, and easy to update or extend with new rules.
+- **Performance:** The redaction process should not increase log processing times by more than 10%.
+- **Reliability:** Achieve at least 99.9% accuracy in detecting and redacting PII from logs.
+- **Security:** Use state-of-the-art techniques to ensure that redacted logs are irreversible, preventing any possibility of reconstructing the original PII.
+- **Maintainability:** Develop the log redaction feature in a modular, well-documented manner to facilitate future updates and maintenance.
 
 ## 4. Technical Specifications
 
 ### 4.1 Architecture Context
 
 - **Integration Points:**
-  - Supabase Realtime for log streaming.
-  - Existing logging mechanisms within the SvelteKit (SSR/API) components and Workers.
+  - The feature will integrate with Supabase Realtime for the streaming of logs and the existing logging mechanism within MeshHook’s SvelteKit components and worker processes.
 - **Components Affected:**
-  - Logging services.
-  - Database schema for storing redaction rules and audit trails.
+  - The logging service layer will be modified to include the redaction process.
+  - The database schema will be expanded to accommodate the storage of redaction rules and audit logs.
 
 ### 4.2 Implementation Approach
 
-1. **Analysis:** Evaluate current logging mechanisms to identify where and how logs are generated, stored, and streamed.
-2. **Design:**
-   - Define a schema for storing redaction rules in Postgres.
-   - Design an audit trail mechanism for tracking redactions.
-   - Outline the architecture for intercepting and processing logs for PII before storage/display.
-3. **Implementation:**
-   - Implement the redaction engine, integrating it into the current logging flow.
-   - Create a management API for redaction rules.
-   - Update logging mechanisms to support asynchronous redaction where necessary.
-4. **Testing and Documentation:** Write tests covering all new functionality and update documentation accordingly.
+1. **Analysis:** Review the current logging infrastructure to identify integration points for the redaction process.
+2. **Data Model Design:**
+   - `log_redaction_rules`: To store patterns and rules for identifying PII.
+   - `log_redaction_audit`: To log instances of redaction, including timestamps and rule identifiers.
+3. **Redaction Logic Development:** Implement the logic for detecting PII based on rules and redacting it from logs.
+4. **API Development:** Create RESTful API endpoints for managing redaction rules.
+5. **Integration:** Integrate the redaction logic into the existing logging flow.
+6. **Testing & Documentation:** Conduct thorough testing and update the API and technical documentation.
 
 ### 4.3 Data Model Changes
 
-- New table `log_redaction_rules` for storing redaction patterns and rules.
-- New table `log_redaction_audit` for storing redaction audit trails.
+- `log_redaction_rules(id SERIAL PRIMARY KEY, pattern TEXT, description TEXT, created_at TIMESTAMP)`
+- `log_redaction_audit(id SERIAL PRIMARY KEY, rule_id INTEGER REFERENCES log_redaction_rules(id), redacted_at TIMESTAMP)`
 
 ### 4.4 API Endpoints
 
-- `POST /api/redaction-rules`: Create new redaction rule.
-- `GET /api/redaction-rules`: List all redaction rules.
-- `DELETE /api/redaction-rules/{id}`: Delete a redaction rule.
+- `POST /api/redaction-rules`: Add a new redaction rule.
+- `GET /api/redaction-rules`: Retrieve all redaction rules.
+- `DELETE /api/redaction-rules/{id}`: Remove a redaction rule.
 
 ## 5. Acceptance Criteria
 
-- [ ] Automatic redaction of PII in logs is implemented and functional.
-- [ ] Log redaction adds no more than a 10% overhead to log processing time.
-- [ ] Customizable redaction rules can be created, listed, and deleted via new API endpoints.
-- [ ] An audit trail of redaction actions is maintained, with appropriate metadata.
-- [ ] Documentation is updated with clear, comprehensive details on the redaction process and API usage.
-- [ ] All new code is covered by unit and integration tests with >95% coverage.
-- [ ] Performance, reliability, and security non-functional requirements are met.
+- [ ] PII is automatically detected and redacted from logs based on predefined and custom rules.
+- [ ] The log redaction process does not increase overall log processing time by more than 10%.
+- [ ] New API endpoints for managing redaction rules are fully functional.
+- [ ] An audit trail for redaction activities is maintained without storing original PII.
+- [ ] Documentation is updated to reflect the new redaction features and API endpoints.
+- [ ] The solution achieves >95% test coverage including unit and integration tests.
 
 ## 6. Dependencies and Prerequisites
 
-- Access to the existing MeshHook codebase and infrastructure.
-- Supabase and Postgres setup for development and testing.
-- Knowledge of the current logging and data storage mechanisms.
+- Access to the MeshHook codebase and development environment.
+- Supabase account and Postgres for development and testing.
+- Understanding of the existing logging mechanism and data storage architecture.
 
 ## 7. Implementation Notes
 
 ### 7.1 Development Guidelines
 
-- Follow the existing code style and conventions.
-- Write modular, reusable code with comprehensive inline documentation.
-- Ensure all new functionality is covered by automated tests.
+- Adhere to MeshHook’s coding standards and documentation practices.
+- Develop in a feature branch, with code reviews required before merging.
+- Ensure all new code is accompanied by comprehensive tests.
 
 ### 7.2 Testing Strategy
 
-- **Unit Tests:** For redaction logic and rule application.
-- **Integration Tests:** For the full log processing pipeline, including redaction and audit logging.
-- **Performance Tests:** To verify the impact on log processing times.
+- **Unit Testing:** For the redaction logic and rule management API endpoints.
+- **Integration Testing:** To cover the entire process from log generation to storage/display with redaction applied.
+- **Performance Testing:** To ensure the redaction process meets the specified performance criteria.
 
 ### 7.3 Security Considerations
 
-- Ensure redacted logs cannot be reverse-engineered to expose PII.
-- Securely manage and access redaction rules and audit logs.
+- Verify that redacted logs cannot be reverse-engineered to reveal PII.
+- Secure management of redaction rules to prevent unauthorized access or manipulation.
 
 ### 7.4 Monitoring & Observability
 
-- Implement monitoring to track the performance impact of log redaction.
-- Alerting for failures in the log redaction process or violations of performance thresholds.
+- Implement monitoring to observe the impact of the redaction process on log processing times.
+- Set up alerts for failures in the redaction process or deviations from expected performance metrics.
 
 ## 8. Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture Overview](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [API Documentation](../API.md) (to be updated with new endpoints)
+- MeshHook PRD, Architecture, and Security guidelines (as listed in the initial PRD).
 
-*Last updated: 2023-12-01*
+*Note: This document and the procedures outlined are in alignment with MeshHook’s goals of enhancing privacy, security, and compliance capabilities within its workflow engine.*
 
 ---
 

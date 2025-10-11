@@ -1,65 +1,35 @@
 @startuml
 !theme plain
 
-package "MeshHook System" {
-    [Supabase] <<Database>> as DB
-    [SvelteKit SSR/API] as SSR
-    [Webhook Intake] as Webhook
-    [Workflow CRUD] as CRUD
-    [Publish Versions] as Publish
-    [Run Console] as Console
-    [Workers] <<Node>> {
-        [Orchestrator] <<Worker>>
-        [HTTP Executor] <<Worker>>
-    }
-    [Existing Codebase] <<Code>>
-}
+title Contributing Guide Workflow for MeshHook Project
 
-package "Contributing Guide Implementation" {
-    [Analysis] as Analysis
-    [Design] as Design
-    [Implementation] as Implementation
-    [Integration] as Integration
-    [Testing] as Testing
-    [Documentation] as Documentation
-    [Review] as Review
-}
+actor Contributor
+entity "Project Lead" as PL
+collections "MeshHook Repository" as Repo
+collections "Developer Documentation" as Docs
+database "Supabase/Postgres" as DB
 
-DB -[hidden]-> SSR
-Webhook -[hidden]-> CRUD
-Publish -[hidden]-> Console
-Console -[hidden]-> Workers
-Workers -[hidden]-> ExistingCodebase
+Contributor -> Repo : Fork repository
+Contributor -> Repo : Clone fork locally
+Contributor -> Docs : Read Contributing Guide
+Contributor -> Contributor : Setup Development Environment\n(SvelteKit/Svelte 5, Supabase, Postgres)
+Contributor -> Contributor : Implement feature/fix
+Contributor -> Contributor : Follow Style Guide\n(JavaScript/TypeScript, Svelte, CSS)
+Contributor -> Repo : Commit changes to feature branch
+Contributor -> Repo : Create Pull Request (PR)
 
-Analysis --> Design : follows
-Design --> Implementation : follows
-Implementation --> Integration : follows
-Integration --> Testing : follows
-Testing --> Documentation : follows
-Documentation --> Review : follows
+Repo -> PL : Notify of PR
+PL -> Repo : Review PR
+PL -> Contributor : Request changes (if any)
+Contributor -> Repo : Make requested changes
+PL -> Repo : Approve PR
+Repo -> Repo : Merge PR into main branch
 
-SSR --> Analysis : "Reviews\nExisting Implementation"
-Design ..> [Data Structures and Schemas] : "Considers"
-Design ..> [API Contracts and Interfaces] : "Defines"
-Design ..> [Component Architecture] : "Designs"
-Design ..> [Error Handling Strategies] : "Plans"
-Integration --> [Existing Codebase] : "Integrates With"
-Testing --> [Unit Tests] : "Includes"
-Testing --> [Integration Tests] : "Includes"
-Testing --> [E2E Tests] : "Includes"
-Documentation --> [Developer Documentation] : "Updates"
-Review --> [Code Review] : "Undergoes"
+PL -> Docs : Update Contributing Guide (as needed)
+PL -> Repo : Announce updates via communication channels
 
-note right of [Developer Documentation]
-  - Update README
-  - Update API docs
-  - Ensure accuracy
-end note
+note right of Contributor : Follow community standards\nfor communication
 
-note right of [Code Review]
-  - Peer Feedback
-  - Linting Passes
-  - CI/CD Checks
-end note
+footer PRD Document: 194-contributing-guide.md | Last updated: 2025-10-10
 
 @enduml

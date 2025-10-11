@@ -1,173 +1,100 @@
 # PRD: Live logs via Supabase Realtime
 
-**Issue:** [#132](https://github.com/profullstack/meshhook/issues/132)  
-**Milestone:** Phase 3: Frontend (SvelteKit)  
-**Labels:** run-console  
-**Phase:** Phase 3  
-**Section:** Run Console
+**Issue:** [#132](https://github.com/profullstack/meshhook/issues/132)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** run-console, hacktoberfest
 
 ---
 
+# PRD: Live logs via Supabase Realtime
+
 ## Overview
 
-This task is part of Phase 3 in the Run Console section of the MeshHook project. 
+As part of Phase 3 in the MeshHook project, focusing on the Run Console section, this PRD outlines the implementation of live logs using Supabase Realtime. This feature is integral to the MeshHook workflow engine, enabling users to monitor workflow execution in real-time. It aligns with the project's goals of providing an intuitive, durable, and secure platform for building webhook-based workflows.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Objective
 
-**Task Objective:** Live logs via Supabase Realtime
+To implement a feature that allows users to view live logs of their workflow runs, thereby improving the observability and debugging capabilities of the MeshHook platform.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Functional Requirements
 
-## Requirements
+1. **Live Log Streaming**: Implement a real-time log streaming feature that pushes log updates to the client's run console as they happen.
+2. **User Interface**: Update the run console UI to display live logs, ensuring a seamless user experience that is both responsive and informative.
+3. **Log Filtering**: Provide basic log filtering capabilities in the UI, such as filtering by severity level or text search.
+4. **Connection Handling**: Ensure robust connection handling, including reconnections in case of network interruptions.
 
-### Functional Requirements
+## Non-Functional Requirements
 
-1. Implement the core functionality described in the task: "Live logs via Supabase Realtime"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance**: Log streaming should not significantly impact the performance of workflow execution or the overall system load, aiming for minimal latency.
+- **Security**: Implement secure access to live logs, ensuring that users can only view logs from their allowed projects and workflows.
+- **Reliability**: Ensure a high reliability of the live logs feature, with proper fallbacks or notifications in case of streaming issues.
+- **Maintainability**: The implementation should follow the project's coding standards, be well-documented, and easy to maintain.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Integration with Supabase Realtime**: Utilize Supabase Realtime for streaming logs stored in Postgres. Subscription to log updates will be based on the workflow run identifiers.
+- **SvelteKit Frontend**: Enhancements to the Run Console UI to support displaying live logs, implemented using SvelteKit for reactivity and performance.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Supabase Realtime Setup**: Configure Supabase Realtime to publish log updates. This includes setting up appropriate triggers in the Postgres database to push log entries to subscribed clients.
+2. **Frontend Subscription**: Implement subscription logic in the Run Console using Supabase JS client to listen to log updates for specific workflow runs.
+3. **UI Development**: Design and implement the UI components for displaying live logs, including automatic scrolling and filtering capabilities.
+4. **Security and Access Control**: Integrate RLS policies to ensure users can only subscribe to logs of workflows they have access to.
+5. **Testing and Optimization**: Perform thorough testing, including load testing, to ensure performance and reliability. Optimize as necessary based on test results.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+- No changes to the existing data model are required specifically for this task. Log entries are already captured; this feature focuses on the real-time streaming of these entries.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+- No new REST API endpoints will be added. The implementation leverages Supabase Realtime subscriptions over WebSocket, which does not require additional RESTful endpoints.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Live log streaming is functional, with updates appearing in the Run Console in real-time.
+- [ ] The UI provides a responsive and intuitive interface for viewing and filtering live logs.
+- [ ] Reconnections in case of network interruptions are handled gracefully, with minimal log loss.
+- [ ] Security measures ensure users can only access logs for workflows they are authorized to view.
+- [ ] Performance benchmarks are met, with live log streaming not causing significant system load or latency issues.
+- [ ] Documentation is updated to reflect the new feature and any changes to the system architecture or setup instructions.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Supabase account and project setup with Realtime enabled.
+- Access to the existing MeshHook frontend and backend codebase.
+- Familiarity with SvelteKit for frontend development.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the existing code style and conventions of the MeshHook project.
+- Write modular, reusable code with comprehensive inline comments.
+- Ensure the feature is fully responsive and compatible with major browsers.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Implement unit tests for new backend logic and frontend components.
+- Conduct integration tests to ensure seamless interaction between the frontend, backend, and Supabase Realtime.
+- Perform load testing to simulate high-volume log streaming and ensure system stability.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Verify RLS policies are correctly enforced, allowing users access only to their logs.
+- Use secure WebSocket connections for live log streaming.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Monitor the performance impact of live log streaming on both the database and application server.
+- Set up alerts for any critical issues related to the live logs feature, such as connection drops or performance degradations.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Live logs via Supabase Realtime
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Run Console
-
-**Task:** Live logs via Supabase Realtime
-
----
-_Auto-generated from TODO.md_
+This PRD outlines the approach to implement a live log streaming feature in MeshHook, enhancing the observability and usability of the platform. The successful implementation of this feature will significantly improve the user experience by providing real-time insights into workflow execution.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #132*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #132*
+*Generated: 2025-10-10*

@@ -1,173 +1,112 @@
 # PRD: Signature key management
 
-**Issue:** [#161](https://github.com/profullstack/meshhook/issues/161)  
-**Milestone:** Phase 5: Webhook System  
-**Labels:** webhook-management-ui  
-**Phase:** Phase 5  
-**Section:** Webhook Management UI
+**Issue:** [#161](https://github.com/profullstack/meshhook/issues/161)
+**Milestone:** Phase 5: Webhook System
+**Labels:** webhook-management-ui, hacktoberfest
 
 ---
+
+# PRD: Signature Key Management System
 
 ## Overview
 
-This task is part of Phase 5 in the Webhook Management UI section of the MeshHook project. 
+The development of a Signature Key Management System within MeshHook's Webhook Management UI is aimed at enhancing the security mechanisms of our webhook system. This system will allow users to create, view, revoke, and reactivate signature keys used for webhook verification. By incorporating this feature, we aim to bolster the integrity and trustworthiness of webhook data transmission, aligning with MeshHook's overarching goals of providing secure, reliable, and user-friendly workflow automation solutions.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## 1. Functional Requirements
 
-**Task Objective:** Signature key management
+1. **Key Generation**: Users must be able to generate new signature keys via the UI, which will be used to sign webhook payloads.
+2. **Key Listing**: The system should provide a list view of all generated keys, displaying key IDs, creation dates, and status (active/revoked).
+3. **Key Revocation**: Users can revoke any key, which should invalidate the key for future webhook verifications.
+4. **Key Reactivation**: Provides the ability to reactivate previously revoked keys.
+5. **Audit Logging**: Every action related to key management (generation, revocation, reactivation) must be logged for audit and compliance purposes.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## 2. Non-Functional Requirements
 
-## Requirements
+- **Performance**: Management operations must be swift, ensuring that actions are reflected in the UI without noticeable delays.
+- **Security**: Keys must be securely stored (encrypted at rest) and managed, with secure transmission over HTTPS. Access to key management functions should be strictly controlled.
+- **Usability**: The UI for managing keys must be intuitive, fitting seamlessly within the existing MeshHook interface.
+- **Scalability**: The system should efficiently handle a large volume of keys without performance degradation.
 
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Signature key management"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
-
-## Technical Specifications
+## 3. Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook's architecture comprises a SvelteKit-based frontend and a Supabase-backed backend. The Signature Key Management System will be integrated into this existing framework, utilizing Supabase for secure storage and management of signature keys.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **UI Design**: Create intuitive UI mockups for key management, ensuring consistency with MeshHook's design language.
+2. **Schema Design**: Add a `signature_keys` table to the database schema, including necessary fields such as key ID, project ID, key value (encrypted), status, and timestamps.
+3. **Backend Implementation**:
+    - Develop API endpoints for key creation, listing, revocation, and reactivation.
+    - Implement audit logging mechanisms for key management actions.
+4. **Frontend Implementation**:
+    - Build UI components based on the approved mockups.
+    - Integrate UI components with backend APIs for key management.
+5. **Security Measures**:
+    - Encrypt signature keys at rest in the database.
+    - Secure API endpoints with proper authentication and authorization checks.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+**New Table: `signature_keys`**
 
-### API Endpoints (if applicable)
+- `id` (UUID): Primary key.
+- `project_id` (UUID): Links to the `projects` table, enforcing RLS.
+- `key` (Text): Encrypted signature key.
+- `status` (Enum): Key status (`active` or `revoked`).
+- `created_at` (Timestamp): Key creation timestamp.
+- `revoked_at` (Nullable Timestamp): Timestamp of key revocation, if applicable.
 
-No new API endpoints required for this task.
+### API Endpoints
 
-## Acceptance Criteria
+- **Generate Key**: `POST /keys/generate`
+- **List Keys**: `GET /keys`
+- **Revoke Key**: `POST /keys/{id}/revoke`
+- **Reactivate Key**: `POST /keys/{id}/reactivate`
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+## 4. Acceptance Criteria
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Signature Key Management UI is fully implemented and consistent with MeshHook design standards.
+- [ ] Users can successfully generate, list, revoke, and reactivate keys.
+- [ ] Key management actions are accurately logged for auditing.
+- [ ] Comprehensive tests (unit and integration) are written and pass successfully.
+- [ ] API and database schema changes are well-documented.
+- [ ] Code review confirms adherence to project standards and successful merge into the main branch.
 
-## Dependencies
+## 5. Dependencies
 
-### Technical Dependencies
+- MeshHook's existing SvelteKit frontend and Supabase backend infrastructure.
+- Design tools for UI mockups.
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 6. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to MeshHook's coding conventions and best practices.
+- Utilize encryption for secure storage of signature keys in the database.
+- Implement asynchronous operations with async/await for improved readability and performance.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests**: Focus on backend logic, particularly API endpoints and encryption mechanisms.
+- **Integration Tests**: Ensure the entire key management workflow operates as expected, from UI actions to database updates.
+- **UI Tests**: Verify that the key management UI functions correctly, including form validations and error handling.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Enforce RLS on all database operations related to the `signature_keys` table.
+- Utilize strong, up-to-date encryption standards for storing signature keys.
+- Protect key management API endpoints with robust authentication and authorization.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement detailed logging for all key management activities.
+- Monitor performance metrics and error rates for key management operations to ensure system reliability.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Signature key management
-
-**Full Issue Body:**
-**Phase:** Phase 5
-**Section:** Webhook Management UI
-
-**Task:** Signature key management
-
----
-_Auto-generated from TODO.md_
+By adhering to these guidelines and requirements, the Signature Key Management System will significantly enhance the security and usability of MeshHook's webhook system, providing users with a robust set of tools for managing webhook signature keys.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #161*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #161*
+*Generated: 2025-10-10*

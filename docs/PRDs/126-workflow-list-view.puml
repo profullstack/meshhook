@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+
+package "Workflow Management System" {
+    [Workflow List View] as (WLV)
+    [Supabase Realtime] as (SR)
+    [Postgres Database] as (PD)
+    [SvelteKit Frontend] as (SKF)
+    [API Server] as (API)
+    [Authentication Service] as (Auth)
+}
+
+package "External Services" {
+    [Supabase Storage] as (SS)
+    [Supabase Edge Functions] as (SEF)
+}
+
+(WLV) -down-> (SR) : Subscribes for updates
+(WLV) -left-> (PD) : Queries workflows
+(WLV) .up.> (SKF) : Renders in
+(API) -right-> (PD) : CRUD operations
+(API) <-down-> (Auth) : Validates requests
+(SR) .right.> (SS) : Fetches artifacts
+(SR) .down.> (SEF) : Triggers cron jobs
+(SKF) -left-> (API) : Sends requests
+(Auth) .up.> (PD) : Verifies users
+
+note right of (WLV)
+  Key Component for displaying
+  workflows in the UI. Integrates
+  with Supabase Realtime for live updates.
+end note
+
+note left of (API)
+  Handles all backend logic including
+  authentication, CRUD operations,
+  and serving data to the frontend.
+end note
+
+note right of (SR)
+  Enables live updates and
+  log streaming directly to the
+  Workflow List View.
+end note
+
+note over SKF, Auth
+  SvelteKit for frontend rendering and
+  Authentication Service for secure access.
+end note
+
+@enduml

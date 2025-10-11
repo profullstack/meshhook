@@ -1,0 +1,55 @@
+@startuml
+!theme plain
+
+package "Workflow Builder" {
+    [Workflow Validation] as (WV)
+    [Visual DAG Builder] as (VDB)
+    [Event Sourcing] as (ES)
+}
+
+package "Supabase" {
+    [Postgres] as (DB)
+    [Realtime] as (RT)
+    [Storage] as (ST)
+}
+
+package "SvelteKit" {
+    [Webhook Intake] as (WHI)
+    [API] as (API)
+}
+
+package "Workers" {
+    [Orchestrator] as (ORC)
+    [HTTP Executor] as (HE)
+}
+
+(WV) -down-> (VDB) : Validates\nDAG structure
+(WV) .right.> (ES) : Utilizes\nfor state replay
+(WV) -left-> (WHI) : Starts with\nwebhook trigger
+(WV) .up.> (API) : Exposes validation\nendpoints
+
+(WHI) -right-> (DB) : Reads/Writes\nwebhook data
+(API) -down-> (DB) : CRUD operations
+(VDB) -down-> (DB) : Stores\nDAG configurations
+(ORC) -down-> (DB) : Manages\nworkflow states
+(HE) .right.> (DB) : Logs HTTP\nrequest data
+
+(DB) -right-> (RT) : Streams updates
+(DB) -down-> (ST) : Manages\nartifacts
+
+note right of (WV)
+  Workflow validation is a critical
+  component in the Workflow Builder
+  section. It ensures that workflows
+  are correctly structured and ready
+  for execution.
+end note
+
+note right of (DB)
+  Supabase Postgres acts as the
+  central database for storing all
+  workflow-related data, including
+  configurations, states, and logs.
+end note
+
+@enduml

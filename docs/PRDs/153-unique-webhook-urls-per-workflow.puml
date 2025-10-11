@@ -1,29 +1,36 @@
 @startuml
-!theme plain
+!theme cerulean
 
-title Unique Webhook URLs per Workflow Implementation
+title Unique Webhook URLs per Workflow Architecture
 
-package "MeshHook System" {
-    [Webhook Service] as Webhook
-    [Workflow Engine] as Engine
-    [Database] as DB
-    [Supabase Realtime] as Realtime
-    [API Gateway] as Gateway
+package "MeshHook Platform" {
+    [SvelteKit UI] as UI
+    [Webhook Management API] as API
+    database "Postgres DB" as DB {
+        [webhooks]
+    }
+    [Supabase Realtime] as Supabase
 }
 
-package "External Systems" {
-    [Client Application] as Client
+cloud {
+    [External Systems]
 }
 
-Client --> Gateway : Request to create\nunique webhook URL
-Gateway --> Webhook : Generate unique URL
-Webhook --> DB : Store webhook URL\nand workflow mapping
-DB --> Webhook : Confirm storage
-Webhook --> Gateway : Return unique URL
-Client --> Webhook : Trigger webhook\nwith payload
-Webhook --> Engine : Initiate workflow\nwith payload
-Engine --> DB : Update workflow state
-DB --> Realtime : Stream log updates
-Realtime -right-> Client : Display live logs
+node "Webhook System" {
+    [Unique URL Generator] as Generator
+    [Signature Verification] as Signature
+    [Migration Tooling] as Migration
+}
+
+External Systems --> API : Triggers webhook\nwith unique URL
+UI ..> API : Registers/Manages\nwebhook URLs
+API --> Generator : Generates unique URL
+Generator --> DB : Stores unique URL\nin webhooks table
+API --> DB : Retrieves webhook details\nincluding unique URL
+API --> Signature : Verifies request signature
+API ..> Supabase : Updates on webhook activity
+DB --> Supabase : Realtime updates
+Supabase ..> UI : Live updates on webhook activity
+Migration ..> DB : Migrates existing\nworkflows to unique URLs
 
 @enduml

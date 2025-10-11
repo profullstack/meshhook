@@ -1,0 +1,33 @@
+@startuml
+!theme plain
+
+title Create/Edit Workflow Process
+
+actor User as user
+entity "Supabase\n(Postgres)" as supabase
+control "SvelteKit\n(Frontend)" as sveltekit
+control "Workflow\nCRUD API" as crudapi
+collections "Realtime Logs" as logs
+control "Workers\n(Orchestrator & HTTP Executor)" as workers
+
+user --> sveltekit : Access workflow editor
+sveltekit --> crudapi : Request existing workflow data
+crudapi --> supabase : Query workflow details
+supabase --> crudapi : Return workflow details
+crudapi --> sveltekit : Display workflow data
+sveltekit --> user : User edits/creates workflow
+
+user --> sveltekit : Submit workflow
+sveltekit -> crudapi : Create/Edit workflow request
+crudapi -> supabase : Persist workflow changes
+supabase --> crudapi : Confirm changes
+crudapi --> sveltekit : Acknowledge success
+sveltekit --> user : Show success message
+
+group Integration with Workers and Logs
+    sveltekit -> workers : Trigger workflow execution
+    workers -> logs : Stream execution logs
+    logs --> sveltekit : Display live logs to user
+end
+
+@enduml

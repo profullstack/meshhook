@@ -1,0 +1,57 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    component [SvelteKit SSR/API] as SvelteKit
+    component [Supabase] {
+        database Postgres
+        node Realtime
+        storage Storage
+        cloud Edge
+    }
+    component [Workers] {
+        node Orchestrator
+        node Executor
+    }
+    [Role-based Access Control] as RBAC
+}
+
+package "External Services" {
+    [External Auth Service] as AuthService
+}
+
+SvelteKit --> RBAC : Uses for\nauthentication & authorization
+RBAC --> Postgres : Reads/Writes\nuser roles & permissions
+RBAC --> AuthService : Validates\nuser roles
+Orchestrator --> RBAC : Checks permissions\nfor workflow actions
+Executor --> RBAC : Verifies access\nto HTTP resources
+
+note right of RBAC : Core Functionality\n- Define roles & permissions\n- Enforce access control
+
+note over SvelteKit, Postgres : Integration Points
+
+class Role {
+    +String name
+    +String description
+}
+
+class Permission {
+    +String name
+    +String description
+}
+
+class UserRole {
+    +UserID
+    +RoleID
+}
+
+class RolePermission {
+    +RoleID
+    +PermissionID
+}
+
+Role "1" *-- "*" Permission : has >
+UserRole "1" -- "1" User : maps >
+RolePermission "1" -- "1" Role : maps >
+
+@enduml

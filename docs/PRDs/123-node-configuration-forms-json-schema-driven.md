@@ -1,184 +1,112 @@
 # PRD: Node configuration forms (JSON Schema-driven)
 
+**Issue:** [#123](https://github.com/profullstack/meshhook/issues/123)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** workflow-builder, hacktoberfest
+
+---
+
+# PRD: Node Configuration Forms (JSON Schema-driven)
+
 **Issue:** [#123](https://github.com/profullstack/meshhook/issues/123)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
-**Labels:** workflow-builder  
+**Labels:** workflow-builder, hacktoberfest  
 **Phase:** Phase 3  
-**Section:** Workflow Builder
+**Section:** Workflow Builder  
 
 ---
 
 ## Overview
 
-This task is part of Phase 3 in the Workflow Builder section of the MeshHook project. 
+The objective of this task is to enhance the MeshHook workflow builder's user experience by implementing JSON Schema-driven configuration forms for workflow nodes. This aligns with MeshHook's goal to provide a visually simple yet powerful workflow engine. By leveraging JSON Schema, we aim to standardize node configurations, ensuring flexibility, validation, and ease of use.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Goals
 
-**Task Objective:** Node configuration forms (JSON Schema-driven)
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+- Provide dynamic, schema-driven forms for configuring nodes within workflows.
+- Improve user experience by simplifying the node configuration process.
+- Ensure robust validation and feedback mechanisms for configuration data.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Node configuration forms (JSON Schema-driven)"
-2. Design database schema following normalization principles
-3. Implement RLS policies for multi-tenant security
-4. Create necessary indexes for query performance
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Schema-Driven Forms:** Dynamically generate node configuration forms based on JSON Schema definitions associated with each node type.
+2. **Validation:** Implement client-side validation of form inputs against the JSON Schema, providing immediate feedback on errors.
+3. **Compatibility:** Ensure forms are compatible with existing and future node types by adhering to a standardized schema format.
+4. **UI Components:** Develop reusable Svelte components for generating form elements from JSON Schema (text inputs, selects, checkboxes).
+5. **Integration:** Seamlessly integrate these forms into the existing DAG editor, ensuring a smooth user experience.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure the form generation and validation processes are efficient, aiming for minimal impact on UI responsiveness.
+- **Usability:** Achieve high usability standards, with clear, intuitive forms and immediate validation feedback.
+- **Scalability:** Design with scalability in mind, allowing for easy addition of new node types and corresponding schemas.
+- **Maintainability:** Follow clean code practices, ensuring code is modular, well-commented, and easy to extend.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a SvelteKit/Svelte 5 stack for the frontend, integrated with Supabase for real-time data updates and Postgres-native functionalities. This task must consider seamless integration with the existing SvelteKit application and the established component architecture.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Schema Definition:** For each node type (e.g., `http_call`, `transform`), define a JSON Schema describing configuration options.
+2. **UI Component Development:** Create Svelte components capable of rendering form elements based on JSON Schema inputs.
+3. **Integration:** Embed the schema-driven forms into the workflow builder's node configuration modal.
+4. **Validation:** Implement real-time validation, displaying error messages from schema violations.
+5. **Testing:** Write unit and integration tests for new components and their interaction with the workflow builder.
 
 ### Data Model
 
-Define the data model including:
+No changes to the database schema are required for this task. However, JSON Schemas for node configurations will be stored as part of the project's static assets or potentially fetched from a central schema repository in future iterations.
 
-- **Tables:** List all new or modified tables
-- **Columns:** Specify column names, types, and constraints
-- **Relationships:** Define foreign keys and relationships
-- **Indexes:** Identify columns that need indexing
-- **RLS Policies:** Define row-level security policies
+### API Endpoints
 
-Refer to `schema.sql` for existing schema and follow established patterns.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+No new API endpoints are required for this task. Existing endpoints for workflow CRUD operations will accommodate the structured configuration data generated by the forms.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Dynamic forms for at least two node types (`http_call`, `transform`) are implemented and functional.
+- [ ] Form inputs are validated in real-time against their JSON Schemas, with appropriate feedback provided to the user.
+- [ ] The user experience of configuring nodes is seamless and integrated into the existing workflow builder UI.
+- [ ] All new code is covered by unit tests, with integration tests validating form interaction within the workflow builder.
+- [ ] Documentation is updated to include information on the JSON Schema structure for node configurations and guidelines for extending it.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Existing SvelteKit frontend setup.
+- Access to static assets or configuration data for JSON Schemas.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to the existing coding, naming, and documentation standards.
+- Use TypeScript for type safety and better developer experience.
+- Ensure responsiveness and accessibility of the UI components.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For each new Svelte component and utility function.
+- **Integration Tests:** Covering the interaction between the node configuration forms and the workflow builder.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Validate all user inputs against the schema to prevent injection attacks.
+- Ensure any data fetching for schemas is secured and authenticated if necessary.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+No specific monitoring or observability tools are required for this task. However, general frontend monitoring (e.g., error tracking, performance metrics) should capture the behavior of the new components.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Node configuration forms (JSON Schema-driven)
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Workflow Builder
-
-**Task:** Node configuration forms (JSON Schema-driven)
-
----
-_Auto-generated from TODO.md_
+- [JSON Schema Documentation](https://json-schema.org/)
+- [SvelteKit Documentation](https://kit.svelte.dev/docs)
+- [Existing Project Documentation](https://github.com/profullstack/meshhook) for coding standards and developer guidelines.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #123*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #123*
+*Generated: 2025-10-10*

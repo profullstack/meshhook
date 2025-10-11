@@ -1,173 +1,140 @@
 # PRD: Create/edit workflow
 
+**Issue:** [#127](https://github.com/profullstack/meshhook/issues/127)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** workflow-management, hacktoberfest
+
+---
+
+# PRD: Create/Edit Workflow
+
 **Issue:** [#127](https://github.com/profullstack/meshhook/issues/127)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
-**Labels:** workflow-management  
+**Labels:** workflow-management, hacktoberfest  
 **Phase:** Phase 3  
-**Section:** Workflow Management
+**Section:** Workflow Management  
 
 ---
 
 ## Overview
 
-This task is part of Phase 3 in the Workflow Management section of the MeshHook project. 
+The "Create/Edit Workflow" feature is a cornerstone of the MeshHook project, enabling users to define and modify their workflow processes visually. This feature leverages MeshHook's core capabilities, such as webhook triggers with signature verification and a visual DAG builder, to provide a user-friendly interface for constructing complex, deterministic workflows. This task aligns with MeshHook's goals of combining the simplicity of visual workflow construction with the robustness of event sourcing and multi-tenant security.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Create/edit workflow
+1. **Visual Workflow Construction:**
+   - Users must be able to create new workflows using a visual DAG builder.
+   - The workflow editor must support editing existing workflows.
+   - Users should be able to define webhook triggers, nodes (e.g., `transform`, `http_call`, `branch`, `delay`, `terminate`), and connections in the DAG.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+2. **Workflow Configuration:**
+   - Support configuration of webhook triggers including signature verification methods.
+   - Allow users to configure node settings using JSON Schema-driven forms.
+   - Enable versioning control, allowing users to save drafts and publish immutable workflow versions.
 
-## Requirements
+3. **Integration with Existing Systems:**
+   - Ensure the workflow creation/editing process integrates smoothly with the backend for persistence.
+   - Utilize Supabase Realtime for live updates during workflow configuration.
 
-### Functional Requirements
+4. **User Experience:**
+   - Provide a "Test run" feature that allows users to execute the workflow with a sample payload and view the execution path and results.
+   - Implement a "resume from step" feature for debugging and testing workflows.
 
-1. Implement the core functionality described in the task: "Create/edit workflow"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+5. **Documentation and Best Practices:**
+   - Document all user-facing features and configurations.
+   - Follow MeshHook coding standards and project conventions throughout development.
 
+## Non-Functional Requirements
 
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The workflow editor must load and respond to user input without perceptible delay, maintaining a responsive user experience.
+- **Reliability:** Changes to workflows must be saved reliably, with appropriate feedback provided to users on success or failure.
+- **Security:** Adhere to MeshHook's security guidelines, especially regarding multi-tenancy and secrets management.
+- **Maintainability:** Code should be clean, well-documented, and easy to maintain, with a clear separation of concerns and modular architecture.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- Utilize SvelteKit for building the frontend workflow editor, ensuring integration with the existing SvelteKit/Svelte 5 based architecture.
+- The frontend must communicate with the backend via RESTful APIs or GraphQL for fetching, saving, and publishing workflows.
+- Supabase Realtime to be used for providing live feedback and updates in the editor.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis:**
+   - Review existing frontend and backend codebases to understand current implementation and integration points.
+   
+2. **Design:**
+   - Define the UI/UX for the create/edit workflow interface, focusing on simplicity and usability.
+   - Outline the frontend-backend interaction model, including API requests and real-time updates.
+   
+3. **Implementation:**
+   - Develop the frontend interface using SvelteKit, incorporating the visual DAG builder and configuration forms.
+   - Implement API calls for fetching, saving, and publishing workflows.
+   - Integrate real-time feedback for the editing process using Supabase Realtime.
+   
+4. **Testing:**
+   - Write unit and integration tests covering new features and interactions.
+   - Conduct manual testing to ensure the feature meets user experience expectations.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+5. **Deployment:**
+   - Ensure the feature is fully integrated into the CI/CD pipeline for automated testing and deployment.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No immediate changes to the existing data model are required for this task. Should adjustments become necessary, they will be documented and included in the project's schema migrations.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+- `GET /api/workflows/{id}`: Fetch a specific workflow for editing.
+- `POST /api/workflows`: Create a new workflow.
+- `PUT /api/workflows/{id}`: Update an existing workflow.
+- `POST /api/workflows/{id}/publish`: Publish a workflow version.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- Users can create new workflows using a visual interface.
+- Users can edit existing workflows, with changes reflected in real-time.
+- Workflows can be saved, with the ability to publish new versions.
+- The workflow editor performs reliably under normal usage conditions.
+- Security and multi-tenancy guidelines are adhered to throughout the implementation.
+- The feature integrates seamlessly with the existing MeshHook architecture and patterns.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the MeshHook codebase and development environment.
+- Supabase project access for real-time updates and backend integration.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the existing project structure and coding conventions.
+- Utilize TypeScript for type safety and better developer experience.
+- Ensure code is well-commented, and document any new functions or modules.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Implement unit tests for new components and utility functions.
+- Write integration tests to cover API interactions and real-time behavior.
+- Perform manual testing for user experience verification.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all user input is validated both client-side and server-side.
+- Use existing project mechanisms for authentication and authorization.
+- Follow secure coding practices to prevent common vulnerabilities (e.g., XSS, CSRF).
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
-
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Create/edit workflow
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Workflow Management
-
-**Task:** Create/edit workflow
-
----
-_Auto-generated from TODO.md_
+- Integrate with existing logging and monitoring solutions to track usage and errors.
+- Consider adding performance metrics specific to the workflow editor if necessary.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #127*  
-*Last updated: 2025-10-10*
+*This PRD aims to provide a comprehensive guide to developing the Create/Edit Workflow feature for the MeshHook project, adhering to the project's standards for performance, security, and user experience.*
+
+---
+
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #127*
+*Generated: 2025-10-10*

@@ -6,119 +6,102 @@
 
 ---
 
-# PRD: PII Detection Rules
+# PRD: Implementation of PII Detection Rules
 
-**Issue:** [#148](https://github.com/profullstack/meshhook/issues/148)  
-**Milestone:** Phase 4: Security  
-**Labels:** pii-redaction, hacktoberfest  
-**Project Context:** MeshHook - A webhook-first, deterministic, Postgres-native workflow engine
+## Overview
 
----
-
-## 1. Overview
-
-As MeshHook scales to handle more sensitive information across various workflows, the necessity of detecting and redacting Personally Identifiable Information (PII) has become paramount. This task aims to define and implement PII detection rules that can be applied to all data processed within the MeshHook system. By aligning with the project's security and multi-tenancy goals, this feature will enhance the platform's capability to protect user data, ensuring compliance with global data protection regulations.
+The implementation of Personally Identifiable Information (PII) detection rules within MeshHook is a critical enhancement aimed at bolstering the security and privacy of the data processed through the system. This feature is designed to automatically identify and manage PII within workflow data, either by redacting or encrypting sensitive information before it is stored or logged. This initiative aligns with MeshHook's overarching goals of providing a secure, reliable, and privacy-compliant workflow automation platform.
 
 ### Purpose
 
-To design and implement a set of rules and mechanisms for detecting PII within workflow data, enabling automatic redaction or encryption of sensitive information before storage or logging. This feature supports MeshHook's commitment to security, privacy, and reliability.
+The purpose of this feature is to ensure that MeshHook can automatically detect and appropriately handle PII, thereby protecting sensitive information and ensuring compliance with global data protection regulations. This is critical for maintaining the trust of users and customers, and for upholding MeshHook's reputation as a secure and privacy-respecting platform.
 
 ### Alignment with Project Goals
 
-- Enhances security by adding an additional layer of data protection.
-- Supports multi-tenant RLS security by ensuring tenant data is handled securely.
-- Maintains system performance and reliability while handling PII.
+- **Security Enhancement:** By detecting and redacting or encrypting PII, we add an essential layer of security, further protecting user data.
+- **Compliance with Data Protection Regulations:** Helps ensure MeshHook workflows are compliant with GDPR, CCPA, and other privacy laws.
+- **Support for Multi-tenancy:** Augments existing RLS security measures by providing tenant-specific PII handling capabilities.
 
----
+## Functional Requirements
 
-## 2. Functional Requirements
+1. **PII Detection Engine:** Develop a modular engine capable of identifying various types of PII within workflow data payloads.
+2. **Customizable Detection Rules:** Enable administrators to customize PII detection rules, tailoring the engine to recognize project-specific PII patterns.
+3. **Redaction and Encryption:** Provide mechanisms for the automatic redaction or encryption of identified PII.
+4. **Audit and Compliance Logging:** Implement logging mechanisms for PII detection and handling actions to support auditability and compliance, without storing PII in logs.
+5. **Management API:** Develop secure API endpoints for the management of PII detection rules.
 
-1. **PII Detection Rule Engine:** Develop a rule engine capable of identifying PII in data payloads based on predefined patterns and heuristics.
-2. **Configurability:** Allow administrators to define custom PII detection rules per project.
-3. **Automatic Redaction:** Implement automatic redaction of detected PII before the data is stored or logged.
-4. **Encryption Option:** Provide an option to encrypt PII instead of redaction, storing the encrypted form securely.
-5. **Audit Trails:** Log actions related to PII detection, redaction, or encryption for auditability, excluding the PII itself.
-6. **API for Rule Management:** Enable CRUD operations for PII detection rules through a secure API.
+## Non-Functional Requirements
 
-## 3. Non-Functional Requirements
+- **Performance:** Ensure PII detection and handling introduce no more than 10ms additional latency per workflow run.
+- **Security:** Adhere to best practices in secure data handling and processing, particularly for operations involving PII.
+- **Reliability:** Achieve a 99.9% accuracy rate in PII detection to minimize false positives and negatives.
+- **Maintainability:** Ensure the PII detection rules engine is modular, well-documented, and easy to extend or modify.
 
-- **Performance:** PII detection and redaction should not significantly impact processing times, aiming for a maximum of 10ms overhead per payload.
-- **Security:** Ensure all operations related to PII handling are conducted securely, adhering to the latest best practices for data protection.
-- **Reliability:** Guarantee a 99.9% success rate in correctly detecting and handling PII.
-- **Maintainability:** Code should be modular, well-documented, and easy to update as new types of PII are defined.
-
-## 4. Technical Specifications
+## Technical Specifications
 
 ### Architecture Context
 
-- Integration with **SvelteKit** for rule management interfaces.
-- Utilization of **Supabase Postgres** for storing PII rules and audit logs.
-- Extension of the existing **Workers** architecture to include PII detection tasks.
+- **Integration with SvelteKit:** Leverage SvelteKit for building the UI components for PII rule management.
+- **Utilization of Supabase Postgres:** Utilize Supabase for storing PII rules and audit logs, leveraging its real-time capabilities.
+- **Extension of Workers Architecture:** Incorporate PII detection tasks within the existing workers' architecture, ensuring seamless integration with workflow processing.
 
 ### Implementation Approach
 
-1. **Rule Engine Design:** Outline the architecture of the PII detection rule engine.
-2. **Data Model Update:** Extend `schema.sql` to include tables for storing PII rules and audit logs.
-3. **Rule Management API:** Define and implement API endpoints for managing PII detection rules.
-4. **Integration Testing:** Test integration with existing components, ensuring no degradation in performance or functionality.
-5. **Deployment and Monitoring:** Deploy the update in a controlled environment, monitor performance and reliability, and make adjustments as necessary.
+1. **PII Detection Engine Design:** Outline and develop the architecture of the PII detection engine, ensuring modularity and extensibility.
+2. **Data Model Extension:** Update `schema.sql` to include new tables for `pii_rules` and `pii_audit_logs`.
+3. **Rule Management API:** Implement secure API endpoints for PII rule CRUD operations.
+4. **Integration and Performance Testing:** Conduct thorough testing to ensure seamless integration and adherence to performance benchmarks.
+5. **Deployment and Monitoring:** Roll out the feature in a phased approach, closely monitoring performance and functionality for optimizations.
 
 ### Data Model Changes
 
-- `pii_rules`: Stores definitions of PII detection rules.
-- `pii_audit_logs`: Records actions taken on detected PII.
+- **`pii_rules` Table:** To store PII detection rule configurations.
+- **`pii_audit_logs` Table:** To log actions related to PII without including the PII itself.
 
 ### API Endpoints
 
-- `POST /api/pii-rules`: Create a new PII detection rule.
-- `GET /api/pii-rules`: List all PII detection rules.
-- `PUT /api/pii-rules/{id}`: Update a PII detection rule.
-- `DELETE /api/pii-rules/{id}`: Delete a PII detection rule.
+- **`POST /api/pii-rules`**: To create a new PII detection rule.
+- **`GET /api/pii-rules`**: To list all PII detection rules.
+- **`PUT /api/pii-rules/{id}`**: To update an existing PII detection rule.
+- **`DELETE /api/pii-rules/{id}`**: To remove a PII detection rule.
 
-## 5. Acceptance Criteria
+## Acceptance Criteria
 
-- [ ] PII detection rule engine implemented and tested.
-- [ ] Automatic redaction and encryption of PII in workflow data.
-- [ ] PII rule management API endpoints defined, implemented, and documented.
-- [ ] Performance benchmarks met: <10ms overhead for PII processing.
-- [ ] Audit logs capture actions related to PII handling without storing PII.
-- [ ] Comprehensive unit, integration, and e2e tests covering new functionality.
+- PII detection engine functional and integrated into workflow processing.
+- Customizable PII detection rules can be created and managed via API.
+- Workflow data is automatically redacted or encrypted based on PII rules.
+- Audit logs accurately reflect PII handling actions.
+- System performance meets specified benchmarks with less than 10ms overhead.
 
-## 6. Dependencies and Prerequisites
+## Dependencies and Prerequisites
 
-- Access to the existing MeshHook codebase and development environment.
-- Supabase account for database and real-time logging.
-- Review of global data protection regulations for PII definition and compliance requirements.
+- Access to MeshHook's existing codebase and development environment.
+- A valid Supabase account for database operations.
+- Familiarity with global PII regulations for compliance considerations.
 
-## 7. Implementation Notes
+## Implementation Notes
 
 ### Development Guidelines
 
-- Follow the existing coding standards and project structure.
-- Ensure all new code is well-commented and adheres to security best practices.
-- Prioritize unit and integration tests for all new features.
+- Adhere to MeshHook's coding standards, ensuring new code is modular, well-commented, and secure.
+- Implement comprehensive unit and integration tests, adopting a TDD approach where feasible.
 
 ### Testing Strategy
 
-- Utilize TDD for the development of the rule engine and API endpoints.
-- Perform load testing to evaluate the impact on performance.
-- Conduct security audits specifically focused on the handling of PII.
+- Perform extensive unit and integration testing, focusing on the PII detection accuracy and system performance.
+- Conduct security audits to validate the safe handling of PII.
 
 ### Security Considerations
 
-- Ensure all data transmission is encrypted (TLS).
-- Apply the principle of least privilege to API access.
-- Regularly rotate encryption keys used for PII encryption.
+- Use TLS for all data in transit.
+- Implement least privilege access controls for API endpoints.
+- Regularly rotate any encryption keys used for PII data.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Implement logging for all rule management operations and PII handling actions.
-- Monitor performance metrics to detect any impact from PII processing.
-- Set up alerts for any failures in the PII detection and handling process.
-
----
-
-*This document serves as the guiding PRD for the implementation of PII detection rules within the MeshHook project, ensuring a balance between functionality, performance, and security.*
+- Set up detailed logging for rule management operations and PII handling actions.
+- Monitor performance metrics to identify and mitigate any impact from PII processing.
+- Establish alerting mechanisms for operational failures in the PII detection process.
 
 ---
 

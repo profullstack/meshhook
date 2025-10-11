@@ -1,5 +1,13 @@
 # PRD: Secrets vault UI
 
+**Issue:** [#136](https://github.com/profullstack/meshhook/issues/136)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** secrets-management, hacktoberfest
+
+---
+
+# PRD: Secrets Vault UI
+
 **Issue:** [#136](https://github.com/profullstack/meshhook/issues/136)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
 **Labels:** secrets-management  
@@ -10,167 +18,108 @@
 
 ## Overview
 
-This task is part of Phase 3 in the Secrets Management section of the MeshHook project. 
+The Secrets Vault UI is a critical component of the MeshHook project's Phase 3 development, focusing on Secrets Management. This task aims to provide a secure, user-friendly interface for managing secrets within the MeshHook platform. The interface will enable users to add, remove, and manage secrets that are crucial for the operation of webhook workflows, ensuring these secrets are handled securely and in compliance with the project's security guidelines.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
-
-**Task Objective:** Secrets vault UI
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+This initiative aligns with MeshHook’s overarching goals by enhancing the platform's usability and security, particularly in managing sensitive information required for webhook triggers and workflow executions.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Secrets vault UI"
-2. Create reusable Svelte 5 components
-3. Implement responsive design for mobile and desktop
-4. Follow project UI/UX patterns and styling
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Secrets Management:** Users must be able to create, read, update, and delete (CRUD) secrets within the vault.
+2. **UI Components:** Develop reusable Svelte 5 UI components for the secrets management interface.
+3. **Responsive Design:** The UI must be responsive, ensuring usability across desktop and mobile devices.
+4. **UI/UX Consistency:** Adhere to existing UI/UX design patterns and styling conventions established in the MeshHook project.
+5. **API Integration:** Interface must integrate seamlessly with backend API endpoints for secrets management.
+6. **Documentation:** Provide comprehensive documentation for all public APIs and interfaces used or created as part of this task.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure the UI is performant, with operations completing in sub-second times where possible.
+- **Reliability:** Achieve 99.9% uptime for the secrets management feature, with robust error handling and recovery processes.
+- **Security:** Adhere to MeshHook's security guidelines, including proper handling and masking of secrets both in transit and at rest.
+- **Maintainability:** The codebase should be clean, well-documented, and easy to maintain, adhering to project-wide coding standards and best practices.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+The Secrets Vault UI will be developed within the SvelteKit framework, leveraging its SSR (Server-Side Rendering) and API capabilities. Integration points include:
+
+- **Supabase:** For storing and retrieving secrets in a secure, encrypted format.
+- **Workers:** Orchestrator and HTTP Executor components may need to interact with the secrets for processing webhook events and executing HTTP requests.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Analysis:** Conduct a thorough review of the existing codebase and identify how the secrets management UI will integrate with backend services.
+2. **Design:** Draft detailed design documents outlining:
+   - UI component design and interaction flow.
+   - Data structures for UI state management.
+   - API contracts for interacting with backend services.
+   - Security measures for handling secrets within the UI.
+3. **Implementation:** Develop the UI following a TDD (Test-Driven Development) approach, ensuring components are fully tested at the unit and integration levels before deployment.
+4. **Integration:** Integrate the UI with backend services, ensuring seamless data flow and error handling.
+5. **Testing:** Perform comprehensive testing, covering all functional and non-functional requirements.
+6. **Documentation:** Update project documentation to reflect the new secrets management UI features and API endpoints.
+7. **Review and Deployment:** Conduct code reviews and merge approved changes for deployment.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No immediate changes to the data model are anticipated for this task. However, adjustments may be necessary to accommodate new UI features or API requirements. Any changes should be documented and reviewed as part of the implementation process.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+- **GET** `/api/secrets`: Retrieve a list of secrets.
+- **POST** `/api/secrets`: Create a new secret.
+- **PUT** `/api/secrets/{secretId}`: Update an existing secret.
+- **DELETE** `/api/secrets/{secretId}`: Delete a secret.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] CRUD operations for secrets can be performed through the UI.
+- [ ] UI components are reusable and consistent with MeshHook design standards.
+- [ ] The secrets management interface is responsive and user-friendly across devices.
+- [ ] Backend integration is seamless, with real-time updates and error handling.
+- [ ] All code is well-documented, and new API endpoints are documented.
+- [ ] Security guidelines are strictly followed, ensuring the safe handling of secrets.
+- [ ] Performance benchmarks are met, with operations completing efficiently.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- **Technical Dependencies:** SvelteKit framework, Supabase services, existing MeshHook backend services.
+- **Prerequisite Tasks:** Ensure all required services are accessible, and any dependent features or APIs are completed and operational.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Utilize the ESM module system and adopt modern JavaScript features for development.
+- Ensure comprehensive error handling throughout the UI, particularly in scenarios involving secret management.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Implement unit tests for new components and services.
+- Conduct integration tests to verify interactions between the UI and backend services.
+- Perform manual testing to validate user experience and responsiveness.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Implement strict access controls and authentication checks.
+- Ensure all secrets are encrypted in transit and at rest.
+- Adhere to best practices for managing and accessing secrets within the application.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement logging for key actions and errors within the secrets management process.
+- Monitor performance metrics and set up alerts for any operational anomalies.
 
 ## Related Documentation
 
 - [Main PRD](../PRD.md)
 - [Architecture](../Architecture.md)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Secrets vault UI
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Secrets Management
-
-**Task:** Secrets vault UI
-
----
-_Auto-generated from TODO.md_
 
 ---
 
-*This PRD was auto-generated from GitHub issue #136*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #136*
+*Generated: 2025-10-10*

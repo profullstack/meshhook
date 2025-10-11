@@ -1,173 +1,117 @@
 # PRD: Webhook configuration
 
-**Issue:** [#158](https://github.com/profullstack/meshhook/issues/158)  
-**Milestone:** Phase 5: Webhook System  
-**Labels:** webhook-management-ui  
-**Phase:** Phase 5  
-**Section:** Webhook Management UI
+**Issue:** [#158](https://github.com/profullstack/meshhook/issues/158)
+**Milestone:** Phase 5: Webhook System
+**Labels:** webhook-management-ui, hacktoberfest
 
 ---
 
+# PRD: Webhook Configuration Feature
+
 ## Overview
 
-This task is part of Phase 5 in the Webhook Management UI section of the MeshHook project. 
+The Webhook Configuration feature is a core addition to the MeshHook project, aimed at empowering users to easily set up and manage webhook triggers for their automated workflows. This feature aligns with MeshHook's overarching goal to offer a visually simple, durable, and Postgres-native workflow engine that emphasizes user-friendliness, scalability, and security. By introducing a user interface for webhook configuration, MeshHook aims to enhance its usability, making it accessible for indie builders, automation engineers, and platform teams to efficiently integrate external event triggers into their workflows.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Webhook configuration
+1. **User Interface for Configuration**: Develop a clean, intuitive UI that enables users to add, modify, and delete webhook triggers for their workflows with minimal effort.
+2. **Signature Verification Support**: Users should be able to select and configure signature verification methods (HMAC, JWT) for their webhooks, enhancing security by ensuring that incoming requests are authenticated.
+3. **Dynamic Webhook URL Generation**: The system must automatically generate a unique URL for each webhook configuration, facilitating easy integration with external services.
+4. **Testing Capability**: Introduce a functionality within the UI that allows users to send test payloads to their configured webhooks, verifying the setup and response handling.
+5. **Comprehensive Documentation**: Update the MeshHook documentation to include detailed guides and examples on configuring and utilizing webhooks, aiding in user education and system adoption.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Webhook configuration"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance**: Changes to webhook configurations should be reflected in real-time, with API response times kept below 500ms to ensure a smooth user experience.
+- **Reliability**: Target a 99.9% uptime for the webhook configuration feature, ensuring high availability for users to manage and test their webhook settings.
+- **Security**: Leverage MeshHook’s existing RLS framework to secure webhook configurations at a multi-tenant level, ensuring that configurations are isolated and protected across different users and projects.
+- **Maintainability**: Code contributed towards this feature should follow the project's established coding standards and patterns, ensuring that it is well-documented, structured, and easy to maintain or extend in the future.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Frontend**: Implement the UI components using SvelteKit/Svelte 5, integrating seamlessly with the existing frontend architecture.
+- **Backend**: Utilize Supabase Postgres for persisting webhook configurations, leveraging its capabilities for secure storage and efficient querying.
+- **Security**: Incorporate HMAC and JWT as the primary methods for signature verification, aligning with MeshHook's focus on secure, authenticated webhook triggers.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **UI Design**: Design intuitive UI layouts for the webhook configuration process, emphasizing ease of use and integration with the existing visual DAG builder.
+2. **API Design and Implementation**:
+   - Define RESTful API endpoints for managing webhook configurations (`POST`, `PUT`, `DELETE`).
+   - Implement the logic for dynamic webhook URL generation and signature verification setup.
+3. **Frontend Implementation**: Develop the frontend components using SvelteKit, ensuring responsiveness and a seamless user experience.
+4. **Backend and Database Implementation**:
+   - Design and implement the database schema for storing webhook configurations.
+   - Securely implement the API functionality, ensuring data validation and authorization checks.
+5. **Integration and Testing**: Conduct thorough integration testing to ensure compatibility with the existing workflow engine components and overall system stability.
+6. **Documentation**: Update the project's user guide and API documentation to include detailed instructions and examples for the webhook configuration feature.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+**Table**: `webhook_configurations`
 
-### API Endpoints (if applicable)
+- `id` UUID: Primary Key
+- `project_id` UUID: Foreign Key to `projects` table, ensuring RLS security
+- `url` VARCHAR: Unique URL for the webhook
+- `signature_method` ENUM('HMAC', 'JWT', 'None'): Method used for signature verification
+- `secret_key` VARCHAR: Secret key used for HMAC/JWT verification, stored securely
+- `created_at` TIMESTAMP: Record creation timestamp
+- `updated_at` TIMESTAMP: Last update timestamp
 
-No new API endpoints required for this task.
+### API Endpoints
+
+- **Create Webhook Configuration**: `POST /api/webhooks`
+- **Update Webhook Configuration**: `PUT /api/webhooks/{id}`
+- **Delete Webhook Configuration**: `DELETE /api/webhooks/{id}`
+- **Test Webhook Configuration**: `POST /api/webhooks/{id}/test`
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] UI for webhook configuration is fully implemented and integrates seamlessly with the existing system.
+- [ ] Signature verification methods (HMAC, JWT) are supported and can be configured by the user.
+- [ ] Unique webhook URLs are generated automatically for each new configuration.
+- [ ] Users can test their webhook configurations directly from the UI.
+- [ ] Documentation is updated to include comprehensive guides on configuring and using webhooks.
+- [ ] All new code is covered by relevant unit and integration tests, ensuring reliability and maintainability.
+- [ ] Manual and automated tests confirm the feature's functionality and performance benchmarks are met.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the existing SvelteKit and Supabase setup.
+- Familiarity with the project's coding standards and development workflows.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to MeshHook's coding conventions and standards.
+- Employ async/await patterns for asynchronous operations.
+- Validate all user input to prevent injection attacks and data corruption.
+- Write comprehensive unit and integration tests using Jest or a compatible testing framework to cover new functionality.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Testing**: Focus on backend logic, utility functions, and component integrity.
+- **Integration Testing**: Ensure new APIs interact correctly with the database and frontend components, verifying end-to-end functionality.
+- **Manual Testing**: Perform user acceptance testing to validate the UI/UX and overall feature integration.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Implement authentication and authorization checks for all new API endpoints, ensuring that webhook configurations are only accessible to authorized users.
+- Encrypt `secret_key` values in the database to protect sensitive information.
+- Introduce rate limiting for the test webhook functionality to prevent abuse and ensure system stability.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Add comprehensive logging throughout the webhook configuration process.
+- Monitor API performance, focusing on response times and error rates for the new endpoints.
+- Set up alerts for critical issues detected in the webhook configuration feature to enable prompt response and resolution.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Webhook configuration
-
-**Full Issue Body:**
-**Phase:** Phase 5
-**Section:** Webhook Management UI
-
-**Task:** Webhook configuration
-
----
-_Auto-generated from TODO.md_
+By following this PRD, the MeshHook team will successfully implement the webhook configuration feature, significantly enhancing the platform's flexibility, security, and user-friendliness. This addition is a critical step toward realizing MeshHook's vision of providing a robust, Postgres-native workflow engine that meets the modern needs of automation and integration.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #158*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #158*
+*Generated: 2025-10-10*

@@ -1,34 +1,29 @@
 @startuml
-title Retry Logic Tests - Sequence Diagram
+!theme plain
 
-actor Tester
-participant "Unit Test Framework" as UTF
-participant "Retry Logic Module" as RLM
-database "Supabase Postgres" as DB
+title Retry Logic Tests for MeshHook - Workflow
 
-== Test Execution ==
-Tester -> UTF : Run retry logic tests
-UTF -> RLM : initiate()
-activate RLM
+actor Developer
+participant "HTTP Executor" as Executor
+database "Workflow Engine" as Engine
+database "Logging\n& Monitoring" as Logs
+participant "Retry Logic" as Retry
 
-RLM -> RLM : Analyze existing workflow
-note right of RLM: Identify integration points\nfor retry logic
+Developer -> Executor : Implement Retry Mechanism
+Executor -> Retry : Utilize exponential backoff with jitter
+Retry -> Engine : Initiate HTTP requests
+Engine --> Retry : Transient failure response
+Retry -> Retry : Retry with backoff
+Retry -> Logs : Log retry attempt
 
-RLM -> DB : Fetch workflow data
-activate DB
-DB --> RLM : Return data
-deactivate DB
+alt success after retries
+    Retry -> Executor : Successful request after retry
+else max retries exceeded
+    Retry -> Logs : Log failure & notify
+end
 
-RLM -> RLM : Execute retry logic
-note right of RLM: Simulate failure scenarios
-
-RLM -> RLM : Assert outcomes
-note right of RLM: Verify error handling\nand recovery mechanisms
-
-RLM --> UTF : Return test results
-deactivate RLM
-
-UTF --> Tester : Display results
-note over Tester, UTF: Test scenarios include:\n- Network failures\n- Timeout errors\n- HTTP status code handling
+note right of Executor : Configuration includes\nmax attempts & backoff interval
+note left of Engine : Part of Workers module
+note right of Logs : Track retry attempts and failures
 
 @enduml

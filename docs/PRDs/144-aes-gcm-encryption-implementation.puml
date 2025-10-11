@@ -1,0 +1,40 @@
+@startuml
+!theme plain
+
+title AES-GCM Encryption Implementation
+
+package "MeshHook System" {
+    [Webhook Intake] as WI
+    [Workflow CRUD API] as WCA
+    [Publish Versions] as PV
+    [Run Console] as RC
+    [Supabase Realtime] as SR
+    [Database (Postgres)] as DB
+}
+
+package "AES-GCM Encryption Module" {
+    [Encryption Service] as ES
+    [Key Management] as KM
+    [Error Handling] as EH
+}
+
+package "External Services" {
+    [Supabase Storage] as SS
+    [Supabase Edge] as SE
+}
+
+WI --> ES : Triggers encryption\nfor incoming data
+WCA --> ES : Requests data encryption\nfor stored workflows
+PV --> KM : Requests new keys\nfor versioning
+RC --> ES : Encrypts logs before storage
+ES --> KM : Retrieves encryption keys
+KM --> DB : Stores & manages keys securely
+ES --> EH : Handles encryption errors
+DB --> SR : Streams encrypted data changes
+SR --> RC : Updates run console in real time
+ES --> SS : Stores encrypted artifacts
+KM -right-> SE : Schedules key rotation jobs
+
+note right of KM : Key rotation ensures\nlong-term security
+
+@enduml

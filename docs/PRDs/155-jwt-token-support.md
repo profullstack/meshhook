@@ -1,173 +1,116 @@
 # PRD: JWT token support
 
-**Issue:** [#155](https://github.com/profullstack/meshhook/issues/155)  
-**Milestone:** Phase 5: Webhook System  
-**Labels:** webhook-triggers  
-**Phase:** Phase 5  
-**Section:** Webhook Triggers
+**Issue:** [#155](https://github.com/profullstack/meshhook/issues/155)
+**Milestone:** Phase 5: Webhook System
+**Labels:** webhook-triggers, hacktoberfest
 
 ---
 
+# PRD: JWT Token Support for Webhook Triggers
+
 ## Overview
 
-This task is part of Phase 5 in the Webhook Triggers section of the MeshHook project. 
+This Product Requirements Document (PRD) details the addition of JWT (JSON Web Token) token support for webhook triggers in the MeshHook project. This feature is a critical enhancement for Phase 5: Webhook System, aimed at bolstering security by enabling the verification of JWT tokens for incoming webhook requests. This aligns with MeshHook's overarching goals of providing a secure, scalable, and user-friendly workflow automation platform. JWT token support will ensure that only authenticated and authorized requests trigger workflows, enhancing the security posture of the MeshHook platform.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** JWT token support
+1. **JWT Verification:** The system must be able to verify the JWT attached to incoming webhook requests to authenticate and authorize these requests.
+2. **Configurable JWT Secrets:** Users must be able to configure JWT secret keys and expected claims through both a UI and an API endpoint for each webhook trigger in their project.
+3. **Dynamic Secret Fetching:** The system should support dynamic fetching of JWT secrets from the project's secrets vault, allowing secrets to be updated without redeploying or restarting services.
+4. **Error Handling and Feedback:** Clear, actionable error responses should be provided for verification failures, and these should be logged appropriately for auditing purposes.
+5. **User Interface for JWT Configuration:** Implement a user-friendly interface within the existing project settings to allow users to configure JWT settings for webhook triggers.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "JWT token support"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+1. **Performance:** The JWT verification process must be optimized to ensure minimal impact on webhook processing latency.
+2. **Security:** Implement secure storage and access mechanisms for JWT secrets and ensure robust validation of JWT signatures and claims to prevent security vulnerabilities.
+3. **Reliability:** The webhook processing system, including JWT verification, should aim for 99.9% uptime.
+4. **Maintainability:** The implementation should follow the project's existing coding standards, ensuring the code is clean, well-documented, and easy to maintain.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Integration Points:**
+  - The feature will be integrated into the SvelteKit frontend for configuration interfaces and the existing webhook processing pipeline for JWT verification.
+  - Supabase Postgres will store JWT configuration settings.
+- **Technologies:**
+  - Use Node.js and a reputable JWT library for the verification process.
+  - SvelteKit/Svelte 5 for frontend changes.
+  - Supabase Realtime for logging.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Extend Webhook Configuration:**
+   - Update the `webhook_triggers` table schema to include a `jwt_config` JSONB column.
+   - Design and implement UI changes in the SvelteKit frontend for JWT configuration.
+2. **Implement JWT Verification:**
+   - Integrate JWT verification into the webhook processing pipeline, ensuring the JWT is verified against the configured secret and claims before proceeding with the trigger.
+   - Implement dynamic secret fetching logic, interfacing with the secrets vault as needed.
+3. **Logging and Monitoring:**
+   - Implement detailed logging for all verification attempts and outcomes.
+   - Utilize Supabase Realtime to monitor these logs.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- `webhook_triggers` table will have a new `jwt_config` JSONB column to store JWT verification configurations, including secrets and claims.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+- **New Endpoint:** `/api/v1/projects/{projectId}/webhooks/{webhookId}/jwt-config`
+  - **Method:** `PUT`
+  - **Body:** 
+    ```json
+    {
+      "secret": "string",
+      "claims": {
+        "iss": "example.com",
+        "aud": "meshhook"
+      }
+    }
+    ```
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- JWT verification correctly authenticates and authorizes incoming requests for all configured webhook triggers.
+- Users can configure JWT settings via both UI and API.
+- Dynamic secret fetching is functional and tested.
+- Unit and integration tests cover new functionality, maintaining a code coverage rate above 90%.
+- Documentation is updated to reflect JWT configuration and verification processes.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to a secure and maintained JWT library compatible with the project's Node.js version.
+- Coordination with the frontend team for UI changes.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to the project's existing coding conventions, utilizing ESLint and Prettier for code formatting.
+- Follow Test-Driven Development (TDD) practices to ensure comprehensive test coverage from the outset.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Focus on isolated testing of JWT verification logic, configuration parsing, and dynamic secret fetching.
+- **Integration Tests:** Ensure end-to-end testing of the webhook processing pipeline with JWT verification in place.
+- **Manual Testing:** Conduct thorough manual testing of the UI and API for JWT configuration to ensure a seamless user experience.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Securely manage JWT secrets, ensuring they are only accessible to necessary components and are encrypted at rest.
+- Thoroughly validate JWT signatures and claims to mitigate potential security threats.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
-
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-JWT token support
-
-**Full Issue Body:**
-**Phase:** Phase 5
-**Section:** Webhook Triggers
-
-**Task:** JWT token support
-
----
-_Auto-generated from TODO.md_
+- Implement detailed logging for all JWT verification attempts, capturing both successes and failures.
+- Leverage Supabase Realtime for real-time monitoring of these logs, facilitating quick response to potential issues.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #155*  
-*Last updated: 2025-10-10*
+By implementing JWT token support for webhook triggers as outlined in this PRD, MeshHook will significantly enhance its security capabilities, ensuring that webhook triggers are only executed following successful authentication and authorization of incoming requests.
+
+---
+
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #155*
+*Generated: 2025-10-10*

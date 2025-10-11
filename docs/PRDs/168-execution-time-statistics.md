@@ -1,173 +1,116 @@
 # PRD: Execution time statistics
 
-**Issue:** [#168](https://github.com/profullstack/meshhook/issues/168)  
-**Milestone:** Phase 6: Observability  
-**Labels:** metrics  
-**Phase:** Phase 6  
-**Section:** Metrics
+**Issue:** [#168](https://github.com/profullstack/meshhook/issues/168)
+**Milestone:** Phase 6: Observability
+**Labels:** metrics, hacktoberfest
 
 ---
 
+# PRD: Execution Time Statistics
+
+**Issue:** [#168](https://github.com/profullstack/meshhook/issues/168)  
+**Milestone:** Phase 6: Observability  
+**Labels:** metrics, hacktoberfest  
+**Project:** MeshHook  
+
 ## Overview
 
-This task is part of Phase 6 in the Metrics section of the MeshHook project. 
+The integration of execution time statistics is a strategic enhancement aimed at bolstering MeshHook's observability capabilities. This feature is designed to provide granular insights into the performance of workflow runs, facilitating the identification and rectification of inefficiencies within the system. By offering a detailed analysis of execution times, MeshHook will empower users and administrators to streamline workflows, thereby reinforcing the platform's commitment to delivering a high-performance, reliable workflow engine.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Execution time statistics
+1. **Execution Time Measurement:** Implement functionality to accurately measure and log the execution time of each workflow run from start to finish.
+2. **Statistics Aggregation:** Aggregate execution time data to compute and store key metrics, including average, median, minimum, maximum, and specified percentiles (e.g., 95th, 99th) for each workflow.
+3. **Persistent Storage:** Ensure execution time metrics are durably stored in the database, with efficient indexing strategies to support rapid data retrieval.
+4. **API Endpoint:** Develop a RESTful API endpoint to provide access to execution time statistics, supporting queries by workflow ID, date range, and other pertinent filters.
+5. **UI Enhancements:** Augment the existing UI to include visualizations of execution time statistics, allowing users to easily monitor performance metrics within the workflow dashboard.
+6. **Comprehensive Documentation:** Update technical documentation and user guides to accurately reflect the availability and usage of execution time statistics.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Execution time statistics"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Execution time statistics retrieval operations must be optimized to ensure response times do not exceed 300ms under standard usage conditions.
+- **Reliability:** Implement fault-tolerant mechanisms to guarantee that the collection and storage of execution time data do not adversely affect workflow execution.
+- **Security:** Integration of execution time statistics must comply with MeshHook's multi-tenant RLS security framework, ensuring that data access is appropriately restricted.
+- **Maintainability:** Code contributed to support execution time statistics should adhere to MeshHook's coding standards and best practices, facilitating future maintenance and enhancements.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Integration Points:**
+  - Integrate timing mechanisms within the Orchestrator worker component to capture execution durations.
+  - Modify the database schema to accommodate the storage of execution time metrics.
+  - Update the UI component to display execution time statistics, leveraging SvelteKit for development.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Schema Modification:** Update the `schema.sql` file to include a new table or extend an existing table dedicated to storing execution time metrics.
+2. **Timing Logic Implementation:** Embed timing logic at the beginning and end of the workflow execution process within the Orchestrator component to measure execution durations.
+3. **Aggregation Logic:** Develop server-side logic to calculate and store aggregated execution time metrics, utilizing efficient PostgreSQL aggregate functions.
+4. **API Endpoint Development:** Implement a new RESTful API endpoint, `/api/v1/statistics/execution-times`, for fetching execution time statistics with support for various filters.
+5. **UI Updates:** Leverage Svelte to integrate execution time visualizations into the workflow dashboard, ensuring a seamless user experience.
+6. **Testing:** Ensure comprehensive test coverage for all new functionality through unit and integration tests.
+7. **Documentation Update:** Revise API and user documentation to include details on the execution time statistics feature.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+- **Table:** `execution_time_statistics`
+  - `id`: SERIAL PRIMARY KEY
+  - `workflow_id`: INTEGER (Foreign Key)
+  - `run_id`: INTEGER (Foreign Key)
+  - `execution_time_ms`: INTEGER
+  - `created_at`: TIMESTAMP WITH TIME ZONE
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+- **GET `/api/v1/statistics/execution-times`**
+  - Parameters: `workflow_id` (optional), `start_date` (optional), `end_date` (optional)
+  - Response: JSON object containing aggregated execution time statistics according to the specified filters.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Execution times are precisely measured and logged for each workflow run.
+- [ ] Execution time metrics (average, median, min, max, percentiles) are accurately calculated and stored.
+- [ ] The API endpoint for execution time statistics is fully functional, returning data within 300ms under typical conditions.
+- [ ] UI enhancements for execution time statistics are implemented in a user-friendly manner, consistent with MeshHook's design ethos.
+- [ ] All newly introduced code achieves greater than 90% test coverage.
+- [ ] Documentation accurately reflects the execution time statistics functionality.
+- [ ] No regressions in existing MeshHook features or performance.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to MeshHook's code repository and development environment.
+- Supabase access for database schema updates.
+- SvelteKit setup for UI development.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Utilize asynchronous programming patterns (async/await) for all new asynchronous operations.
+- Adhere to MeshHook's established coding conventions and standards to maintain codebase consistency.
+- Optimize database interactions for performance, particularly in relation to the aggregation and retrieval of execution time metrics.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Focus on isolated testing of the execution time measurement and aggregation logic.
+- **Integration Tests:** Ensure comprehensive coverage of the end-to-end process, from workflow execution through to statistics retrieval via the API.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Confirm that the execution time statistics feature fully complies with MeshHook's RLS policies, ensuring data access controls are enforced.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement logging mechanisms within the execution time tracking functionality to facilitate monitoring and troubleshooting.
 
 ## Related Documentation
 
 - [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
+- [Architecture Overview](../Architecture.md)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Execution time statistics
-
-**Full Issue Body:**
-**Phase:** Phase 6
-**Section:** Metrics
-
-**Task:** Execution time statistics
-
----
-_Auto-generated from TODO.md_
 
 ---
 
-*This PRD was auto-generated from GitHub issue #168*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #168*
+*Generated: 2025-10-10*

@@ -1,173 +1,99 @@
 # PRD: Log levels and filtering
 
-**Issue:** [#163](https://github.com/profullstack/meshhook/issues/163)  
-**Milestone:** Phase 6: Observability  
-**Labels:** logging  
-**Phase:** Phase 6  
-**Section:** Logging
+**Issue:** [#163](https://github.com/profullstack/meshhook/issues/163)
+**Milestone:** Phase 6: Observability
+**Labels:** logging, hacktoberfest
 
 ---
 
+# PRD: Log Levels and Filtering
+
 ## Overview
 
-This task is part of Phase 6 in the Logging section of the MeshHook project. 
+The MeshHook project aims to introduce log levels and filtering to enhance its observability features, aligning with the project's goal of providing a reliable and scalable webhook-first, deterministic workflow engine. This feature is critical for debugging and monitoring the system's health, enabling users and administrators to efficiently diagnose and resolve issues. By implementing structured logging with log levels and dynamic filtering capabilities, MeshHook will offer improved insights into its operations, thereby supporting its core objective of delivering a robust workflow engine.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Log levels and filtering
+1. **Log Levels:** Implement structured logging with predefined log levels (`DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`) to categorize log messages according to their severity and importance.
+2. **Dynamic Log Filtering:** Develop functionality to filter logs dynamically based on log levels, timestamps, and potentially other metadata like component or workflow identifiers, both through the UI and API.
+3. **User-configurable Log Levels:** Enable users to set default log levels via the MeshHook UI and through configuration files, which will determine the verbosity of logging output for their environment.
+4. **Log Persistence and Real-time Viewing:** Store logs in a structured and queryable format within Supabase, ensuring they are accessible for real-time viewing in the MeshHook console, facilitated by Supabase Realtime.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Log levels and filtering"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure that the logging mechanism, including collection, filtering, and querying, is optimized for high performance and minimal impact on workflow execution.
+- **Reliability:** Design the logging system to be fault-tolerant, making sure that no logs are lost during normal and high-load operations.
+- **Security:** Implement measures to redact sensitive information from logs and enforce role-based access control for viewing logs.
+- **Maintainability:** The logging framework should be easy to extend and maintain, adhering to MeshHook's coding standards and best practices.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook leverages SvelteKit for its UI and API layers, and Supabase for database and real-time functionalities. The logging system must integrate seamlessly within this architecture, using Supabase for log storage and enabling real-time log viewing through the MeshHook console.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis:** Conduct an audit of current logging practices within MeshHook to identify gaps and integration points for structured logging.
+2. **Design:**
+   - Define a logging interface that encapsulates structured logging functionalities, including log levels and metadata.
+   - Design the integration with Supabase for efficient log storage and querying.
+   - Design the UI components for log configuration and filtering, ensuring a user-friendly experience.
+3. **Implementation:**
+   - Update the existing logging system to support structured logging with the defined log levels.
+   - Create backend services for storing logs in Supabase and enabling real-time log viewing.
+   - Implement UI components for log level configuration and log filtering.
+4. **Integration:** Ensure seamless integration of the logging features with existing MeshHook components, focusing on the UI, backend services, and Supabase integration.
+5. **Testing:** Execute comprehensive testing, including unit tests for new logic, integration tests for system components, and performance tests to meet benchmarks.
+6. **Documentation:** Update project documentation to cover the new logging features, usage instructions, and configuration options.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- **Logs Table:** Introduce a `logs` table in Supabase with columns for `level`, `timestamp`, `message`, and `metadata` (JSON type to store additional context).
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+- **GET /api/logs:** Fetch logs based on specified filter criteria, such as level and date range.
+- **POST /api/logs/config:** Allow updating the system-wide default log level.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- Log levels (`DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`) are fully implemented across MeshHook's components and can be dynamically configured.
+- Logs are filterable by level, timestamp, and other specified criteria through both the UI and API.
+- Logs are persistently stored in a structured format within Supabase and can be viewed in real-time through the MeshHook console.
+- The logging system's performance meets predefined benchmarks, ensuring minimal impact on the core workflow engine.
+- Access to logs is securely controlled, with sensitive information appropriately redacted.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to MeshHook's codebase and development environment.
+- A configured Supabase project for log storage and real-time capabilities.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to MeshHook's project structure and coding conventions.
+- Ensure new code is well-documented and includes appropriate test coverage.
+- Use environment variables for configuration settings to support various deployment environments.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Develop unit tests for new logic, particularly around log level management and filtering.
+- Conduct integration tests to confirm seamless functionality with existing MeshHook components and Supabase integration.
+- Implement performance testing to verify that logging operations meet efficiency benchmarks.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Enforce role-based access control for viewing logs, ensuring only authorized users can access them.
+- Implement data sanitization to prevent sensitive information from being logged.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
-
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Log levels and filtering
-
-**Full Issue Body:**
-**Phase:** Phase 6
-**Section:** Logging
-
-**Task:** Log levels and filtering
-
----
-_Auto-generated from TODO.md_
+- Set up monitoring for the logging system to track its performance and reliability.
+- Establish alerting mechanisms for critical logging failures and threshold breaches.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #163*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #163*
+*Generated: 2025-10-10*

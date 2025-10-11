@@ -1,51 +1,47 @@
 @startuml
-
 !theme plain
 
-title PII Detection Rules Implementation Flow
+package "MeshHook System" {
+    [SvelteKit UI] - [Rule Management API]
+    [Rule Management API] --> [PII Detection Rule Engine]: Uses
+    [PII Detection Rule Engine] --> [Supabase Postgres]: Stores rules & logs
+    [Worker] --> [PII Detection Rule Engine]: Extends
+    database "Supabase Postgres" {
+        [pii_rules]
+        [pii_audit_logs]
+    }
+}
 
-actor Developer
-participant "GitHub Issue #148" as Issue
-participant "PRD Document" as PRD
-database "Supabase Postgres" as DB
-participant "SvelteKit SSR/API" as SvelteKit
-participant "Supabase Realtime" as Realtime
-participant "Orchestrator Worker" as Orchestrator
-participant "HTTP Executor Worker" as Executor
+[SvelteKit UI] --> [Rule Management API]: CRUD operations
+[Rule Management API] --> [pii_rules]: Updates
+[pii_rules] --> [PII Detection Rule Engine]: Defines rules
+[PII Detection Rule Engine] --> [pii_audit_logs]: Writes logs
 
-Developer -> Issue: Reviews task details
-Issue -> PRD: Links to full PRD
-Developer -> PRD: Reads PRD for specifications
+cloud {
+    [External Data Sources]
+}
 
-PRD -> Developer: Provides implementation steps
+[External Data Sources] --> [Worker]: Data payloads
+[Worker] --> [PII Detection Rule Engine]: Detect & redact/encrypt PII
+[PII Detection Rule Engine] --> [Supabase Postgres]: Encrypted PII & Audit logs
 
-group Implementation
-    Developer -> SvelteKit: 1. Analysis of integration points
-    SvelteKit -> DB: 2. Design data interactions
-    DB --> SvelteKit: Returns existing schemas
-    Developer -> SvelteKit: 3. Implements PII detection logic
-    SvelteKit -> Orchestrator: 4. Integration with workflow engine
-    Orchestrator -> Executor: Schedules PII detection jobs
-    Executor -> DB: Performs PII data queries
-    DB --> Executor: Returns queried data
-    Executor -> Realtime: Streams logs
-end
+note right of [PII Detection Rule Engine]
+  Implementations must ensure:
+  - Sub 10ms processing overhead
+  - 99.9% success rate for PII detection
+  - Compliance with security best practices
+end note
 
-group Testing & Documentation
-    Developer -> SvelteKit: Writes unit and integration tests
-    SvelteKit -> Developer: Test results
-    Developer -> PRD: Updates documentation
-end
+note right of [pii_rules]
+  Stores:
+  - Rule definitions
+  - Configurations for PII detection
+end note
 
-group Review & Deployment
-    Developer -> Issue: Marks as ready for review
-    Issue -> Developer: Code review feedback
-    Developer -> Issue: Implements feedback
-    Issue -> Developer: Approves changes
-    Developer -> DB: Applies any DB migrations
-    DB --> Developer: Confirms migration success
-    Developer -> SvelteKit: Merges to main branch
-    SvelteKit -> Realtime: Deployment notifications
-end
+note right of [pii_audit_logs]
+  Records:
+  - Actions on detected PII
+  - Excludes PII itself for privacy
+end note
 
 @enduml

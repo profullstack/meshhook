@@ -1,30 +1,27 @@
 @startuml
 !theme plain
 
-title Concurrent Execution Tests - MeshHook Project
+title Concurrent Execution Tests for MeshHook
 
 actor Tester
-entity "Supabase" as Supabase
-component "Webhook Intake" as Webhook
-component "Workflow Engine" as Engine
-component "Orchestrator" as Orchestrator
-component "HTTP Executor" as Executor
-database "Postgres" as DB
-queue "Task Queue" as Queue
+boundary "Test Suite" as TS
+control "Load Generator" as LG
+database "Supabase\nReal-time DB" as DB
+entity "Serverless Functions\n& Durable Workers" as Workers
+collections "Workflow Queues" as Queues
+node "Monitoring Tools\n(Grafana, Prometheus)" as Monitoring
 
-Tester --> Webhook : Triggers test
-Webhook --> Engine : Initiates workflow
-Engine --> DB : Validates & logs start
-Engine --> Queue : Enqueues tasks
-Queue --> Orchestrator : Picks up tasks
-Orchestrator --> Executor : Dispatches HTTP tasks
-Executor --> Supabase : Performs operations
-Supabase --> Executor : Returns results
-Executor --> DB : Logs results
-DB --> Engine : Updates workflow state
-Engine --> Tester : Returns test results
+Tester --> TS : Develops & Executes Tests
+TS --> LG : Defines Test Scenarios
+LG --> DB : Triggers Concurrent\nWorkflows
+LG --> Queues : Enqueues Workflows
+DB --> Workers : Triggers Workflows
+Queues --> Workers : Distributes Workloads
+Workers --> DB : Updates State
+DB --> Monitoring : Logs & Metrics
+Workers --> Monitoring : Performance Metrics
 
-note right of DB : Uses RLS for security
-note right of Executor : Robust HTTP with retries/backoff
+note right of LG : Simulates\nReal-world Loads
+note right of Monitoring : Observes System Behavior\nUnder Test Conditions
 
 @enduml

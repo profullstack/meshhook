@@ -1,37 +1,36 @@
 @startuml
 !theme plain
 
+title Queue Depth Monitoring System Architecture
+
 package "MeshHook System" {
-    [Webhook Receiver] - [Queue System]
-    [Queue System] - [Queue Depth Monitor]
-    [Queue Depth Monitor] - [Alerting Service]
-    [Queue System] - [Worker Orchestrator]
-    [Worker Orchestrator] - [HTTP Executor]
-    [HTTP Executor] --> [External Systems]
-    database "Supabase" {
-        [Postgres]
-        [Realtime]
-        [Storage]
-    }
-    [Queue System] --> [Postgres]
-    [Realtime] - [Queue Depth Monitor]
+    [Queue Management\n(pg-boss/pgmq)] as Queue
+    database "Supabase/Postgres" as DB
+    [Existing Metrics\nInfrastructure] as Metrics
+    [Alert Infrastructure] as Alerts
 }
 
-[Queue Depth Monitor] .right.> [Supabase] : Uses
-[Queue Depth Monitor] .down.> [Alerting Service] : Triggers
-[Queue Depth Monitor] .left.> [Webhook Receiver] : Monitors
-[Alerting Service] .right.> [External Systems] : Notifies
+package "Queue Depth Monitoring" {
+    [Metrics Collection\nComponent] as Collection <<Service>>
+    [Reporting Mechanism] as Reporting <<Service>>
+    database "Historical Data Storage\n(queue_metrics)" as QueueDB
+    [API Endpoints] as API
+}
 
-note right of [Queue Depth Monitor] : Monitors queue depth\nand triggers alerts\non threshold breach.
+Queue --> Collection : measures depth
+Collection --> QueueDB : stores historical data
+Collection --> Reporting : sends current data
+Reporting --> API : exposes data
+API --> Alerts : triggers alerts
+DB --> Queue : provides queue functionality
+QueueDB .up.> DB : integrates with
+Metrics --> API : fetches metrics
 
-note right of [Alerting Service] : Sends notifications\nto configured endpoints\nor email addresses.
+note right of QueueDB : Stores\ntimestamp,\nqueue_name,\ndeepth
 
-note left of [Webhook Receiver] : Receives incoming\nwebhook requests.
-
-note left of [Worker Orchestrator] : Manages job distribution\nand execution state.
-
-note over [Postgres] : Stores queue data\nand execution logs.
-
-note over [HTTP Executor] : Executes outbound\nHTTP requests with\nretries and backoff.
+note right of API
+GET /api/metrics/queue-depth
+POST /api/metrics/queue-depth/alerts
+end note
 
 @enduml

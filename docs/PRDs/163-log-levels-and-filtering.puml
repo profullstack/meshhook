@@ -1,48 +1,42 @@
 @startuml
 !theme plain
 
-title Log Levels and Filtering Implementation
-
 package "MeshHook System" {
-    component [Webhook Intake] <<SvelteKit>>
-    component [Workflow CRUD] <<SvelteKit>>
-    component [Publish Versions] <<SvelteKit>>
-    component [Run Console] <<SvelteKit>>
-    database [Supabase Postgres] {
-        component [Data Storage]
-        component [Queues]
-    }
-    component [Supabase Realtime] <<Log Streaming>>
-    component [Storage] <<Supabase>>
-    component [Edge] <<Supabase>>
-    component [Orchestrator Worker]
-    component [HTTP Executor Worker]
-    component [Logging Service] {
-        node "Log Levels" as LogLevels
-        node "Filtering Mechanism" as Filtering
-    }
+    [UI Console] - [API Layer]
+    [API Layer] --> [Logging Service] : uses
+    [Logging Service] --> [Supabase Storage] : persists logs
+    [API Layer] --> [Supabase Realtime] : retrieves logs
+    [Supabase Storage] .> [Supabase Realtime] : triggers updates
+    [UI Console] --> [Supabase Realtime] : displays logs in real-time
+    [API Layer] .> [Authentication Service] : secures access
 }
 
-[Webhook Intake] --> [Logging Service] : Sends log data
-[Workflow CRUD] --> [Logging Service] : Sends log data
-[Publish Versions] --> [Logging Service] : Sends log data
-[Run Console] --> [Logging Service] : Sends log data
-[Orchestrator Worker] --> [Logging Service] : Sends log data
-[HTTP Executor Worker] --> [Logging Service] : Sends log data
+package "External Systems" {
+    [Client Applications] - [UI Console] : configures log levels\n& filters
+}
 
-[Logging Service] --> [Supabase Realtime] : Streams logs
-[Supabase Realtime] --> [Run Console] : Displays live logs
+[Logging Service] : +Introduce log levels\n(DEBUG, INFO, WARN, ERROR, FATAL)
+[Logging Service] : +Enable dynamic filtering
+[Logging Service] : +Log persistence
+[Logging Service] : +Real-time viewing
+
+[Supabase Storage] : +Logs Table\n(level, timestamp, message, metadata)
+
+[API Layer] : +GET /api/logs\n+POST /api/logs/config
 
 note right of [Logging Service]
-  Log levels include DEBUG, INFO,
-  WARNING, ERROR, and CRITICAL.
-  Filtering based on level, component,
-  and custom criteria.
+  Log levels and filtering capabilities
+  are crucial for observability and debugging.
 end note
 
 note right of [Supabase Realtime]
-  Enables live observation of logs
-  with applied filters.
+  Allows real-time log viewing
+  in the MeshHook console.
+end note
+
+note right of [API Layer]
+  Integrates logging with the existing
+  MeshHook components and Supabase.
 end note
 
 @enduml

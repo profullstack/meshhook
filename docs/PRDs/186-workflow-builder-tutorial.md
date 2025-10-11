@@ -6,92 +6,102 @@
 
 ---
 
-# PRD: Workflow Builder Tutorial
+# PRD: Workflow Builder Tutorial for MeshHook
 
-## Overview
+## 1. Overview
 
-This Product Requirements Document (PRD) outlines the development of a Workflow Builder Tutorial for MeshHook, a webhook-first, deterministic, Postgres-native workflow engine. This tutorial aims to provide users with comprehensive guidance on leveraging the visual DAG builder for creating, managing, and optimizing workflows within MeshHook. By integrating educational materials directly into the user experience, we strive to enhance user adoption, reduce the learning curve, and empower users to fully utilize MeshHook's capabilities.
+The development of a Workflow Builder Tutorial is tasked with providing an engaging, interactive learning experience for users of MeshHook, enhancing their understanding and proficiency with the visual DAG builder. This tutorial will serve as an essential tool in onboarding new users, reducing the learning curve, and enabling users to leverage the full power of MeshHook for creating efficient and robust workflows.
 
-Aligning with MeshHook's objectives, this tutorial will emphasize the engine's core features, including webhook triggers with signature verification, the use of SvelteKit/Svelte 5 for a seamless visual DAG building experience, event sourcing for durable, replayable runs, live logs via Supabase Realtime, and multi-tenant RLS security.
+This tutorial aligns with MeshHook's goal to offer a user-friendly, yet powerful workflow engine that combines the simplicity of visual programming with the reliability and scalability of a webhook-first, deterministic, Postgres-native architecture.
 
-## Functional Requirements
+## 2. Functional Requirements
 
-1. **Interactive Tutorial Creation:** Develop an interactive, step-by-step guide within the MeshHook platform that demonstrates how to create a workflow using the visual DAG builder.
-2. **Sample Workflows:** Include a variety of sample workflows that cover common use cases, demonstrating the application of different nodes and functionalities such as `transform`, `http_call`, `branch`, `delay`, and `terminate`.
-3. **Progress Tracking:** Implement progress tracking within the tutorial, allowing users to resume where they left off.
-4. **Feedback Mechanism:** Incorporate a feedback mechanism at the end of the tutorial for users to rate their experience and provide suggestions for improvement.
-5. **Accessibility and Usability:** Ensure the tutorial is accessible to all users, including compliance with WCAG (Web Content Accessibility Guidelines) and responsive design for various devices.
-6. **Localization:** Prepare the tutorial content for future localization efforts, structuring it to easily accommodate translations into different languages.
+1. **Interactive Tutorial Framework:** Implement an interactive tutorial system within the MeshHook user interface that guides users through creating and managing workflows step by step.
+   
+2. **Comprehensive Content Coverage:** Cover essential topics, including webhook configuration, node utilization (`transform`, `http_call`, etc.), error handling, and security best practices.
+   
+3. **Use Case Demonstrations:** Provide real-world use case scenarios within the tutorial, showing how to solve common problems with MeshHook.
+   
+4. **Progress Tracking and Management:** Enable users to save their progress through the tutorial, allowing them to pause and resume at their convenience.
+   
+5. **Feedback Collection:** Integrate a feedback collection mechanism upon tutorial completion to gather user insights and suggestions for future improvements.
 
-## Non-Functional Requirements
+## 3. Non-Functional Requirements
 
-- **Performance:** The tutorial should load swiftly and interactively without causing significant delays in the user experience.
-- **Reliability:** The tutorial must be reliable and available, with built-in fault tolerance to handle user errors gracefully.
-- **Security:** Adhere to the project's security guidelines, ensuring any user input within the tutorial is validated and sanitized.
-- **Maintainability:** Write clean, modular, and well-documented code to ensure the tutorial is easy to update and maintain.
+- **Performance:** Ensure the tutorial system is optimized for quick loading and smooth interaction, minimizing any disruption to the user experience.
+  
+- **Reliability:** Design the tutorial to be fault-tolerant, ensuring it is always accessible and functions correctly across all supported platforms and devices.
+  
+- **Security:** Follow MeshHook's security guidelines, particularly in handling user input and data within the tutorial.
+  
+- **Maintainability:** Code should be modular, well-documented, and adhere to the project's coding standards, facilitating easy updates and maintenance.
 
-## Technical Specifications
+## 4. Technical Specifications
 
 ### Architecture Context
 
-The tutorial will integrate seamlessly with the existing MeshHook components, utilizing the SvelteKit framework for the frontend to maintain consistency with the visual DAG builder's technology stack.
+The tutorial will be integrated into the existing MeshHook platform, leveraging the SvelteKit/Svelte 5 stack for frontend consistency. It will interact with MeshHook's core components, enhancing the user interface without modifying the underlying workflow engine or data models significantly.
 
 ### Implementation Approach
 
-1. **Planning:** Define the scope and objectives of the tutorial, including key concepts and functionalities to cover.
-2. **Content Creation:** Draft the tutorial content, ensuring it is clear, concise, and informative. Collaborate with UX/UI designers to create engaging and interactive components.
-3. **Development:** Implement the tutorial following the design specifications, utilizing SvelteKit for frontend components.
-4. **Integration:** Integrate the tutorial within the MeshHook platform, ensuring it is easily accessible from the dashboard.
-5. **Testing:** Conduct thorough testing, including user acceptance testing (UAT) to gather feedback and iterate on the tutorial design and content.
-6. **Deployment:** Deploy the tutorial in a production environment, monitor its usage, and collect user feedback for continuous improvement.
+1. **Design Phase:** Collaborate with UI/UX designers to outline the tutorial's user interface and user experience flow. Prioritize simplicity and intuitive design.
+   
+2. **Content Development:** Work with technical writers and experienced MeshHook users to develop clear, concise, and helpful tutorial content.
+   
+3. **Tutorial Implementation:** Build the tutorial using SvelteKit, integrating it into the MeshHook dashboard. Ensure the tutorial is dynamic and interactive, supporting various learning paths.
+   
+4. **Progress Tracking Integration:** Extend the user profile schema to include tutorial progress, allowing users to pause and resume the tutorial seamlessly.
+   
+5. **Feedback Mechanism:** Implement a simple, intuitive mechanism for collecting user feedback at the tutorial's conclusion.
 
-### Data Model
+### Data Model Changes
 
-No new data model changes are required specifically for this task. However, to support progress tracking within the tutorial, consider extending the user profile schema to include fields related to tutorial progress and completion status.
+- Extend the `User` entity to include:
+  - `tutorialProgress`: JSON field to store progress information, including completed sections and timestamps.
+  - `tutorialFeedbackSubmitted`: Boolean to track if feedback has been submitted.
 
 ### API Endpoints
 
-No new API endpoints are required specifically for this task. The tutorial content and progress tracking can be managed client-side or through existing user management APIs.
+N/A - Tutorial progress and feedback will be managed using existing user profile management functionality.
 
-## Acceptance Criteria
+## 5. Acceptance Criteria
 
-- [ ] Interactive tutorial is fully integrated within the MeshHook platform.
-- [ ] Tutorial covers key features and functionalities of the visual DAG builder.
-- [ ] Users can start, pause, and resume the tutorial at any time.
-- [ ] Feedback mechanism is implemented and operational.
-- [ ] Tutorial complies with performance, security, and accessibility standards.
-- [ ] User testing is completed, and feedback is incorporated into the final implementation.
+- [ ] Users can access the tutorial directly from the MeshHook dashboard.
+- [ ] The tutorial provides a comprehensive guide on creating and managing workflows with the visual DAG builder.
+- [ ] Progress tracking allows users to pause and resume the tutorial at their convenience.
+- [ ] The feedback collection mechanism is functional and user-friendly.
+- [ ] The tutorial adheres to MeshHook's performance, security, and accessibility standards.
+- [ ] User feedback is collected and analyzed for future tutorial improvements.
 
-## Dependencies
+## 6. Dependencies and Prerequisites
 
-- Access to the existing MeshHook codebase and development environment.
-- Collaboration with the UX/UI design team for interface design.
-- Coordination with the security team to ensure compliance with security standards.
+- Access to MeshHook's current development environment and codebase.
+- Collaboration with UI/UX design teams for the tutorial's interface design.
+- Technical writing resources for content creation.
 
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-- Follow the existing coding standards and best practices for MeshHook.
-- Utilize the SvelteKit framework for frontend development.
-- Ensure code is modular, well-commented, and easily maintainable.
-
+- Follow MeshHook's established coding, security, and architectural patterns.
+- Use SvelteKit for frontend development, ensuring consistency and reusability of components.
+  
 ### Testing Strategy
 
-- Perform unit and integration tests for new components.
-- Conduct user acceptance testing (UAT) to validate the tutorial's effectiveness and user experience.
+- Perform unit tests for all new components and integration tests for the tutorial system within the MeshHook environment.
+- Conduct user acceptance testing (UAT) with a small group of end-users to validate the tutorial's effectiveness and user experience.
 
 ### Security Considerations
 
-- Validate and sanitize any user input received through the tutorial's feedback mechanism.
-- Ensure that tutorial progress tracking does not expose sensitive user information.
+- Ensure all user inputs within the tutorial are validated and sanitized to prevent XSS and other input-related vulnerabilities.
+- Tutorial progress and feedback must be securely stored and transmitted, adhering to MeshHook's existing security protocols.
 
 ### Monitoring and Observability
 
-- Implement logging for tutorial progress and feedback submissions.
-- Monitor user engagement with the tutorial and collect metrics on completion rates and feedback scores.
+- Implement logging for tutorial interactions, progress, and feedback submissions to monitor engagement and identify potential issues.
+- Use analytics tools to track tutorial completion rates and collect aggregated feedback scores for continuous improvement.
 
-By adhering to these guidelines, the Workflow Builder Tutorial will serve as a valuable resource for MeshHook users, facilitating a deeper understanding of the platform's capabilities and promoting effective workflow creation.
+By fulfilling these requirements and guidelines, the Workflow Builder Tutorial will significantly contribute to MeshHook's user experience, fostering a more robust understanding and efficient use of the platform.
 
 ---
 

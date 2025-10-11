@@ -1,37 +1,51 @@
 @startuml
 !theme plain
 
+title Multi-tenant Isolation Tests for MeshHook
+
+actor Tester
+
 package "MeshHook System" {
-    [Supabase] <<Database>> as Supabase
-    [Webhook Intake] <<API>> as WebhookIntake
-    [Workflow CRUD] <<API>> as WorkflowCRUD
-    [Publish Versions] <<API>> as PublishVersions
-    [Run Console] <<API>> as RunConsole
-    [Orchestrator Worker] <<Worker>> as Orchestrator
-    [HTTP Executor Worker] <<Worker>> as HTTPExecutor
+    [API Gateway] - [Authentication Service]
+    [API Gateway] --> [Workflow Execution Service]
+    [API Gateway] --> [Data Storage\n(Supabase/Postgres)]
+    [Data Storage\n(Supabase/Postgres)] ..> (Row-Level Security)
+    [Workflow Execution Service] ..> (Isolation Verification)
+    [Data Storage\n(Supabase/Postgres)] ..> (Secrets Security)
+    [Data Storage\n(Supabase/Postgres)] ..> (Audit Logs)
+    
+    package "Integration Testing Framework" {
+        [Test Runner] - [Test Scenarios]
+        [Test Scenarios] ..> (API Security Tests)
+        [Test Scenarios] ..> (Workflow Execution Isolation)
+        [Test Scenarios] ..> (Isolation Verification)
+        [Test Scenarios] ..> (Secrets Security)
+        [Test Scenarios] ..> (Audit Logs)
+    }
 }
 
-package "Integration Tests" {
-    [Multi-tenant Isolation Tests] <<Test>> as MultiTenantTests
-}
+[Tester] --> [Test Runner] : Executes tests
+[Test Runner] --> [API Gateway] : Simulates multi-tenant operations
+[Authentication Service] --> [Data Storage\n(Supabase/Postgres)] : Validates tenant access
+[Workflow Execution Service] --> [Data Storage\n(Supabase/Postgres)] : Executes tenant-specific workflows
 
-Supabase --> WebhookIntake : Data Storage & Queues
-Supabase --> WorkflowCRUD : Data Storage
-Supabase --> PublishVersions : Data Storage
-Supabase --> RunConsole : Data Storage & Realtime Logs
-Supabase --> Orchestrator : Data Storage & Queues
-Supabase --> HTTPExecutor : Data Storage & Queues
+note right of [API Security Tests]
+  Ensure API endpoints reject
+  unauthorized cross-tenant access attempts
+end note
 
-WebhookIntake --> Orchestrator : Trigger Workflows
-Orchestrator --> HTTPExecutor : HTTP Requests
-Orchestrator --> RunConsole : Workflow State Updates
+note right of (Row-Level Security)
+  Enforces data isolation at the database level
+end note
 
-MultiTenantTests ..> Supabase : Validates RLS & Multi-tenancy
-MultiTenantTests ..> WebhookIntake : Tests Signature Verification
-MultiTenantTests ..> RunConsole : Tests Realtime Log Streaming
-MultiTenantTests ..> Orchestrator : Validates Workflow Execution Isolation
-MultiTenantTests ..> HTTPExecutor : Validates HTTP Execution Isolation
+note right of (Isolation Verification)
+  Verify no data leaks across tenants
+end note
 
-note right of MultiTenantTests : Integration Points\nwith Existing System
+note right of [Test Runner]
+  Integrates with CI/CD pipeline
+end note
+
+footer Generated: 2025-10-10 | PRD: Multi-tenant Isolation Tests
 
 @enduml

@@ -2,49 +2,72 @@
 !theme plain
 
 package "Alert Configuration UI" {
-    [AlertConfigUI] as (ui)
-    [Svelte 5 Components] as (components)
-    [Responsive Design] as (responsive)
-    [UI/UX Patterns] as (patterns)
-    [Public API Documentation] as (apiDoc)
+    [Alert Configuration Component] as ACC
+    [Alert Criteria Specification] as ACS
+    [Multi-Tenancy Support] as MTS
+    database "Supabase Backend" as SB
+    [Existing Workflow Engine] as EWE
+    [Existing UI] as EUI
 }
 
-package "MeshHook Backend" {
-    [Supabase Realtime] as (realtime)
-    [Postgres] as (postgres)
-    [SvelteKit SSR/API] as (sveltekit)
-    [Workers] as (workers)
+cloud {
+    [SvelteKit for SSR/API] as SK
 }
 
-package "Testing & Documentation" {
-    [Unit Tests] as (unitTests)
-    [Integration Tests] as (integrationTests)
-    [E2E Tests] as (e2eTests)
-    [Code Review] as (codeReview)
-    [Documentation] as (documentation)
+node "Browser" {
+    [User Interface] as UI
 }
 
-(ui) -down-> (components) : Uses
-(ui) -down-> (responsive) : Implements
-(ui) -down-> (patterns) : Follows
-(ui) -down-> (apiDoc) : Generates
+[User Interface] --> ACC : uses
+ACC --> ACS : configures
+ACC --> MTS : validates access
+ACC --> [SvelteKit for SSR/API]
+[SvelteKit for SSR/API] --> SB : reads/writes data
+SB --> ACC : returns data
+EWE --> SB : workflow data
+EUI --> ACC : integrates with
+ACC .> EWE : fetches workflow metrics/events
+EWE ..> ACS : provides metrics/events
 
-(components) .right.> (sveltekit) : Integrates With
-(responsive) .right.> (sveltekit) : Integrates With
-(patterns) .right.> (sveltekit) : Integrates With
+SK --> EUI : renders UI
+UI --> SK : sends requests
 
-(sveltekit) -down-> (realtime) : Uses
-(sveltekit) -down-> (postgres) : Uses
-(sveltekit) -down-> (workers) : Coordinates
+class ACC {
+    +createAlertConfig()
+    +viewAlertConfig()
+    +editAlertConfig()
+    +deleteAlertConfig()
+}
 
-(realtime) .left.> (ui) : Updates
-(postgres) .left.> (ui) : Stores Configs
-(workers) .left.> (ui) : Triggers Alerts
+class ACS {
+    +setCriteria()
+    +setThresholds()
+}
 
-(ui) -right-> (unitTests) : Tested By
-(ui) -right-> (integrationTests) : Tested By
-(ui) -right-> (e2eTests) : Tested By
-(ui) -right-> (codeReview) : Reviewed By
-(ui) -right-> (documentation) : Documented In
+class MTS {
+    +validateProjectScope()
+}
+
+SB : -alert_configurations table
+SB : +CRUD operations
+
+note right of SB : Data Model Changes\nfor alert configurations
+
+note over ACC, ACS
+  Components developed using Svelte 5
+  for seamless UI experience
+end note
+
+note over MTS
+  Ensures compliance with RLS
+  security policies
+end note
+
+note over EWE
+  Integration point for fetching\nworkflow metrics and events
+end note
+
+SK <..> ACC : includes
+EWE <..> SB : integrates with
 
 @enduml

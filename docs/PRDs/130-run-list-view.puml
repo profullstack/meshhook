@@ -1,0 +1,32 @@
+@startuml
+!theme plain
+
+package "Run Console" {
+    [Run List View] as RunListView
+    [Supabase Realtime] as SupabaseRealtime
+    [Postgres Database] as PostgresDB
+    [SvelteKit SSR/API] as SvelteKit
+    [Worker: Orchestrator] as Orchestrator
+    [Worker: HTTP Executor] as HTTPExecutor
+}
+
+package "External Services" {
+    [Supabase Storage] as SupabaseStorage
+    [Supabase Edge] as SupabaseEdge
+}
+
+RunListView --> SvelteKit : Renders using
+SvelteKit --> SupabaseRealtime : Subscribes for live updates
+SvelteKit --> PostgresDB : Queries runs data
+SupabaseRealtime -right-> SupabaseStorage : Retrieves artifacts
+SupabaseRealtime -right-> SupabaseEdge : Schedules with cron/timers
+Orchestrator --> PostgresDB : Updates state
+HTTPExecutor --> PostgresDB : Logs HTTP requests
+Orchestrator --> HTTPExecutor : Triggers HTTP tasks
+
+note right of RunListView : Core functionality\nfor run listing in UI
+note left of SvelteKit : Handles SSR and API logic
+note right of SupabaseRealtime : Streams live logs and updates
+note bottom of PostgresDB : Stores runs data and queues
+
+@enduml

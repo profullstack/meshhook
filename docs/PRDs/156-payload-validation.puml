@@ -1,30 +1,44 @@
 @startuml
 !theme plain
 
-title Payload Validation Process
+title Payload Validation for Webhook Triggers
 
-actor Client as client
-boundary "Webhook API" as webhookAPI
-control "Validation Service" as validationService
-database "Supabase Postgres" as supabaseDB
-control "Workflow Engine" as workflowEngine
-control "Logger" as logger
+actor User as user
+boundary "UI: Workflow Editor" as UI
+control "Webhook Intake Service" as Intake
+database "Supabase DB" as DB
+entity "JSON Schema Validator" as Validator
+control "Webhook Processing Worker" as Worker
+queue "Webhook Event Queue" as Queue
 
-client -> webhookAPI : Sends payload
-webhookAPI -> validationService : Validates payload
-validationService --> webhookAPI : Validation result
+user -> UI : Define JSON schema
+UI -> DB : Store schema in\nwebhook_triggers
+DB --> UI : Confirm schema stored
 
-alt If payload is valid
-    validationService -> supabaseDB : Store payload
-    supabaseDB --> validationService : Acknowledge storage
-    validationService -> workflowEngine : Trigger workflow
-    workflowEngine -> logger : Log workflow start
-    logger --> workflowEngine : Acknowledge log
-    workflowEngine -> client : Respond with workflow initiated
-else If payload is invalid
-    validationService -> logger : Log validation error
-    logger --> validationService : Acknowledge log
-    validationService -> client : Respond with error
+user -> Intake : Send webhook payload
+Intake -> Worker : Push to processing queue
+Worker -> DB : Fetch schema for\nwebhook trigger
+DB --> Worker : Return schema
+Worker -> Validator : Validate payload against schema
+alt Validation Success
+    Validator --> Worker : Validation passed
+    Worker -> Queue : Proceed with workflow execution
+else Validation Failure
+    Validator --> Worker : Validation error
+    Worker -> Intake : Return error message
+    Intake --> user : Display error
 end
+
+note right of Validator
+  Use JSON schema validation library\ncompatible with the tech stack
+end note
+
+note over DB
+  Schema changes:\nAdd optional payload_schema field\nto webhook_triggers table
+end note
+
+note over UI, Worker
+  Integration points with existing system
+end note
 
 @enduml

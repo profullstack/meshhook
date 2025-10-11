@@ -1,173 +1,143 @@
 # PRD: Project membership management
 
-**Issue:** [#142](https://github.com/profullstack/meshhook/issues/142)  
-**Milestone:** Phase 4: Security  
-**Labels:** authentication-authorization  
-**Phase:** Phase 4  
-**Section:** Authentication & Authorization
+**Issue:** [#142](https://github.com/profullstack/meshhook/issues/142)
+**Milestone:** Phase 4: Security
+**Labels:** authentication-authorization, hacktoberfest
 
 ---
 
+# PRD: Project Membership Management
+
+**Issue:** [#142](https://github.com/profullstack/meshhook/issues/142)  
+**Milestone:** Phase 4: Security  
+**Labels:** authentication-authorization, hacktoberfest  
+**Owner:** Anthony Ettinger (Profullstack)  
+**License:** MIT  
+
 ## Overview
 
-This task is part of Phase 4 in the Authentication & Authorization section of the MeshHook project. 
+The Project Membership Management feature is a critical component of MeshHook's Phase 4 security enhancements. It is designed to manage user roles and permissions within projects, enabling fine-grained access control and ensuring that users can only access resources and execute operations according to their roles. This feature aligns with MeshHook's goals by enhancing security, ensuring multi-tenant RLS security is robust and adhering to the principle of least privilege.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Objectives
 
-**Task Objective:** Project membership management
+- Introduce role-based access control (RBAC) within projects.
+- Enable project administrators to manage user roles and permissions.
+- Support the seamless integration of project membership management with existing authentication and authorization mechanisms.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Functional Requirements
 
-## Requirements
+1. **Role Definition and Assignment:**
+   - Support predefined roles (e.g., Admin, Editor, Viewer) with customizable permissions.
+   - Allow project administrators to assign and revoke roles to users within their projects.
 
-### Functional Requirements
+2. **Permission Management:**
+   - Implement permissions that cover all user actions within the platform, including creating workflows, viewing logs, and managing project settings.
+   - Permissions should be granular to allow for precise access control.
 
-1. Implement the core functionality described in the task: "Project membership management"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+3. **User Interface for Membership Management:**
+   - Develop UI components that enable project administrators to manage project members' roles easily.
+   - Integrate these components with the existing project settings UI.
 
+4. **Audit Logging:**
+   - Record all membership changes (role assignments/revocations) in the audit log.
 
-### Non-Functional Requirements
+5. **API Support:**
+   - Provide RESTful API endpoints to programmatically manage project membership.
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+## Non-Functional Requirements
+
+- **Performance:** Ensure that the project membership management operations do not significantly impact the overall performance of the platform.
+- **Security:** Leverage existing RLS and encryption mechanisms to secure membership data. Ensure all changes go through authentication and authorization checks.
+- **Maintainability:** Follow clean code practices, ensuring new code is modular, well-commented, and easy to understand.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Supabase Authentication & Authorization:** Utilize Supabase's built-in capabilities for user management and integrate custom RBAC for project-level access control.
+- **SvelteKit:** Build the management UI as part of the existing SvelteKit application, ensuring a consistent user experience.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Design Data Model for Roles & Permissions:**
+   - Extend the existing schema to include `roles`, `permissions`, and a `user_project_roles` junction table.
+   - Update `schema.sql` with new tables and relationships.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+2. **API Development:**
+   - Implement API endpoints for managing roles and permissions (`/api/roles`, `/api/permissions`, `/api/project-members`).
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+3. **UI Development:**
+   - Design and implement UI components for role and permission management within the project settings page.
+   - Ensure the UI is intuitive and accessible to non-technical users.
 
-### Data Model
+4. **Integration Testing:**
+   - Conduct thorough testing to ensure new features work seamlessly with existing authentication and authorization flows.
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+5. **Documentation & Training:**
+   - Update the project documentation to include guides on managing project membership.
+   - Prepare training materials for project administrators.
 
-### API Endpoints (if applicable)
+### Data Model Changes
 
-No new API endpoints required for this task.
+- New Tables:
+  - `roles`: Stores role definitions.
+  - `permissions`: Stores permission definitions.
+  - `user_project_roles`: Associates users with roles within projects.
+
+### API Endpoints
+
+- POST `/api/projects/{projectId}/members`: Add a member to a project with a specific role.
+- GET `/api/projects/{projectId}/members`: List project members and their roles.
+- PATCH `/api/projects/{projectId}/members/{userId}`: Update a member's role.
+- DELETE `/api/projects/{projectId}/members/{userId}`: Remove a member from a project.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Project administrators can assign, change, and revoke roles to users within their projects.
+- [ ] Users can perform only those actions permitted by their roles.
+- [ ] Membership changes are logged in the audit log.
+- [ ] API endpoints for project membership management are functional and secure.
+- [ ] UI for managing project membership is intuitive and consistent with the rest of the platform.
+- [ ] Documentation and training materials are updated and available.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Supabase for authentication and authorization.
+- Existing database schema and API infrastructure.
+- Frontend development environment setup with SvelteKit.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Use TypeScript for type safety and better code documentation.
+- Follow existing patterns for API design and error handling.
+- Ensure new UI components are responsive and match the platform's look and feel.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Write unit tests for all new backend logic and utility functions.
+- **Integration Tests:** Test API endpoints to ensure they correctly interact with the database and other services.
+- **UI Tests:** Use Playwright or a similar tool to test the new UI components and workflows.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all membership management operations require proper authentication and authorization.
+- Sanitize inputs to prevent SQL injection and other common web vulnerabilities.
+- Use existing RLS policies to secure access to membership data.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Monitor API performance and error rates related to project membership management.
+- Extend existing logging mechanisms to include membership management operations.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Project membership management
-
-**Full Issue Body:**
-**Phase:** Phase 4
-**Section:** Authentication & Authorization
-
-**Task:** Project membership management
-
----
-_Auto-generated from TODO.md_
+- Updated `schema.sql` reflecting the new data model.
+- API documentation for the new endpoints (`/docs/api`).
+- User guide for project administrators on managing project membership (`/docs/user-guide`).
 
 ---
 
-*This PRD was auto-generated from GitHub issue #142*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #142*
+*Generated: 2025-10-10*

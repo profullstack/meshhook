@@ -1,33 +1,48 @@
 @startuml
 !theme plain
 
-package "MeshHook System" {
-    [Webhook Intake] - [SvelteKit]
-    [Workflow CRUD] - [SvelteKit]
-    [Publish Versions] - [SvelteKit]
-    [Run Console] - [SvelteKit]
-    database "Supabase" {
-        [Postgres]
-        [Realtime]
-        [Storage]
-        [Edge]
-    }
-    [SvelteKit] --> [Supabase] : Uses for data, logs, artifacts, cron/timers
-    [Orchestrator Worker] --> [Supabase] : State management & scheduling
-    [HTTP Executor Worker] --> [Supabase] : HTTP tasks with retries/backoff
-    node "External Services" {
-        [Supabase Services]
-    }
-    [Supabase] --> [Supabase Services] : Integration
+title JMESPath Examples Integration into MeshHook Documentation
+
+package "MeshHook Documentation System" {
+    [User Documentation Site\n(SvelteKit)] as Docs
+    [Workflow Editor\n(Svelte/Svelte 5)] as Editor
+    database "Documentation Repository" as Repo
 }
 
-package "JMESPath Examples Feature" {
-    [JMESPath Examples] - [Documentation]
-    [Documentation] ..> [User Documentation] : Part of
-    [JMESPath Examples] ..> [SvelteKit] : Implements examples in
-    [JMESPath Examples] ..> [Supabase] : Utilizes for data manipulation examples
+package "JMESPath Examples Task" {
+    [Research and Analysis] as Research
+    [Example Development] as Development
+    [Documentation Integration] as Integration
+    [Review and Feedback] as Review
 }
 
-[User Documentation] --> [MeshHook System] : Documents
+cloud {
+    [User Feedback] as Feedback
+}
+
+[Research] --> [Development] : Identifies needs\nand scenarios
+[Development] --> [Integration] : Creates examples
+[Integration] --> [Review] : Embeds examples\nin documentation
+[Review] --> [Repo] : Updates documentation
+[Repo] --> [Docs] : Serves updated content
+[Docs] -right-> [Editor] : Reference material for workflow creation
+[Review] --> [Feedback] : Incorporates peer and user feedback
+[Feedback] --> [Development] : Suggests improvements
+
+note right of [Docs]
+  Hosted with SvelteKit
+  Ensures optimal presentation
+  of JMESPath examples
+end note
+
+note left of [Editor]
+  Indirectly impacted
+  Assists users during workflow creation
+end note
+
+note right of [Repo]
+  Markdown format
+  Adheres to linting rules
+end note
 
 @enduml

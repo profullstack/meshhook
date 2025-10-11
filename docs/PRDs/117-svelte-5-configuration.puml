@@ -1,0 +1,35 @@
+@startuml
+!define SvelteKitAlias alias="SvelteKit (SSR/API)"
+!define SupabaseAlias alias="Supabase (Postgres, Realtime, Storage, Edge)"
+!define WorkersAlias alias="Workers (Orchestrator, HTTP Executor)"
+
+package "Svelte 5 Configuration Task" {
+    [Svelte 5 Configuration] as SvelteConfig
+    [Existing Codebase] as Codebase
+    [Database Schema] as DBSchema
+    [External Services] as ExtServices
+    [Development Environment] as DevEnv
+    [Documentation] as Docs
+}
+
+package "MeshHook System Components" {
+    [SvelteKitAlias] as SvelteKit
+    [SupabaseAlias] as Supabase
+    [WorkersAlias] as Workers
+}
+
+SvelteConfig --> SvelteKit : Configures\nSvelteKit/Svelte 5
+SvelteConfig --> Codebase : Reviews & Integrates
+SvelteConfig --> DBSchema : References\nNo Changes Required
+SvelteConfig --> ExtServices : Utilizes\nSupabase Services
+SvelteConfig --> DevEnv : Setup & Development
+SvelteConfig --> Docs : Updates Documentation
+
+SvelteKit --> Supabase : Interacts
+SvelteKit --> Workers : Orchestrates Workflows
+Supabase --> Workers : Data & Queue Management
+
+note right of SvelteConfig : Implementation\nApproach &\nTechnical Specifications
+note right of Docs : Includes API Docs,\nREADME, and Inline Comments
+
+@enduml

@@ -1,173 +1,115 @@
 # PRD: Run success/failure rates
 
-**Issue:** [#167](https://github.com/profullstack/meshhook/issues/167)  
-**Milestone:** Phase 6: Observability  
-**Labels:** metrics  
-**Phase:** Phase 6  
-**Section:** Metrics
+**Issue:** [#167](https://github.com/profullstack/meshhook/issues/167)
+**Milestone:** Phase 6: Observability
+**Labels:** metrics, hacktoberfest
 
 ---
 
-## Overview
+# PRD: Run Success/Failure Rates
 
-This task is part of Phase 6 in the Metrics section of the MeshHook project. 
+**Issue:** [#167](https://github.com/profullstack/meshhook/issues/167)  
+**Milestone:** Phase 6: Observability  
+**Labels:** metrics, hacktoberfest  
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+---
 
-**Task Objective:** Run success/failure rates
+## 1. Overview
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+This PRD outlines the implementation of run success and failure rates to enhance MeshHook's observability features. Aligning with MeshHook's v1 goals, this feature aims to provide users with immediate insights into the health and performance of their workflows, thus enabling more efficient debugging and optimization processes. By tracking and visualizing these metrics, users can assess the reliability of their workflows over time and make data-driven decisions to improve their configurations.
 
-## Requirements
+## 2. Functional Requirements
 
-### Functional Requirements
+1. **Metric Calculation:** Implement logic to calculate and store success and failure rates of workflow runs within the database.
+2. **Dashboard Visualization:** Display these metrics on the MeshHook dashboard, offering insights at both individual workflow and aggregate levels.
+3. **Real-Time Metrics:** Ensure the metrics reflect real-time data, updating immediately after each workflow run completes.
+4. **Historical Trend Analysis:** Enable users to view historical trends of success and failure rates over selectable time periods.
+5. **Customizable Views:** Allow users to filter and sort metrics based on time ranges, specific workflows, or other criteria.
+6. **Threshold-Based Notifications:** Create a notification system that alerts users when the success or failure rates of workflows breach predefined thresholds.
 
-1. Implement the core functionality described in the task: "Run success/failure rates"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+## 3. Non-Functional Requirements
 
+- **Performance:** Ensure the metrics computation and dashboard updates are optimized for performance, causing no noticeable delay in workflow execution or dashboard interaction.
+- **Reliability:** The metrics must accurately represent the true outcomes of workflow runs, with a robust design that minimizes the risk of data loss or inaccuracies.
+- **Security:** Adhere to MeshHook's multi-tenant RLS security model, ensuring that users can only access metrics relevant to their permissions.
+- **Maintainability:** Craft the solution with maintainability in mind, employing clean, modular code that integrates seamlessly with the existing codebase.
 
-### Non-Functional Requirements
+## 4. Technical Specifications
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+### Architecture Considerations
 
-## Technical Specifications
-
-### Architecture Context
-
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Integration with Workflow Execution Engine:** To capture the outcome of each workflow run.
+- **Supabase Realtime Integration:** For pushing real-time updates to the dashboard.
+- **SvelteKit Dashboard Enhancements:** To visualize the metrics data effectively for the end-users.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis Phase:**
+   - Identify optimal points within the workflow execution engine to hook in the success/failure tracking logic.
+2. **Design Phase:**
+   - **Data Model Update:** Introduce a `workflow_run_metrics` table to store aggregated metrics data.
+   - **API Design:** Define internal RESTful API endpoints for fetching and updating metrics data.
+   - **UI Components:** Design and prototype dashboard components for metrics visualization.
+3. **Implementation Phase:**
+   - Modify the workflow execution logic to update success/failure metrics upon each run’s completion.
+   - Implement the backend API for metrics retrieval.
+   - Develop the frontend components and integrate them into the existing dashboard.
+4. **Testing & Documentation:**
+   - Write comprehensive tests covering new logic and interactions.
+   - Update developer and user documentation to reflect the new features.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- **New Table: `workflow_run_metrics`**
+  - Columns: `workflow_id` (FK), `success_count` INT, `failure_count` INT, `last_updated` TIMESTAMP.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+- **GET `/api/metrics/workflow/{workflow_id}`**: Fetch success and failure rates for a given workflow.
+- **GET `/api/metrics/workflows/summary`**: Fetch a summary of success and failure rates across all workflows.
 
-### API Endpoints (if applicable)
+## 5. Acceptance Criteria
 
-No new API endpoints required for this task.
+- [ ] Success and failure rates are accurately tracked and updated after each workflow run.
+- [ ] The dashboard displays these metrics in real-time, with support for historical data viewing.
+- [ ] Users can filter and sort metrics based on their needs.
+- [ ] Alerting mechanism works as expected, notifying users of significant changes in success/failure rates.
+- [ ] The implementation adheres to performance, security, and maintainability standards.
+- [ ] All new features are fully documented and tested.
 
-## Acceptance Criteria
+## 6. Dependencies and Prerequisites
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- Access to the workflow execution engine for integrating success/failure tracking.
+- Supabase Realtime setup for live dashboard updates.
+- Existing SvelteKit dashboard infrastructure for UI enhancements.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
-
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow MeshHook’s coding standards and conventions.
+- Write clean, well-documented, and modular code.
+- Prioritize security and efficiency in all implementations.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Develop unit tests for all new logic and data handling.
+- Implement integration tests to ensure seamless interaction between the metrics feature and existing systems.
+- Conduct end-to-end tests focusing on user interactions with the dashboard.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure new API endpoints require authentication and respect RLS policies.
+- Validate input data rigorously to prevent injection attacks or data leaks.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Integrate monitoring tools to track the performance and reliability of the metrics calculation and API endpoints.
+- Log operational metrics for the metrics feature to facilitate quick troubleshooting.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Run success/failure rates
-
-**Full Issue Body:**
-**Phase:** Phase 6
-**Section:** Metrics
-
-**Task:** Run success/failure rates
-
----
-_Auto-generated from TODO.md_
+By adhering to these specifications, MeshHook will enhance its observability capabilities, providing users with valuable insights into their workflows’ performance and reliability.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #167*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #167*
+*Generated: 2025-10-10*

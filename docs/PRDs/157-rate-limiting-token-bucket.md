@@ -1,173 +1,100 @@
 # PRD: Rate limiting (token bucket)
 
-**Issue:** [#157](https://github.com/profullstack/meshhook/issues/157)  
-**Milestone:** Phase 5: Webhook System  
-**Labels:** webhook-triggers  
-**Phase:** Phase 5  
-**Section:** Webhook Triggers
+**Issue:** [#157](https://github.com/profullstack/meshhook/issues/157)
+**Milestone:** Phase 5: Webhook System
+**Labels:** webhook-triggers, hacktoberfest
 
 ---
 
+# PRD: Implementing Rate Limiting Using Token Bucket Algorithm for MeshHook
+
 ## Overview
 
-This task is part of Phase 5 in the Webhook Triggers section of the MeshHook project. 
+The objective of this task is to integrate a rate limiting mechanism, specifically using the token bucket algorithm, into the MeshHook project’s webhook system. This enhancement is pivotal for controlling resource consumption, ensuring equitable resource distribution among tenants, and safeguarding the system against potential abuse. It aligns with MeshHook’s overarching goals of scalability, security, and robust workflow management, thereby supporting its mission to offer a webhook-first, deterministic, Postgres-native workflow engine that is both efficient and secure.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Rate limiting (token bucket)
+1. **Token Bucket Algorithm Integration:** Implement the token bucket algorithm to enforce rate limiting on webhook triggers.
+2. **Tenant/Project-Based Configuration:** Allow rate limits to be configurable at the tenant or project level, ensuring flexibility and customization.
+3. **Rate Limit Status Headers:** Append HTTP headers (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`) to responses to provide clients with rate limit status information.
+4. **Handling Over Limit Requests:** Implement logic to handle requests exceeding the rate limit, including issuing a `429 Too Many Requests` response and logging the attempt.
+5. **Rate Limit Management API:** Provide an API endpoint for administrators to configure rate limits per tenant or project.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Rate limiting (token bucket)"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The rate limiting feature must maintain a high-performance benchmark, adding no more than 10ms of overhead to any webhook request processing.
+- **Scalability:** Design the rate limiting solution to easily scale with the growth in webhook traffic and the number of tenants.
+- **Reliability:** Ensure the rate limiting operates reliably, accurately tracking and enforcing limits without erroneous blocking or allowance.
+- **Security:** Utilize MeshHook’s existing role-level security (RLS) framework to secure access to rate limit configurations.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook is built on a modern stack that includes SvelteKit for frontend interactions and Supabase (encompassing Postgres, Realtime, and more) for backend functionalities. The rate limiting feature will be integrated into the webhook processing flow, managed by SvelteKit services, with configurations stored and managed in the Postgres database.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Integration Point Analysis:** Review the webhook processing pipeline to identify where rate limiting checks should be applied.
+2. **Design:** 
+   - **Data Model Extension:** Update the `tenant_settings` table in Postgres to include `rate_limit_rps` (rate limit requests per second).
+   - **Algorithm Implementation:** Select an efficient token bucket algorithm suitable for concurrent access and minimal performance impact.
+   - **API Development:** Create an endpoint `/api/v1/tenants/{tenantId}/rate_limit` for updating tenant-specific rate limit settings.
+3. **Implementation:** Develop the rate limiting feature, emphasizing efficiency and minimal impact on existing functionalities.
+4. **Testing:** Execute thorough testing, covering various scenarios including limit overreaches and dynamic limit adjustments.
+5. **Documentation:** Update both API and developer documentation to reflect the new rate limiting feature, including configuration and operation guidelines.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- Modify `tenant_settings`:
+  - Add `rate_limit_rps` (INTEGER): Defines the maximum number of requests per second (RPS) each tenant is allowed.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+- **Update Tenant Rate Limit:**
+  - **Method:** POST
+  - **Endpoint:** `/api/v1/tenants/{tenantId}/rate_limit`
+  - **Payload:** `{ "rate_limit_rps": number }`
+  - **Response:** 200 OK, `{ "message": "Rate limit updated successfully." }`
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Token bucket rate limiting is implemented for all webhook triggers.
+- [ ] Tenants can customize their rate limits through a dedicated API endpoint.
+- [ ] Responses for exceeded limits correctly include rate limiting headers and a `429` status code.
+- [ ] Integration and unit tests validate functionality against performance benchmarks.
+- [ ] Documentation provides clear guidance on configuring and understanding rate limits.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the project's existing database schema for necessary modifications.
+- Integration with MeshHook’s authentication and authorization mechanisms for secure API access.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to MeshHook’s coding standards and architectural patterns.
+- Ensure the rate limiting module is flexible for future enhancements or algorithm adjustments.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Testing:** Focus on algorithm precision under various load conditions.
+- **Integration Testing:** Validate the seamless operation of rate limiting within the webhook processing workflow, including dynamic configuration changes.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Confirm that rate limit setting changes are securely authenticated and authorized.
+- Guard against potential denial-of-service strategies aimed at exploiting rate limiting logic.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement logging for events when requests are rate-limited and for changes to rate limit configurations.
+- Monitor the impact of rate limiting on overall webhook processing performance.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Rate limiting (token bucket)
-
-**Full Issue Body:**
-**Phase:** Phase 5
-**Section:** Webhook Triggers
-
-**Task:** Rate limiting (token bucket)
-
----
-_Auto-generated from TODO.md_
+By adhering to these specifications, MeshHook will introduce a robust rate limiting feature that enhances its security, efficiency, and scalability, further solidifying its position as a leading workflow engine solution.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #157*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #157*
+*Generated: 2025-10-10*

@@ -1,5 +1,74 @@
 @startuml
 !theme plain
 
+package "MeshHook Deployment Guide" {
+    [Deployment Guide] as (DG)
+    [Gather Requirements] as (GR)
+    [Environment Setup] as (ES)
+    [Configuration] as (C)
+    [Security Setup] as (SS)
+    [Monitoring and Logging] as (ML)
+    [Scaling and Performance Tuning] as (SPT)
+    [Troubleshooting] as (T)
+}
+
+package "MeshHook System Components" {
+    [SvelteKit SSR/API] as (SK)
+    [Supabase Database] as (SD)
+    [Distributed Workers] as (DW)
+    [RLS Security] as (RLS)
+    [Webhook Triggers] as (WT)
+}
+
+package "Deployment Environments" {
+    [Cloud Services (AWS, GCP, Azure)] as (Cloud)
+    [Docker] as (Docker)
+    [Kubernetes] as (K8s)
+}
+
+package "Tools and Services" {
+    [Monitoring Tools] as (MT)
+    [Logging Tools] as (LT)
+    [Security Tools] as (ST)
+}
+
+(DG) ..> (GR) : includes
+(DG) ..> (ES) : includes
+(DG) ..> (C) : includes
+(DG) ..> (SS) : includes
+(DG) ..> (ML) : includes
+(DG) ..> (SPT) : includes
+(DG) ..> (T) : includes
+
+(SK) .up.> (ES) : deployed on
+(SD) .up.> (ES) : deployed on
+(DW) .up.> (ES) : deployed on
+
+(SK) .right.> (C) : configured via
+(SD) .right.> (C) : configured via
+(DW) .right.> (C) : configured via
+
+(RLS) .down.> (SS) : setup instructions
+(WT) .down.> (SS) : setup instructions
+
+(MT) .up.> (ML) : used for
+(LT) .up.> (ML) : used for
+
+(SD) .right.> (SPT) : scaling instructions
+(DW) .right.> (SPT) : scaling instructions
+
+(ES) -right-> (Cloud) : includes
+(ES) -right-> (Docker) : includes
+(ES) -right-> (K8s) : includes
+
+note right of (Cloud)
+  Cloud services include instructions
+  for AWS, GCP, and Azure
+end note
+
+note right of (ST)
+  Includes secrets management
+  and webhook signature verification
+end note
 
 @enduml

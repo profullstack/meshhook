@@ -2,37 +2,49 @@
 !theme plain
 
 package "MeshHook System" {
-    [Webhook Intake] as Webhook
-    [Workflow CRUD API] as CRUD
-    [Publish Versions] as Publish
-    [Run Console] as Console
-    [Realtime Log Streaming] as Logs
-    [Orchestrator Worker] as Orchestrator
-    [HTTP Executor Worker] as Executor
-    database "Postgres (Data + Queues)" as Postgres
-    database "Supabase Storage (Artifacts)" as Storage
-    [Supabase Edge (Cron/Timers)] as Edge
+    [Webhook Intake] --> [PII Detection & Redaction] : processes payload
+    [Workflow Logs] --> [PII Detection & Redaction] : logs data
+    [PII Detection & Redaction] --> [Compliance Policies DB] : queries policies
+    [PII Detection & Redaction] .> [Audit Logs DB] : logs actions
+    [User Interface] --> [Compliance Policies DB] : configures policies
+    [API] --> [Compliance Policies DB] : manages via endpoints
+    [API] --> [Audit Logs DB] : fetches logs
 }
 
-package "Compliance Helpers Feature" {
-    [Compliance Helpers] as Helpers
-    [PII Redaction Rules] as PII
-    [Secrets Management] as Secrets
-    [Audit Logging] as Audit
+database "Compliance Policies DB" {
+    [CompliancePolicies]
 }
 
-Webhook --> Helpers : Triggers\nwith signature verification
-CRUD --> Helpers : Workflow management
-Publish --> Helpers : Versioning
-Console --> Helpers : Execution monitoring
-Helpers --> Postgres : Utilizes data & queues
-Helpers --> Logs : Sends real-time logs
-Helpers --> Storage : Manages artifacts
-Helpers --> Edge : Schedules tasks
-Helpers --> Orchestrator : Coordinates workflows
-Helpers --> Executor : Handles HTTP requests
-Helpers --> PII : Applies redaction rules
-Helpers --> Secrets : Manages encryption keys
-Helpers --> Audit : Logs admin actions & secret access
+database "Audit Logs DB" {
+    [AuditLogs]
+}
+
+cloud {
+    [Regex Libraries]
+}
+
+[PII Detection & Redaction] --> [Regex Libraries] : uses for pattern recognition
+
+[User Interface] --> [PII Detection & Redaction] : configures detection and redaction
+[API] -right-> [PII Detection & Redaction] : extends functionality
+
+note right of [PII Detection & Redaction]
+  Key Operations:
+  - Detect PII
+  - Redact based on policies
+  - Log redaction activities
+end note
+
+note right of [Compliance Policies DB]
+  Stores:
+  - PII definitions
+  - Redaction strategies
+end note
+
+note right of [Audit Logs DB]
+  Stores:
+  - Policy changes
+  - Redaction logs
+end note
 
 @enduml

@@ -1,173 +1,112 @@
 # PRD: Workflow list view
 
-**Issue:** [#126](https://github.com/profullstack/meshhook/issues/126)  
-**Milestone:** Phase 3: Frontend (SvelteKit)  
-**Labels:** workflow-management  
-**Phase:** Phase 3  
-**Section:** Workflow Management
+**Issue:** [#126](https://github.com/profullstack/meshhook/issues/126)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** workflow-management, hacktoberfest
 
 ---
 
+# PRD: Workflow List View
+
 ## Overview
 
-This task is part of Phase 3 in the Workflow Management section of the MeshHook project. 
+The Workflow List View is a critical component of the MeshHook project, aimed at enhancing the user experience by providing an efficient and intuitive interface for managing workflows. This task aligns with MeshHook's goal to deliver a robust, Postgres-native workflow engine that combines the visual simplicity of n8n and the durability of Temporal, ensuring ease of use without compromising on functionality.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
-
-**Task Objective:** Workflow list view
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+**Objective:**  
+To implement a user-friendly, performant, and secure list view for workflows, enabling users to view, sort, and manage their workflows efficiently.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Workflow list view"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **List View Implementation:** Display a list of user workflows with essential details such as name, status (active, paused, errors), last run time, and creation date.
+2. **Sorting and Filtering:** Enable users to sort workflows by name, status, last run time, and creation date. Provide filtering capabilities to view workflows based on status and other criteria.
+3. **Navigation and Actions:** Allow users to navigate to individual workflow details, and perform actions such as edit, delete, and toggle status (activate/pause) directly from the list view.
+4. **Responsive Design:** Ensure the workflow list view is responsive and accessible across devices and screen sizes.
+5. **Integration with Backend:** Leverage existing API endpoints for fetching, sorting, and filtering workflows. Implement any required changes or additional endpoints.
+6. **User Feedback:** Provide immediate visual feedback for actions (e.g., loading indicators, success/error messages).
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure the interface renders quickly and efficiently, even with a large number of workflows.
+- **Reliability:** The list view should accurately reflect the current state of workflows, updating in real-time where necessary.
+- **Security:** Adhere to MeshHook's security guidelines, especially regarding multi-tenancy and data access controls.
+- **Maintainability:** Follow code standards and practices established in the MeshHook project to ensure code quality and ease of maintenance.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook leverages a combination of SvelteKit for the frontend and Supabase (Postgres, Realtime) for the backend, with a focus on security through RLS and performance via efficient data handling.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Design Mock-ups:** Create UI/UX design mock-ups for the list view, ensuring alignment with MeshHook's visual language.
+2. **API Contract Definition:** Collaborate with backend developers to define or refine API contracts for workflow data retrieval.
+3. **Frontend Development:**
+   - Implement the UI based on the mock-ups using SvelteKit.
+   - Integrate with existing or newly defined API endpoints for data fetching.
+   - Implement client-side logic for sorting, filtering, and actions.
+4. **Backend Adjustments:** Make necessary adjustments to API endpoints or database queries to support efficient data retrieval and actions performed from the list view.
+5. **Testing:** Conduct thorough testing, including unit, integration, and user acceptance tests.
+6. **Documentation:** Update project documentation and API docs to reflect any new changes or endpoints introduced.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No new data model changes are anticipated specifically for this view. The existing workflow data structures and relationships should suffice. Any adjustments identified during implementation will be documented and applied following project procedures.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+Leverage existing workflow management API endpoints. If adjustments or new endpoints are needed, they will be specified during the design and implementation phase.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Workflow list view implemented as per design mock-ups.
+- [ ] Efficient data fetching, with support for sorting and filtering.
+- [ ] Responsive design, accessible across different devices.
+- [ ] Integration with backend API endpoints verified.
+- [ ] User actions (edit, delete, toggle status) functional and providing immediate feedback.
+- [ ] All code changes are well-documented and follow project standards.
+- [ ] Security guidelines are adhered to, with appropriate data access controls.
+- [ ] Performance benchmarks met, with quick load times even for large datasets.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- SvelteKit and Supabase infrastructure already in place.
+- Access to existing API documentation and backend codebase.
+- UI/UX design resources.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the SvelteKit framework conventions for frontend development.
+- Use async/await for handling asynchronous API calls.
+- Adhere to secure coding practices, especially for data handling and user interaction.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Implement unit tests for new frontend components and logic.
+- Conduct integration tests to ensure frontend-backend interaction is seamless.
+- Perform manual testing for user experience verification.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all user data displayed in the list view respects RLS policies.
+- Validate and sanitize user input for actions initiated from the list view.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement logging for key actions and events within the list view.
+- Monitor performance metrics to identify and address any bottlenecks.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Workflow list view
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Workflow Management
-
-**Task:** Workflow list view
-
----
-_Auto-generated from TODO.md_
+- Existing project documentation (PRD, Architecture, Security Guidelines).
+- API documentation for workflow management endpoints.
+- SvelteKit and Supabase documentation for frontend and backend integration.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #126*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #126*
+*Generated: 2025-10-10*

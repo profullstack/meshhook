@@ -1,150 +1,117 @@
 # PRD: Run detail view with DAG visualization
 
+**Issue:** [#131](https://github.com/profullstack/meshhook/issues/131)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** run-console, hacktoberfest
+
+---
+
+# PRD: Run Detail View with DAG Visualization
+
 **Issue:** [#131](https://github.com/profullstack/meshhook/issues/131)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
-**Labels:** run-console  
-**Phase:** Phase 3  
-**Section:** Run Console
+**Labels:** run-console, hacktoberfest  
+**Owner:** Anthony Ettinger (Profullstack)  
+**License:** MIT
 
 ---
 
 ## Overview
 
-This task is part of Phase 3 in the Run Console section of the MeshHook project. 
+The **Run Detail View with DAG Visualization** task is a critical component of the MeshHook project's Phase 3 milestone, focusing on enhancing the Run Console section. This feature aims to provide users with a detailed view of individual workflow runs, represented through a Directed Acyclic Graph (DAG) visualization. This aligns with MeshHook's goal to deliver a visually intuitive and durable workflow engine that supports webhook triggers, visual DAG building, durable runs, live logging, and multi-tenant security.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Objectives
 
-**Task Objective:** Run detail view with DAG visualization
-
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+- To visually represent the execution path of a workflow run within the MeshHook platform.
+- To enhance the debugging and monitoring capabilities for users by providing detailed insights into the run's state, history, and performance.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Run detail view with DAG visualization"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **DAG Visualization:** Generate and display a visual representation of the workflow execution as a DAG, showing the sequence and dependencies between nodes.
+2. **Run Detail Information:** Display detailed information about the run, including start/end times, execution status, and any errors encountered.
+3. **Live Updates:** Integrate with Supabase Realtime to reflect live status updates within the DAG visualization and run details.
+4. **User Interaction:** Allow users to interact with the DAG nodes to view specific logs, metrics, or errors associated with each step.
+5. **Navigation and Usability:** Provide an intuitive interface for navigating between different runs and workflows.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Ensure the DAG visualization and run detail fetching operations complete within sub-second response times.
+- **Reliability:** Achieve 99.9% uptime for the run detail view feature.
+- **Security:** Implement RLS and adhere to the existing project security guidelines to protect run data.
+- **Maintainability:** Code should be clean, well-documented, and easy to maintain with adherence to the project's coding standards.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a combination of SvelteKit for frontend development, Supabase for backend services, and a PostgreSQL database. The run detail view with DAG visualization requires integration with these existing components:
+
+- **SvelteKit/Svelte 5:** For building the frontend user interface.
+- **Supabase Realtime:** To stream run status updates.
+- **PostgreSQL:** To retrieve run details and workflow definitions.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Design Phase:** Create mockups for the DAG visualization and run detail view. Define the user interaction models and data flow.
+2. **Data Modeling:** Identify necessary database queries to fetch run details and workflow definitions from PostgreSQL.
+3. **Frontend Development:**
+   - Implement the DAG visualization using a suitable JavaScript library that integrates well with Svelte.
+   - Develop the run detail view component, fetching data from PostgreSQL through Supabase.
+   - Ensure live updates using Supabase Realtime subscriptions.
+4. **Integration Testing:** Test the integration of the new frontend components with the backend data sources.
+5. **Performance Optimization:** Optimize the frontend components and database queries for performance.
+6. **Security Review:** Ensure all data interactions are secured and comply with RLS policies.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+No immediate data model changes are required. However, any adjustments discovered during implementation should be documented and applied to `schema.sql`.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+No new API endpoints are required. The existing endpoints for fetching run details and workflow definitions will be utilized.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] DAG visualization accurately represents the workflow execution path.
+- [ ] Run details are correctly displayed, including execution status and errors.
+- [ ] Live updates are reflected in real-time without manual page refreshes.
+- [ ] User interactions with DAG nodes display relevant logs or metrics.
+- [ ] Performance benchmarks for response time are met.
+- [ ] Code adheres to project's coding standards and security guidelines.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- SvelteKit and Supabase access and configurations must be in place.
+- Access to the PostgreSQL database schema for potential adjustments.
+- Existing frontend and backend codebase for integration.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Utilize the latest features of SvelteKit and Svelte 5, following component best practices.
+- Implement error handling and logging mechanisms.
+- Prioritize user experience and interface responsiveness.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For individual components and utility functions.
+- **Integration Tests:** To ensure components interact correctly with backend services.
+- **E2E Tests:** Simulate user interactions and data flow through the application.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all database queries are protected against SQL injection.
+- Verify that RLS policies are correctly applied to all data queries.
+- Audit log access and modifications to run details.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Instrument frontend components to track performance metrics.
+- Monitor error rates and log anomalies for the new feature.
+- Utilize Supabase Realtime monitoring tools to ensure live updates are functioning correctly.
 
 ## Related Documentation
 
@@ -153,21 +120,7 @@ No new API endpoints required for this task.
 - [Security Guidelines](../Security.md)
 - [Operations Guide](../Operations.md)
 
-## Task Details
-
-**Original Task Description:**
-Run detail view with DAG visualization
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Run Console
-
-**Task:** Run detail view with DAG visualization
-
----
-_Auto-generated from TODO.md_
-
 ---
 
-*This PRD was auto-generated from GitHub issue #131*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #131*
+*Generated: 2025-10-10*

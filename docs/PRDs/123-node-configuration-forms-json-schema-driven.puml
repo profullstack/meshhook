@@ -1,0 +1,46 @@
+@startuml
+!define RECTANGLE class
+
+package "MeshHook Workflow Builder" {
+    RECTANGLE SvelteKit_Frontend {
+        node "Webhook Intake" as WebhookIntake
+        node "Workflow CRUD UI" as WorkflowCRUD
+        node "Publish Versions" as PublishVersions
+        node "Run Console" as RunConsole
+    }
+    RECTANGLE Supabase_Backend {
+        database Postgres {
+            [Data + Queues] as DataQueues
+            [Realtime Log Streaming] as RealtimeLogs
+            [Storage Artifacts] as StorageArtifacts
+        }
+        node "Edge (Cron/Timers)" as EdgeCronTimers
+    }
+    RECTANGLE Workers {
+        [Orchestrator] as Orchestrator
+        [HTTP Executor] as HTTPExecutor
+    }
+    RECTANGLE "JSON Schema" as JSONSchema {
+        [Node Configuration Forms] as NodeConfigForms
+    }
+}
+
+SvelteKit_Frontend .down.> Supabase_Backend : Uses
+Supabase_Backend .right.> Workers : Triggers
+Workers .up.> SvelteKit_Frontend : Updates
+SvelteKit_Frontend .right.> JSONSchema : Validates with
+JSONSchema .left.> Postgres : Defines Forms Structure
+
+note right of NodeConfigForms
+  Node configuration forms are driven
+  by JSON Schema to ensure dynamic
+  and flexible user interfaces for
+  workflow node configurations.
+end note
+
+note left of Postgres
+  Stores configuration data and
+  schemas for nodes in workflows.
+end note
+
+@enduml

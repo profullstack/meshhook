@@ -2,13 +2,43 @@
 !theme plain
 
 package "MeshHook System" {
-    [Webhook Intake] <<SvelteKit>>
-    }
-    [Orchestrator Worker]
-    [HTTP Executor Worker]
+    [SvelteKit SSR/API] - [Connection Pool Manager]
+    [Connection Pool Manager] - [Supabase (Postgres)]
+    [Connection Pool Manager] --> [Monitoring & Alerting]
+
+    [SvelteKit SSR/API] : serves web content\nand API endpoints
+    [Connection Pool Manager] : optimizes DB connection pooling\nand manages multi-tenancy
+    [Supabase (Postgres)] : stores workflows,\nruns, logs, etc.
+    [Monitoring & Alerting] : tracks pool metrics\nand alerts on thresholds
 }
 
-package "Connection Pooling Optimization" {
-    [Connection Pool Manager] #LightGreen
+package "External Libraries" {
+    [Connection Pooling Library] --> [Connection Pool Manager]
+    [Connection Pooling Library] : provides pooling mechanism\nand configuration
+}
+
+note right of [Connection Pool Manager]
+  Key Operations:
+  - Analyze DB usage
+  - Design pooling strategy
+  - Integrate pooling library
+  - Test under load
+  - Monitor metrics
+end note
+
+note right of [Monitoring & Alerting]
+  Metrics Include:
+  - Pool size
+  - Active/idle connections
+  - Wait times
+end note
+
+[Connection Pool Manager] .down.> [Configuration & Tuning] : configures
+[Configuration & Tuning] : pool size, timeouts, etc.
+
+[Connection Pool Manager] .right.> [Security] : ensures isolation\nand secure config
+
+[Connection Pool Manager] .left.> [Documentation] : updates
+[Documentation] : new config options\nand best practices
 
 @enduml

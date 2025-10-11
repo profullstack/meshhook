@@ -1,0 +1,48 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Existing Codebase <<Existing>>]
+    [Database <<Postgres>>]
+    [Supabase Services <<External>>]
+}
+
+package "Visual DAG Editor" {
+    [Visual DAG Editor Component]
+    [SvelteKit SSR/API]
+    [Workflow CRUD API]
+    [Supabase Realtime]
+    [Error Handling]
+    [Security Layer]
+    [UI/UX Patterns]
+}
+
+[Existing Codebase <<Existing>>] -down-> [SvelteKit SSR/API] : Uses
+[Database <<Postgres>>] -right-> [Workflow CRUD API] : CRUD Operations
+[Supabase Services <<External>>] -down-> [Supabase Realtime] : Streams Logs
+
+[Visual DAG Editor Component] -right-> [SvelteKit SSR/API] : Rendered by
+[SvelteKit SSR/API] -down-> [Workflow CRUD API] : Manages Workflows
+[Workflow CRUD API] -left-> [Visual DAG Editor Component] : Updates
+[Visual DAG Editor Component] -down-> [UI/UX Patterns] : Follows
+[Visual DAG Editor Component] -down-> [Error Handling] : Uses
+[Visual DAG Editor Component] -down-> [Security Layer] : Enforces
+
+note right of [Visual DAG Editor Component]
+  Core functionality for visually
+  editing Directed Acyclic Graphs (DAGs)
+  in the workflow builder.
+end note
+
+note right of [SvelteKit SSR/API]
+  Serves webhooks, workflow management
+  interfaces, and handles server-side
+  rendering for the editor.
+end note
+
+note right of [Supabase Realtime]
+  Provides live updates and log
+  streaming for the editor.
+end note
+
+@enduml

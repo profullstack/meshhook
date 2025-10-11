@@ -1,35 +1,53 @@
 @startuml
-!define RECTANGLE class
-!define DATABASE entity
+!theme plain
 
-RECTANGLE UserInterface <<Webhook Management UI>> {
-    :+ Create Webhook
-    :+ Update Webhook
-    :+ Delete Webhook
+package "Webhook Configuration System" {
+    [Webhook UI] - [API Gateway]
+    [API Gateway] - [Webhook Service]
+    [Webhook Service] --> [Database]
+    [Webhook Service] -right-> [Authentication Service]
+    [Webhook Service] .> [Email Service] : triggers
+    [Database] : stores\nwebhook configurations
+    [Email Service] : sends notifications
+    [Authentication Service] : validates user access
 }
 
-RECTANGLE WebhookService {
-    :+ validateRequest()
-    :+ saveWebhookData()
-    :+ triggerWorkflow()
+package "Existing System" {
+    [Visual DAG Builder] ..> [Webhook Service] : uses
+    [User Guide] ..> [Webhook UI] : documents
+    [API Documentation] ..> [API Gateway] : documents
 }
 
-RECTANGLE WorkflowEngine <<Workers>> {
-    :+ executeWorkflow()
+note right of [Webhook UI]
+  SvelteKit/Svelte 5
+end note
+
+note right of [Webhook Service]
+  Supabase Postgres
+  HMAC/JWT for signature verification
+end note
+
+note right of [API Gateway]
+  Define endpoints for:
+  - Creating
+  - Updating
+  - Deleting webhook configurations
+  - Signature verification setup
+  - Testing webhooks
+end note
+
+[Webhook UI] --> [Visual DAG Builder] : integrates with
+
+class "Data Model" {
+    - id : UUID
+    - project_id : UUID
+    - url : VARCHAR
+    - signature_method : ENUM
+    - secret_key : VARCHAR
+    - created_at : TIMESTAMP
+    - updated_at : TIMESTAMP
 }
 
-DATABASE Supabase <<Database>> {
-    :Postgres
-    :Realtime
-    :Storage
-}
-
-UserInterface --> WebhookService : Uses
-WebhookService --> Supabase : Reads/Writes
-WebhookService --> WorkflowEngine : Triggers
-WorkflowEngine --> Supabase : Updates State
-
-note right of WebhookService : Core Webhook\nConfiguration Logic
-note right of WorkflowEngine : Handles Workflow\nExecution Logic
+[Database] ..> "Data Model" : implements
 
 @enduml

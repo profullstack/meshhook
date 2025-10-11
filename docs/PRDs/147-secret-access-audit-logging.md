@@ -8,44 +8,54 @@
 
 # PRD: Secret Access Audit Logging
 
-### Overview
+## Overview
 
-The introduction of secret access audit logging into MeshHook is aimed at enhancing the platform's security posture by providing detailed records of when and by whom secrets are accessed. This feature is critical for regulated industries and any organization prioritizing security, as it helps in forensic analysis and compliance reporting. This task aligns with MeshHook's core goals by bolstering its security features without compromising on its performance and usability.
+The task of implementing secret access audit logging is pivotal for enhancing MeshHook's security framework, making it an indispensable feature for ensuring transparency, accountability, and compliance. This feature is designed to track and log every access to the secrets stored within MeshHook, including both reads and writes. It is directly aligned with the project’s goals of providing a secure, robust, and compliance-ready workflow engine that caters to the needs of regulated industries and security-conscious organizations. By adding audit logging, MeshHook will not only bolster its security posture but also foster trust among its users by providing them with visibility into how and when secrets are accessed.
 
-### Functional Requirements
+## Functional Requirements
 
-1. **Audit Log Creation:** Automatically generate audit logs for each secret access, including reads and writes.
-2. **Log Details:** Each log entry must include the secret's identifier, access timestamp, user identity (or service account), access type (read/write), and the IP address of the request initiator.
-3. **Searchability:** Implement a mechanism to query and filter the audit logs based on the secret identifier, date range, user identity, and access type.
-4. **Access Control:** Ensure that viewing audit logs is restricted to users with the appropriate permissions.
-5. **Integration:** Integrate the audit logging mechanism seamlessly with the existing secrets management module.
+1. **Audit Log Entries:** Automatically generate an audit log entry for every access (read/write) to secrets.
+2. **Log Details:** Capture detailed information in each log entry, including:
+   - Secret identifier
+   - Timestamp of access
+   - Identity of the accessor (user or service account)
+   - Type of access (read/write)
+   - IP address from which the access was made
+3. **Search and Filter Capability:** Provide functionality to search and filter the audit logs by secret identifier, date range, accessor's identity, and type of access.
+4. **Access Control:** Restrict access to the audit logs, ensuring that only users with designated permissions can view them.
+5. **Seamless Integration:** The audit logging feature should integrate flawlessly with the existing secrets management module, without necessitating significant modifications to the current workflows.
 
-### Non-Functional Requirements
+## Non-Functional Requirements
 
-- **Performance:** The audit logging feature must not introduce significant latency to secret access operations.
-- **Security:** Ensure that the audit logs themselves are secure and cannot be tampered with. Implement appropriate access controls.
-- **Reliability:** Guarantee high availability of the audit log service, ensuring logs are always written and retrievable upon secret access.
-- **Maintainability:** Design the logging system for easy maintenance, including scalable storage solutions and efficient log rotation/archiving mechanisms.
+- **Performance:** Implement the audit logging feature ensuring minimal impact on the secret access performance.
+- **Security:** Secure the audit logs against unauthorized access and tampering. Utilize secure storage and transmission mechanisms.
+- **Reliability:** Ensure the audit log service is highly available, with a robust mechanism to handle failures gracefully, ensuring no data loss.
+- **Maintainability:** Design the feature with future scalability in mind, ensuring that the system can handle increasing volumes of logs efficiently.
 
-### Technical Specifications
+## Technical Specifications
 
-#### Architecture Context and Integration Points
+### Architecture Context and Integration Points
 
-- **Integration with Secrets Vault:** Audit logging functionality will be integrated into the existing secrets vault module.
-- **Storage:** Utilize Postgres for storing audit logs, leveraging its reliability and transactional integrity.
-- **Supabase Realtime:** Use Supabase Realtime for monitoring audit log entries in real-time, facilitating immediate visibility into secret access events.
+- **Integration with Secrets Vault:** The audit logging feature will be tightly integrated with MeshHook's secrets management module, capturing all access to secrets.
+- **Storage Solution:** Leverage the existing Postgres infrastructure for storing audit logs to maintain consistency and utilize Postgres's transactional integrity.
+- **Real-Time Monitoring:** Utilize Supabase Realtime to enable real-time monitoring of audit logs, ensuring immediate visibility and alerting capabilities.
 
-#### Implementation Approach
+### Implementation Approach
 
-1. **Schema Design:** Extend the database schema to include a new `audit_logs` table with fields for secret ID, access type, timestamp, user identity, and IP address.
-2. **Logging Mechanism:** Implement logging logic within the secrets access and modification functions, ensuring every access writes a new log entry to the `audit_logs` table.
-3. **Query API:** Develop an API endpoint for querying audit logs, supporting filtering by secret identifier, date range, user identity, and access type.
-4. **Permission Checks:** Update the access control module to include permissions for viewing audit logs, ensuring only authorized users can query logs.
-5. **Log Management:** Implement log rotation and archiving strategies to manage log size and ensure performance.
+1. **Schema Extension:**
+   - Create a new `audit_logs` table in Postgres, including columns for secret ID, access type, timestamp, user identity, and IP address.
+2. **Logging Mechanism:**
+   - Modify the secrets access and modification functions to include a step that writes an entry into the `audit_logs` table upon each access.
+3. **Query API:**
+   - Develop a new API endpoint (`GET /api/audit-logs`) to enable querying and filtering of audit logs.
+4. **Permission Management:**
+   - Update the access control system to include a new permission set for audit log access, ensuring only authorized personnel can view the logs.
+5. **Log Management:**
+   - Implement a log rotation and archiving strategy to manage storage efficiently while ensuring logs are retained as per compliance requirements.
 
-#### Data Model Changes
+### Data Model Changes
 
-- `audit_logs` table:
+- New `audit_logs` Table:
   - `id` SERIAL PRIMARY KEY
   - `secret_id` INT REFERENCES `secrets(id)`
   - `access_type` ENUM('read', 'write')
@@ -53,49 +63,52 @@ The introduction of secret access audit logging into MeshHook is aimed at enhanc
   - `user_identity` VARCHAR(255)
   - `ip_address` VARCHAR(45)
 
-#### API Endpoints
+### API Endpoints
 
-- `GET /api/audit-logs`: Fetch audit logs with support for filters (secret_id, date range, user_identity, access_type).
+- **Query Audit Logs:**
+  - `GET /api/audit-logs`: Fetches audit logs, supports filtering by `secret_id`, `date_range`, `user_identity`, and `access_type`.
 
-### Acceptance Criteria
+## Acceptance Criteria
 
-- [ ] Audit log entries are created for every secret access and modification.
-- [ ] Audit logs include all required details (secret ID, access type, timestamp, user identity, IP address).
-- [ ] Audit logs can be queried and filtered based on specified criteria.
-- [ ] Only authorized users can access the audit logs.
-- [ ] Performance benchmarks meet the non-functional requirements.
+- [ ] Audit log entry is created for every access (read/write) to secrets.
+- [ ] Each audit log entry includes secret ID, access type, timestamp, user identity, and IP address.
+- [ ] Functionality exists to query and filter audit logs by secret ID, date range, user identity, and access type.
+- [ ] Only users with the appropriate permissions can access the audit log entries.
+- [ ] Audit logging feature does not significantly impact the performance of secret accesses.
 
-### Dependencies and Prerequisites
+## Dependencies and Prerequisites
 
-- Existing secrets management module for integration.
-- Postgres database for storing the audit logs.
-- Supabase Realtime for log monitoring.
+- Access to MeshHook's existing Postgres database.
+- Integration capability with Supabase Realtime for monitoring.
+- Existing secrets management module for seamless integration.
 
-### Implementation Notes
+## Implementation Notes
 
-#### Development Guidelines
+### Development Guidelines
 
-- Follow the existing code style and patterns for consistency.
-- Write unit and integration tests covering new functionality.
-- Document the new API endpoint in the project's API documentation.
+- Adhere to MeshHook’s coding standards and best practices.
+- Ensure new code is efficiently structured and well-documented.
+- Cover the new functionality extensively with both unit and integration tests.
+- Update the project's API documentation to include the new audit log querying endpoint.
 
-#### Testing Strategy
+### Testing Strategy
 
-- **Unit Tests:** Cover the logging mechanism and query API with unit tests.
-- **Integration Tests:** Test the integration with the secrets management module and permission checks.
-- **Performance Testing:** Ensure the logging mechanism meets performance requirements through benchmarking.
+- **Unit Tests:** Validate the functionality of audit log creation and query filtering.
+- **Integration Tests:** Test the integration points with the secrets management module and the permissions system.
+- **Performance Tests:** Benchmark the impact of audit logging on secret access operations to ensure compliance with performance requirements.
 
-#### Security Considerations
+### Security Considerations
 
-- Ensure audit logs are stored securely and are immutable.
-- Implement strict permission checks for accessing the audit logs.
+- Ensure audit logs are immutable once written.
+- Implement strict access controls to prevent unauthorized log access.
+- Securely store and transmit log data to prevent interception or tampering.
 
-#### Monitoring and Observability
+### Monitoring and Observability
 
-- Monitor the performance impact of the audit logging feature.
-- Set up alerts for any failures in the audit log mechanism.
+- Set up monitoring for the audit log feature to track its performance and alert on failures.
+- Implement logging and tracing for audit log operations to facilitate troubleshooting and performance tuning.
 
-This PRD outlines the approach for implementing secret access audit logging in MeshHook, ensuring the feature enhances the platform's security and compliance capabilities while adhering to the project's performance and reliability standards.
+This PRD defines a clear, comprehensive roadmap for implementing secret access audit logging within MeshHook, ensuring the feature aligns with the project's security, performance, and usability standards.
 
 ---
 

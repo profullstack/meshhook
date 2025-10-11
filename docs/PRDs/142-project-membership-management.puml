@@ -1,0 +1,23 @@
+@startuml
+!theme plain
+
+title Project Membership Management - Sequence Diagram
+
+actor User
+participant "Web UI" as UI
+participant "API Gateway" as API
+participant "Membership Service" as Membership
+database "Supabase DB" as DB
+
+User -> UI : Access Project Management
+UI -> API : Request Membership Info
+API -> Membership : Validate User\n& Fetch Membership
+Membership -> DB : Query Membership Data
+DB -> Membership : Return Data
+Membership -> API : Membership Details
+API -> UI : Display Membership Info
+UI -> User : Show Project Memberships
+
+note over Membership : Handles CRUD Operations\nfor Project Memberships
+
+@enduml

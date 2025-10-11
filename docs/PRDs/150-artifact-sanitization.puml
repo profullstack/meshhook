@@ -1,55 +1,52 @@
 @startuml
 !theme plain
 
-package "MeshHook System" {
-  [Supabase] <<Database>> #lightgreen
-  [Realtime Log Streaming] <<Service>> #lightblue
-  [Artifact Storage] <<Service>> #lightblue
-  [Webhook Intake] <<Component>> #FFAA77
-  [Workflow CRUD API] <<Component>> #FFAA77
-  [Publish Versions] <<Component>> #FFAA77
-  [Run Console] <<Component>> #FFAA77
-  [Orchestrator Worker] <<Worker>> #FFCCAA
-  [HTTP Executor Worker] <<Worker>> #FFCCAA
+package "MeshHook Workflow Engine" {
+    [Workflow Execution Pipeline] --> [Sanitization Engine]: triggers sanitization
+    [Sanitization Engine] --> [Supabase Storage]: sanitized artifacts
+    database "Supabase Storage" {
+    }
+    [Sanitization Engine] ..> [Sanitization Rules Table]: fetches rules
 }
 
-package "Artifact Sanitization Feature" {
-  [Artifact Sanitization] <<Task>> #pink
-  [Data Model] <<Model>> #lightgrey
-  [Error Handling] <<Strategy>> #FFDD88
+package "Configuration and Monitoring" {
+    [Configuration API] --> [Sanitization Rules Table]: CRUD operations
+    [Audit Logging] ..> [Realtime Log Stream]: streams logs
+    [Sanitization Engine] --> [Audit Logging]: logs actions
 }
 
-[Supabase] --> [Data Model] : Uses
-[Realtime Log Streaming] --> [Run Console] : Updates live logs
-[Artifact Storage] --> [Artifact Sanitization] : Stores sanitized artifacts
+database "Sanitization Rules Table" {
+}
 
-[Webhook Intake] --> [Orchestrator Worker] : Triggers workflows
-[Workflow CRUD API] --> [Supabase] : CRUD operations
-[Publish Versions] --> [Supabase] : Updates workflow versions
-[Run Console] --> [Supabase] : Fetches run information
-[Orchestrator Worker] --> [HTTP Executor Worker] : Delegates tasks
-[Orchestrator Worker] --> [Artifact Sanitization] : Initiates sanitization
-[HTTP Executor Worker] --> [Artifact Sanitization] : Provides artifacts for sanitization
+[Supabase Storage] <-- [Realtime Log Stream]: logs storage actions
 
-[Artifact Sanitization] --> [Artifact Storage] : Stores sanitized artifacts
-[Artifact Sanitization] --> [Error Handling] : Utilizes
-[Error Handling] --> [Run Console] : Displays errors
+actor User {
+    User --> [Configuration API]: defines PII redaction rules
+}
 
-note right of [Artifact Sanitization]
-  1. Analyze artifact
-  2. Redact PII
-  3. Store sanitized artifact
-  4. Log completion
+note right of [Sanitization Engine]
+  Detect and redact PII using:
+  - Regex patterns
+  - Machine learning models
 end note
 
-note right of [Orchestrator Worker]
-  Manages workflow execution
-  and task scheduling
+note right of [Audit Logging]
+  Log details:
+  - What was redacted
+  - By whom
+  - When
 end note
 
-note right of [HTTP Executor Worker]
-  Executes HTTP requests with
-  retries and backoff
+note right of [Sanitization Rules Table]
+  Stores user-defined PII redaction rules:
+  - Pattern definitions
+  - Action specifications
+end note
+
+note right of [Configuration API]
+  API Endpoints:
+  - GET /projects/{projectId}/sanitization-rules
+  - POST /projects/{projectId}/sanitization-rules
 end note
 
 @enduml

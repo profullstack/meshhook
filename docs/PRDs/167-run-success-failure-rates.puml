@@ -1,32 +1,36 @@
 @startuml
 !theme plain
 
-title Run Success/Failure Rates Implementation Flow
+title Run Success/Failure Rates Implementation
 
-actor Developer
-boundary "Webhook API" as Webhook
-control "Orchestrator Worker" as Orchestrator
-database "Postgres DB" as DB
-boundary "Supabase Realtime" as Realtime
-control "HTTP Executor Worker" as Executor
-database "Logs Storage" as Logs
+package "MeshHook System" {
+    [Workflow Execution Engine] as WEE
+    database "Supabase Realtime" as Supabase
+    [SvelteKit Dashboard] as Dashboard
+}
 
-Developer -> Webhook : Trigger workflow
-Webhook -> Orchestrator : Initiate run
-Orchestrator -> DB : Fetch workflow definition
-DB -> Orchestrator : Return definition
-Orchestrator -> Executor : Execute steps
-Executor -> DB : Update step status
-DB -> Realtime : Stream updates
-Realtime -> Developer : Show live logs
-Executor -> Logs : Store execution logs
-Orchestrator -> DB : Update run status
-DB -> Orchestrator : Run status updated
-Orchestrator --> Webhook : Notify completion
-Webhook -> Developer : Return run result
+database "Metrics Database" as MetricsDB {
+    table "workflow_run_metrics" as MetricsTable {
+        column "workflow_id": FK
+        column "success_count": Integer
+        column "failure_count": Integer
+        column "last_updated": Timestamp
+    }
+}
 
-note right of DB : Stores workflows,\nruns, and execution logs
-note right of Realtime : Provides live updates\nto the developer
-note right of Executor : Handles retries\nand backoffs
+package "API" {
+    [GET /metrics/workflow/{workflow_id}] as GetWorkflowMetrics
+    [GET /metrics/workflows/summary] as GetSummaryMetrics
+}
+
+WEE --> MetricsDB : "Captures run results\nand updates metrics"
+MetricsDB --> Supabase : "Pushes updates"
+Supabase --> Dashboard : "Displays metrics\nin real-time"
+Dashboard --> GetWorkflowMetrics : "Queries specific\nworkflow metrics"
+Dashboard --> GetSummaryMetrics : "Queries summary\nmetrics across workflows"
+
+note right of WEE : Integration Point\nfor capturing run results
+note right of Supabase : Real-time updates\nto dashboard
+note right of MetricsTable : New table for\nstoring metrics data
 
 @enduml

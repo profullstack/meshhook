@@ -1,61 +1,64 @@
 @startuml
 !theme plain
 
-package "MeshHook API" {
-    [API Gateway] - [Authentication Service]
-    [API Gateway] --> [API Documentation]
-    [API Gateway] --> [Webhook Service]
-    [API Gateway] --> [Workflow Engine]
-    [API Gateway] --> [Logging Service]
+title MeshHook API Documentation Process
 
-    [Webhook Service] --> [Workflow Engine]
-    [Workflow Engine] --> [Database]
-    [Logging Service] --> [Database]
-    [Authentication Service] --> [Database]
-
-    [API Documentation] ..> [Developer Portal]: publishes
+package "MeshHook System" {
+    [SvelteKit SSR/API] as SSR
+    [Supabase Backend] as Backend
+    [Worker Orchestration] as Workers
 }
 
-package "External Systems" {
-    [Supabase] --> [Database]
-    [Developer Portal] 
+cloud {
+    [Documentation Tool/Platform] as DocTool
 }
 
-package "Supabase" {
-    [Postgres] - [Realtime]
-    [Postgres] - [Storage]
-    [Postgres] - [Edge]
+database "API Documentation" as APIDocs {
+    [Versioning] as Versioning
+    [Search & Navigation] as Search
+    [Security Best Practices] as SecurityDocs
+    [Endpoint Documentation] as Endpoints
 }
 
-[Database] ..> [Postgres] : <<use>>
+[SSR] --> [DocTool] : Integrates for API Serving
+[Backend] --> [DocTool] : Data Model Documentation
+[Workers] --> [DocTool] : Workflow Execution Docs
 
-note right of [API Documentation]
-  Key Tasks:
-  - Document RESTful API endpoints
-  - Include request/response schemas
-  - Error codes explanation
+DocTool --> APIDocs : Generates & Hosts
+APIDocs --> [Versioning]
+APIDocs --> [Search]
+APIDocs --> [SecurityDocs]
+APIDocs --> [Endpoints]
+
+note right of [Endpoints]
+  Include:
+  - Webhook Triggers
+  - Workflow Management
+  - Version Publication
+  - Run Console
 end note
 
-note right of [Workflow Engine]
-  Handles:
-  - Workflow CRUD operations
-  - Version publishing
-  - Run executions
+note right of [DocTool]
+  Select a tool that supports:
+  - Automatic generation
+  - Versioning
+  - Easy hosting
 end note
 
-note right of [Webhook Service]
-  - Signature verification
-  - Trigger workflows
-end note
+[SecurityDocs] ..> [Security Guidelines] : Aligns with
+[Versioning] ..> [Implementation Notes] : Based on
+[Search] ..> [Requirements] : Facilitates
 
-note right of [Logging Service]
-  - Live logs via Supabase Realtime
-  - Error logging
-end note
+[DocTool] <.. [Development Team] : Reviews & Feedback
+[DocTool] <.. [Beta Users] : External Feedback
 
-note right of [Authentication Service]
-  - AuthN/AuthZ
-  - Multi-tenant RLS security
-end note
+[DocTool] --> [Maintenance Plan] : Establishes
+
+legend right
+  **Development Guidelines**
+  - Follow OpenAPI specifications
+  - Realistic examples
+  - Clear language
+endlegend
 
 @enduml

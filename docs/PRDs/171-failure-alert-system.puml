@@ -1,45 +1,58 @@
 @startuml
-!theme plain
+!define RECTANGLE class
 
 package "MeshHook System" {
-    [Webhook Intake] as Intake
-    [Workflow Engine] as Engine
-    [Failure Alert System] as Alert
-    database "Supabase" {
-        [Postgres DB] as DB
-        [Realtime] as Realtime
-        [Storage] as Storage
-    }
-    [HTTP Executor] as Executor
-    [Orchestrator] as Orchestrator
+  [Workflow Orchestrator] as Orchestrator
+  [Supabase Realtime] as Supabase
+  [SvelteKit SSR/API] as SvelteKit
+  [Notification Dispatcher] as Dispatcher
 }
 
-cloud {
-    [External Alerting Services] as ExternalAlerts
+package "Failure Alert System" {
+  RECTANGLE "Alert Detection Service" as Detection {
+    .. Integration ..
+    - Workflow Execution Logs
+    - Error States
+  }
+  RECTANGLE "Alert Settings\nManagement API" as SettingsAPI {
+    .. Endpoints ..
+    + POST /api/alerts/settings
+    + GET /api/alerts/settings/{project_id}/{workflow_id?}
+  }
+  RECTANGLE "Alert Database" as AlertDB {
+    .. Tables ..
+    - AlertSettings
+    - AlertLogs
+  }
 }
 
-Intake --> Engine : triggers workflow
-Engine --> DB : logs state
-Engine --> Alert : detects failure
-Alert --> Realtime : streams failure log
-Alert --> ExternalAlerts : sends failure notification
-DB --> Orchestrator : stores state
-Orchestrator --> Executor : schedules retry
-Executor --> Engine : executes HTTP tasks
+Orchestrator -down-> Detection : Detects Failures
+Detection -right-> Dispatcher : Triggers Alerts
+Dispatcher -down-> [Email Provider] : Sends Email Notifications
+Dispatcher -down-> [Webhook Provider] : Sends Webhook Notifications
+SettingsAPI .right.> AlertDB : Manages Alert Settings
+Supabase -left-> [Logging System] : Logs Workflow Executions
+Logging System -up-> Detection : Provides Execution Logs
 
-note right of Alert
-  Failure detection and
-  notification logic
+note right of Dispatcher
+  Supports multiple channels:
+  - Email
+  - SMS
+  - Webhook
 end note
 
-note over DB, Realtime
-  Supabase Services
-end note
+note "User Configuration\nand Alert Criteria" as UserConfig
+UserConfig ..> SettingsAPI : Configures Alerts
+UserConfig ..> Detection : Defines Criteria
 
-note right of ExternalAlerts
-  Integrates with external
-  services like email, SMS,
-  or Slack for alerts
-end note
+class EmailProvider {
+  SMTP Configuration
+  Send Email()
+}
+
+class WebhookProvider {
+  Webhook URLs
+  Invoke Webhook()
+}
 
 @enduml

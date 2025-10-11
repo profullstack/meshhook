@@ -1,5 +1,13 @@
 # PRD: Save/load workflow definitions
 
+**Issue:** [#125](https://github.com/profullstack/meshhook/issues/125)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** workflow-builder, hacktoberfest
+
+---
+
+# PRD: Save/Load Workflow Definitions
+
 **Issue:** [#125](https://github.com/profullstack/meshhook/issues/125)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
 **Labels:** workflow-builder  
@@ -10,164 +18,105 @@
 
 ## Overview
 
-This task is part of Phase 3 in the Workflow Builder section of the MeshHook project. 
+The save/load workflow definitions feature is a critical component of the MeshHook project, enabling users to persist their workflow configurations and retrieve them for future editing or execution. This capability ensures that complex workflows can be developed incrementally, shared among team members, and maintained over time. It aligns with MeshHook’s goals of providing a durable, visually intuitive, and secure workflow engine.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Save/load workflow definitions
+1. **Save Workflows:** Users must be able to save their current workflow definitions, including all nodes, connections, and configuration settings.
+2. **Load Workflows:** Users must be able to load previously saved workflow definitions into the visual DAG builder for editing or execution.
+3. **Versioning:** Each save operation should create a new version of the workflow definition to support rollback and history tracking.
+4. **UI Integration:** The save and load functionalities should be seamlessly integrated into the existing DAG builder UI.
+5. **Multi-Tenant Support:** Ensure that workflow definitions are saved and loaded in a tenant-specific manner, adhering to RLS policies.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Save/load workflow definitions"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Workflow save and load operations should complete within 500ms to ensure a responsive user experience.
+- **Security:** All saved workflow definitions must be stored securely, with sensitive information encrypted and access controlled via RLS.
+- **Reliability:** The save and load feature should have an uptime of 99.9%, with proper error handling and recovery mechanisms in place.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a microservices architecture with the frontend powered by SvelteKit for SSR/API interactions, and backend components including Supabase for database and real-time updates, and dedicated workers for orchestration and execution.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Extend Data Model:** Add a new table `workflow_definitions` with fields for storing serialized workflow configurations, versions, and tenant IDs.
+2. **API Endpoints:**
+   - `POST /api/workflows`: Save a new workflow definition or update an existing one.
+   - `GET /api/workflows/{id}`: Retrieve a specific workflow definition by ID.
+   - Ensure endpoints enforce multi-tenancy rules and are secured according to project standards.
+3. **UI Updates:** Modify the SvelteKit frontend to include "Save" and "Load" buttons in the workflow builder interface, with appropriate dialogs for naming and selecting workflows.
+4. **Integration Testing:** Ensure the feature integrates properly with existing components, particularly the visual DAG builder and the backend API.
+5. **Error Handling:** Implement comprehensive error handling for API endpoints and UI interactions, including user-friendly error messages for common issues.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+- **Workflow Definitions Table:**  
+  - `id` (UUID): Primary Key  
+  - `project_id` (UUID): Foreign Key to `projects` table  
+  - `name` (TEXT): Workflow name  
+  - `definition` (JSONB): Serialized workflow configuration  
+  - `version` (INT): Workflow version  
+  - `created_at` (TIMESTAMP WITH TIME ZONE)  
+  - `updated_at` (TIMESTAMP WITH TIME ZONE)
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+- **Save Workflow Definition:**  
+  - `POST /api/workflows`  
+  - Body: `{ name: string, definition: object, projectId: string }`  
+- **Load Workflow Definition:**  
+  - `GET /api/workflows/{id}`
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Workflow definitions can be saved and associated with a specific tenant and user.
+- [ ] Users can load saved workflow definitions for editing or execution.
+- [ ] Workflow versioning is implemented, allowing users to track changes over time.
+- [ ] The UI provides a seamless experience for saving and loading workflows.
+- [ ] API endpoints for saving and loading workflows are secured and performant.
+- [ ] Integration with existing components (DAG builder, backend services) is verified through tests.
+- [ ] Documentation is updated to include new endpoints and data model changes.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- SvelteKit for frontend changes.
+- Supabase for backend storage and real-time updates.
+- Existing authentication and multi-tenancy mechanisms.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow existing coding standards and patterns for SvelteKit and Supabase interactions.
+- Ensure new features are fully type-checked and comply with ESLint and Prettier configurations.
+- Write unit and integration tests covering new functionality.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For API logic and utility functions.
+- **Integration Tests:** For API endpoints and their interaction with the database.
+- **E2E Tests:** For the save/load workflow user journey.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all API interactions are authenticated and authorized according to the project’s RLS policy.
+- Encrypt sensitive parts of the workflow definition as necessary.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Instrument new API endpoints with logging and metrics collection to monitor usage patterns and performance bottlenecks.
+- Set up alerts for any errors or performance issues detected in the save/load workflow functionalities.
 
 ## Related Documentation
 
 - [Main PRD](../PRD.md)
 - [Architecture](../Architecture.md)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Save/load workflow definitions
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Workflow Builder
-
-**Task:** Save/load workflow definitions
-
----
-_Auto-generated from TODO.md_
 
 ---
 
-*This PRD was auto-generated from GitHub issue #125*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #125*
+*Generated: 2025-10-10*

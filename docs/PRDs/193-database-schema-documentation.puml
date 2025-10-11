@@ -1,40 +1,52 @@
 @startuml
+!theme plain
 
-!define Table(name,desc) class name << (T,#FFAAAA) >> {\n<color:#0000FF>desc</color>}
-!define Service(name,desc) class name << (S,#AAAAFF) >> {\n<color:#0000FF>desc</color>}
-!define Component(name,desc) class name << (C,#AAFFAA) >> {\n<color:#0000FF>desc</color>}
-
-package "MeshHook Database Schema" #DDDDDD {
-
-    Table(User, "Stores user data\n- id PK\n- email\n- name") 
-    Table(Project, "Stores project details\n- id PK\n- user_id FK\n- title\n- description") 
-    Table(Webhook, "Stores webhook configurations\n- id PK\n- project_id FK\n- url\n- signature_key") 
-    Table(Log, "Stores logs for webhook events\n- id PK\n- webhook_id FK\n- status\n- response_time") 
-    Table(Tenant, "Multi-tenant RLS security\n- id PK\n- name")
-
-    User "1" -- "n" Project : "Owns"
-    Project "1" -- "n" Webhook : "Configures"
-    Webhook "1" -- "n" Log : "Generates"
-    Tenant "1" -- "*" User : "Includes"
-    
-    note right of Tenant : RLS Policies are\napplied here for\nmulti-tenancy security
+package "MeshHook Database Schema Documentation" {
+    [schema.sql] as (SchemaSQL)
+    [Migration Files] as (Migrations)
+    [Documentation Tool] as (DocTool)
+    [Database Schema Documentation] as (Doc)
+    [Project GitHub Wiki] as (Wiki)
+    [Dedicated Documentation Site] as (DocSite)
 }
 
-package "MeshHook Services" #DDDDDD {
-    Service(SvelteKit, "SvelteKit (SSR/API)\n- Webhook intake\n- CRUD operations") 
-    Service(Supabase, "Supabase\n- Postgres\n- Realtime\n- Storage\n- Edge") 
-    Service(Workers, "Workers\n- Orchestrator\n- HTTP Executor")
-    
-    SvelteKit ..> User : Reads/Writes
-    SvelteKit ..> Project : Reads/Writes
-    SvelteKit ..> Webhook : Reads/Writes
-    SvelteKit ..> Log : Reads/Writes
-    SvelteKit ..> Tenant : Reads/Writes
-    
-    Supabase ..> SvelteKit : "Provides DB & services"
-    Workers ..> Webhook : "Executes & logs"
-    
-    note right of Supabase : Supabase Realtime for\nlive log streaming
+package "MeshHook Core Components" {
+    [Webhook Triggers] as (Webhooks)
+    [Visual DAG Builder] as (DAG)
+    [Durable Runs] as (Runs)
+    [Live Logs] as (Logs)
+    [Multi-Tenant Security] as (Security)
+    [Postgres Database] as (Postgres)
 }
+
+(SchemaSQL) .down.> (DocTool) : Reviews
+(Migrations) .down.> (DocTool) : Reviews
+(DocTool) .right.> (Doc) : Generates
+(Doc) .down.> (Wiki) : Publishes
+(Doc) .down.> (DocSite) : Publishes
+(Postgres) .up.> (Webhooks) : Supports
+(Postgres) .up.> (DAG) : Supports
+(Postgres) .up.> (Runs) : Supports
+(Postgres) .up.> (Logs) : Supports
+(Postgres) .up.> (Security) : Supports
+(Postgres) -right-> (Doc) : Documented
+
+note right of (Doc)
+  Include:
+  - Tables
+  - Columns
+  - Data Types
+  - Constraints
+  - Relationships
+  - Indexes
+  - RLS Policies
+end note
+
+note left of (Postgres)
+  Managed by Supabase
+  - Data Storage
+  - Queues
+  - Real-time Log Streaming
+end note
 
 @enduml

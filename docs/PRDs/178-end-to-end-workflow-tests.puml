@@ -1,31 +1,34 @@
 @startuml
 !theme plain
 
-title End-to-End Workflow Tests - MeshHook Project
+actor Tester
+participant "E2E Test Suite" as E2E
+participant "Mock Data/Environment" as Mock
+database "Testing Database" as TestDB
+participant "CI/CD Pipeline" as CI
+participant "MeshHook System\n(SvelteKit, Supabase,\nWorker Processes)" as MeshHook
 
-actor Developer
-boundary "SvelteKit SSR/API" as SSR
-database "Supabase Postgres" as Postgres
-control "Orchestrator Worker" as Orchestrator
-control "HTTP Executor Worker" as Executor
-collections "Supabase Realtime" as Realtime
-collections "Supabase Storage" as Storage
-boundary "External Services" as External
+Tester -> E2E : Initiates tests
+E2E -> Mock : Uses mock data/environments
+Mock -> TestDB : Isolates from production data
+E2E -> MeshHook : 1. Webhook Triggers\n2. DAG Execution\n3. Event Sourcing\n4. Live Logging\n5. Multi-tenant Security
+MeshHook -> E2E : Returns test results
+E2E -> CI : Integrates with CI/CD for automatic testing
+CI -> Tester : Reports test outcomes
 
-Developer --> SSR : Initiates workflow tests
-SSR --> Postgres : 1. Fetch workflow definition
-Postgres --> Orchestrator : 2. Trigger workflow
-Orchestrator --> Executor : 3. Execute HTTP tasks
-Executor --> External : 4. Interact with external APIs
-External --> Executor : 5. Receive responses
-Executor --> Postgres : 6. Update task status
-Postgres --> Realtime : 7. Stream logs
-Realtime --> Developer : 8. Display live logs
+note right of E2E
+  - Simulate real-world scenarios
+  - Include signature verification
+  - Test visual DAG builder
+  - Verify event sourcing & replayability
+  - Validate live logging
+end note
 
-note over Developer, External : End-to-End Testing Scenario
-
-note right of Postgres : Data + Queues
-note right of Realtime : Log Streaming
-note right of Storage : Artifacts
+note right of MeshHook
+  Leverages:
+  - SvelteKit for UI
+  - Supabase for DB & Auth
+  - Worker Processes for background tasks
+end note
 
 @enduml

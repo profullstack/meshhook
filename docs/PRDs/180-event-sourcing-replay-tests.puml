@@ -1,32 +1,38 @@
 @startuml
 !theme plain
 
-title Event Sourcing Replay Tests - Integration Flow
+title Event Sourcing Replay Tests
 
 actor Tester
-entity "Integration Test Suite" as ITS
-component "Event Store" as ES
-database "Postgres DB" as DB
-component "Supabase Realtime" as SR
-component "Workflow Engine" as WE
-component "HTTP Executor" as HE
-component "Orchestrator Worker" as OW
+database PostgresDB {
+    folder "Event Sourcing Tables" as EST
+}
+component SupabaseRealtime
+component CI_CD_Pipeline
+component TestSuite {
+    component "Integration Tests" as IT
+    component "Failure Injection Tests" as FIT
+}
 
-Tester -> ITS : initiates tests
-ITS -> ES : 1. Fetches events
-ES -> DB : 2. Reads events\nfrom DB
-DB -> ES : 3. Returns events
-ES -> ITS : 4. Provides events
-ITS -> WE : 5. Triggers replay\nwith events
-WE -> OW : 6. Orchestrates replay
-OW -> HE : 7. Executes HTTP tasks
-HE -> OW : 8. Returns task results
-OW -> WE : 9. Completes replay
-WE -> SR : 10. Streams logs
-SR --> ITS : 11. Validates live logs
-ITS -> Tester : 12. Reports test results
+Tester --> TestSuite : initiates
+TestSuite --> SupabaseRealtime : observes logs
+TestSuite --> PostgresDB : verifies state replay
+CI_CD_Pipeline --> TestSuite : executes tests
+SupabaseRealtime ..> EST : streams logs
+PostgresDB ..> EST : stores events
 
-note right of WE : Uses event sourcing\nfor state changes
-note right of DB : No schema changes\nrequired for this task
+note right of IT : Covers normal replays,\nfailures, manual interventions
+note right of FIT : Simulates system failures\nto verify recovery
+
+legend right
+  -- Key Components --
+  Tester : Initiates test scenarios
+  TestSuite : Contains all tests for event sourcing replay
+  Integration Tests : Focus on event sourcing replay capabilities
+  Failure Injection Tests : Simulate system failures
+  SupabaseRealtime : For live log streaming
+  PostgresDB : Stores event sourcing data
+  CI/CD Pipeline : Automates test execution
+endlegend
 
 @enduml

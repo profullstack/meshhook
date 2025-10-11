@@ -1,0 +1,32 @@
+@startuml
+!theme plain
+
+title Event Timeline Implementation for MeshHook
+
+package "MeshHook System" {
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase Postgres] as Postgres
+    [Supabase Realtime] as Realtime
+    [Orchestrator Worker] as Orchestrator
+    [HTTP Executor Worker] as Executor
+}
+
+package "Event Timeline Feature" {
+    [Event Timeline UI] as EventUI
+    [Event Timeline Logic] as EventLogic
+    [Live Logs] as LiveLogs
+}
+
+SvelteKit --> EventUI : renders UI
+EventUI --> EventLogic : invokes logic
+EventLogic --> Postgres : reads/writes events
+EventLogic --> Realtime : subscribes to updates
+Realtime --> LiveLogs : streams logs
+LiveLogs --> EventUI : updates UI in real-time
+Orchestrator --> EventLogic : triggers events
+Executor --> EventLogic : executes HTTP requests
+
+note right of EventLogic : Follows TDD\nWrites tests before implementation
+note right of Postgres : Uses existing schema\nEvent sourcing for state changes
+
+@enduml
