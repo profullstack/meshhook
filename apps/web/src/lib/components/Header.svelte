@@ -1,5 +1,6 @@
 <script>
 	import { page } from '$app/stores';
+	import ThemeToggle from './ThemeToggle.svelte'; // Import ThemeToggle
 
 	let { session } = $props();
 
@@ -36,6 +37,9 @@
 		</nav>
 
 		<div class="user-menu">
+			<!-- Add ThemeToggle here -->
+			<ThemeToggle />
+			
 			{#if session?.user}
 				<span class="user-email">{session.user.email}</span>
 				<form action="/auth/logout" method="POST">
@@ -50,12 +54,13 @@
 
 <style>
 	.header {
-		background: white;
-		border-bottom: 1px solid #e0e0e0;
+		background: var(--color-nav-bg);
+		border-bottom: 1px solid var(--color-nav-border);
 		position: sticky;
 		top: 0;
 		z-index: 100;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+		box-shadow: var(--shadow-sm);
+		transition: background-color var(--transition-normal), border-color var(--transition-normal);
 	}
 
 	.container {
@@ -73,10 +78,10 @@
 		align-items: center;
 		gap: 0.5rem;
 		text-decoration: none;
-		color: #333;
+		color: var(--color-nav-text);
 		font-weight: 600;
 		font-size: 1.25rem;
-		transition: opacity 0.2s;
+		transition: opacity var(--transition-fast);
 	}
 
 	.logo a:hover {
@@ -101,20 +106,20 @@
 	.nav-link {
 		padding: 0.5rem 1rem;
 		text-decoration: none;
-		color: #666;
+		color: var(--color-text-secondary);
 		font-weight: 500;
 		border-radius: 4px;
-		transition: all 0.2s;
+		transition: all var(--transition-fast);
 	}
 
 	.nav-link:hover {
-		background: #f5f5f5;
-		color: #333;
+		background: var(--color-nav-hover);
+		color: var(--color-nav-text);
 	}
 
 	.nav-link.active {
-		background: var(--color-theme-1, #0066cc);
-		color: white;
+		background: var(--color-primary);
+		color: var(--color-text-inverse);
 	}
 
 	.user-menu {
@@ -124,28 +129,28 @@
 	}
 
 	.user-email {
-		color: #666;
+		color: var(--color-text-secondary);
 		font-size: 0.875rem;
 	}
 
 	.btn-logout,
 	.btn-login {
 		padding: 0.5rem 1rem;
-		border: 1px solid #e0e0e0;
-		background: white;
-		color: #333;
+		border: 1px solid var(--color-border-primary);
+		background: var(--color-bg-primary);
+		color: var(--color-text-primary);
 		border-radius: 4px;
 		font-weight: 500;
 		cursor: pointer;
 		text-decoration: none;
-		transition: all 0.2s;
+		transition: all var(--transition-fast);
 		font-size: 0.875rem;
 	}
 
 	.btn-logout:hover,
 	.btn-login:hover {
-		background: #f5f5f5;
-		border-color: #ccc;
+		background: var(--color-bg-hover);
+		border-color: var(--color-border-hover);
 	}
 
 	@media (max-width: 768px) {
