@@ -1,7 +1,8 @@
 <script>
 	import HttpResponseViewer from './HttpResponseViewer.svelte';
+	import VariablePickerTemplate from './VariablePickerTemplate.svelte';
 	
-	let { node, onSave, onCancel } = $props();
+	let { node, onSave, onCancel, previousNodeOutput = {} } = $props();
 	
 	// Local state for editing
 	let editedNode = $state({ ...node });
@@ -25,7 +26,7 @@
 		},
 		transform: {
 			fields: [
-				{ name: 'expression', label: 'JMESPath Expression', type: 'textarea', required: true, placeholder: 'data.items[*].{id: id, name: name}' },
+				{ name: 'template', label: 'Template', type: 'template-picker', required: true },
 				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Transform description' }
 			]
 		},
@@ -178,37 +179,47 @@
 			</div>
 			
 			{#each currentConfig.fields as field}
-				<div class="form-group">
-					<label for={field.name}>
-						{field.label}
-						{#if field.required}<span class="required">*</span>{/if}
-					</label>
-					
-					{#if field.type === 'text' || field.type === 'number'}
-						<input
-							id={field.name}
-							type={field.type}
-							bind:value={config[field.name]}
-							placeholder={field.placeholder || ''}
-							required={field.required}
-							min={field.min}
-							max={field.max}
+				<div class="form-group" class:full-width={field.type === 'template-picker'}>
+					{#if field.type === 'template-picker'}
+						<VariablePickerTemplate
+							previousNodeOutput={previousNodeOutput}
+							bind:template={config[field.name]}
+							onTemplateChange={(newTemplate) => {
+								config[field.name] = newTemplate;
+							}}
 						/>
-					{:else if field.type === 'textarea'}
-						<textarea
-							id={field.name}
-							bind:value={config[field.name]}
-							placeholder={field.placeholder || ''}
-							required={field.required}
-							rows={field.rows || 4}
-						></textarea>
-					{:else if field.type === 'select'}
-						<select id={field.name} bind:value={config[field.name]} required={field.required}>
-							<option value="">Select {field.label}</option>
-							{#each field.options as option}
-								<option value={option}>{option}</option>
-							{/each}
-						</select>
+					{:else}
+						<label for={field.name}>
+							{field.label}
+							{#if field.required}<span class="required">*</span>{/if}
+						</label>
+						
+						{#if field.type === 'text' || field.type === 'number'}
+							<input
+								id={field.name}
+								type={field.type}
+								bind:value={config[field.name]}
+								placeholder={field.placeholder || ''}
+								required={field.required}
+								min={field.min}
+								max={field.max}
+							/>
+						{:else if field.type === 'textarea'}
+							<textarea
+								id={field.name}
+								bind:value={config[field.name]}
+								placeholder={field.placeholder || ''}
+								required={field.required}
+								rows={field.rows || 4}
+							></textarea>
+						{:else if field.type === 'select'}
+							<select id={field.name} bind:value={config[field.name]} required={field.required}>
+								<option value="">Select {field.label}</option>
+								{#each field.options as option}
+									<option value={option}>{option}</option>
+								{/each}
+							</select>
+						{/if}
 					{/if}
 				</div>
 			{/each}
@@ -329,6 +340,10 @@
 	}
 	
 	.form-group:last-child {
+		margin-bottom: 0;
+	}
+	
+	.form-group.full-width {
 		margin-bottom: 0;
 	}
 	

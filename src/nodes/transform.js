@@ -2,26 +2,27 @@ import jmespath from 'jmespath';
 
 /**
  * Transform Node Implementation
- * 
- * Implements data transformation using JMESPath expressions.
- * JMESPath is a query language for JSON that allows you to extract
- * and transform data from JSON documents.
- * 
- * @example
+ *
+ * Implements data transformation using either:
+ * 1. JMESPath expressions for complex queries
+ * 2. Template-based transformations with variable substitution
+ *
+ * @example JMESPath
  * const node = new TransformNode({
  *   expression: 'users[*].{name: name, email: email}'
  * });
- * 
- * const result = node.transform({
- *   users: [
- *     { name: 'Alice', email: 'alice@example.com', age: 30 },
- *     { name: 'Bob', email: 'bob@example.com', age: 25 }
- *   ]
+ *
+ * @example Template
+ * const node = new TransformNode({
+ *   template: 'Hello {{name}}! Your order #{{order.id}} is {{status}}.'
  * });
- * // Result: [
- * //   { name: 'Alice', email: 'alice@example.com' },
- * //   { name: 'Bob', email: 'bob@example.com' }
- * // ]
+ *
+ * const result = node.transform({
+ *   name: 'Alice',
+ *   order: { id: 123 },
+ *   status: 'shipped'
+ * });
+ * // Result: "Hello Alice! Your order #123 is shipped."
  */
 
 /**
@@ -43,86 +44,165 @@ export class TransformError extends Error {
 
 /**
  * Transform Node
- * 
- * Transforms input data using JMESPath expressions
+ *
+ * Transforms input data using JMESPath expressions or templates
  */
 export class TransformNode {
   /**
    * Create a transform node
    * @param {Object} config - Node configuration
-   * @param {string} config.expression - JMESPath expression
+   * @param {string} config.expression - JMESPath expression (legacy)
+   * @param {string} config.template - Template string with {{variable}} syntax
    * @param {Object} config.options - Optional JMESPath options
    */
   constructor(config) {
-    if (!config.expression) {
-      throw new TransformError('expression is required', '');
-    }
-
+    // Support both template and expression modes
+    this.template = config.template;
     this.expression = config.expression;
     this.options = config.options || {};
     this.compiledExpression = null;
+    this.compilationError = null;
 
-    // Pre-compile the expression for better performance
-    try {
-      this.compiledExpression = jmespath.compile(this.expression);
-    } catch (error) {
-      // Expression will be validated later, store error for validation
-      this.compilationError = error;
+    // Validate that at least one mode is provided
+    if (!this.template && !this.expression) {
+      throw new TransformError('Either template or expression is required', '');
+    }
+
+    // Pre-compile JMESPath expression if provided
+    if (this.expression) {
+      try {
+        this.compiledExpression = jmespath.compile(this.expression);
+      } catch (error) {
+        this.compilationError = error;
+      }
     }
   }
 
   /**
-   * Transform input data using the JMESPath expression
-   * 
+   * Transform input data using template or JMESPath expression
+   *
    * @param {any} input - Input data to transform
    * @returns {any} Transformed data
    * @throws {TransformError} If transformation fails
-   * 
-   * @example
+   *
+   * @example Template
+   * const node = new TransformNode({ template: 'Hello {{name}}!' });
+   * const result = node.transform({ name: 'Alice' });
+   * // Result: "Hello Alice!"
+   *
+   * @example JMESPath
    * const node = new TransformNode({ expression: 'data.value' });
    * const result = node.transform({ data: { value: 42 } });
    * // Result: 42
    */
   transform(input) {
     try {
-      // Use jmespath.search directly - compilation is for validation only
+      // Use template mode if template is provided
+      if (this.template) {
+        return this._processTemplate(this.template, input);
+      }
+      
+      // Otherwise use JMESPath expression
       return jmespath.search(input, this.expression);
     } catch (error) {
       throw new TransformError(
         `Transform failed: ${error.message}`,
-        this.expression
+        this.template || this.expression
       );
     }
   }
 
   /**
-   * Validate the JMESPath expression
-   * 
+   * Process template with variable substitution
+   * @private
+   * @param {string} template - Template string
+   * @param {any} data - Data object for variable substitution
+   * @returns {string} Processed template
+   */
+  _processTemplate(template, data) {
+    return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+      const trimmedPath = path.trim();
+      const value = this._getValueByPath(data, trimmedPath);
+      
+      if (value === undefined || value === null) {
+        return match; // Keep original if not found
+      }
+      
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
+      
+      return String(value);
+    });
+  }
+
+  /**
+   * Get value from object by path string
+   * @private
+   * @param {any} obj - Source object
+   * @param {string} path - Dot-notation path (e.g., 'user.name' or 'items[0].id')
+   * @returns {any} Value at path or undefined
+   */
+  _getValueByPath(obj, path) {
+    const parts = path.split(/\.|\[|\]/).filter(Boolean);
+    let current = obj;
+    
+    for (const part of parts) {
+      if (current === null || current === undefined) {
+        return undefined;
+      }
+      current = current[part];
+    }
+    
+    return current;
+  }
+
+  /**
+   * Validate the transform configuration
+   *
    * @returns {Object} Validation result with valid flag and optional errors
-   * 
+   *
    * @example
-   * const node = new TransformNode({ expression: 'data.value' });
+   * const node = new TransformNode({ template: 'Hello {{name}}!' });
    * const result = node.validate();
    * // Result: { valid: true }
    */
   validate() {
-    if (this.compilationError) {
-      return {
-        valid: false,
-        errors: [this.compilationError.message],
-      };
+    const errors = [];
+
+    // Validate template if provided
+    if (this.template) {
+      // Check for balanced braces
+      const openBraces = (this.template.match(/\{\{/g) || []).length;
+      const closeBraces = (this.template.match(/\}\}/g) || []).length;
+      
+      if (openBraces !== closeBraces) {
+        errors.push('Template has unbalanced braces');
+      }
+      
+      // Check for empty variable names
+      if (/\{\{\s*\}\}/.test(this.template)) {
+        errors.push('Template contains empty variable names');
+      }
     }
 
-    try {
-      // Try to compile the expression
-      jmespath.compile(this.expression);
-      return { valid: true };
-    } catch (error) {
-      return {
-        valid: false,
-        errors: [error.message],
-      };
+    // Validate JMESPath expression if provided
+    if (this.expression) {
+      if (this.compilationError) {
+        errors.push(this.compilationError.message);
+      } else {
+        try {
+          jmespath.compile(this.expression);
+        } catch (error) {
+          errors.push(error.message);
+        }
+      }
     }
+
+    return {
+      valid: errors.length === 0,
+      errors: errors.length > 0 ? errors : undefined,
+    };
   }
 
   /**
@@ -145,14 +225,16 @@ export class TransformNode {
 
   /**
    * Get node metadata
-   * 
+   *
    * @returns {Object} Node metadata
    */
   getMetadata() {
     return {
       type: 'transform',
+      mode: this.template ? 'template' : 'expression',
+      template: this.template,
       expression: this.expression,
-      valid: !this.compilationError,
+      valid: this.validate().valid,
     };
   }
 }
