@@ -45,6 +45,7 @@
 		const incomingEdges = edges.filter(edge => edge.target === node.id);
 		
 		let sampleData;
+		const currentTimestamp = new Date().toISOString();
 		
 		if (incomingEdges.length === 0) {
 			// No previous node - provide sample data
@@ -58,7 +59,7 @@
 						{ name: 'Product B', price: 69.99 }
 					]
 				},
-				timestamp: new Date().toISOString()
+				timestamp: currentTimestamp
 			};
 		} else {
 			// Get the first previous node (for now, we'll support single input)
@@ -127,7 +128,8 @@
 	
 	// Handle node click - open configuration modal
 	function handleNodeClick(node) {
-		selectedNode = node;
+		// Clone the node to avoid immutability issues
+		selectedNode = JSON.parse(JSON.stringify(node));
 		showConfigModal = true;
 	}
 	

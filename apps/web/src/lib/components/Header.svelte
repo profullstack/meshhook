@@ -55,6 +55,7 @@
 		top: 0;
 		z-index: 100;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+		padding: 0.5rem 0;
 	}
 
 	.container {
@@ -85,7 +86,6 @@
 	.logo-image {
 		height: 64px;
 		width: auto;
-		padding: 0.5rem;
 	}
 
 	.logo-text {
