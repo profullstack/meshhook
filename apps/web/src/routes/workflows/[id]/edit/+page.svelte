@@ -22,6 +22,8 @@
 	// Node configuration modal state
 	let selectedNode = $state(null);
 	let showConfigModal = $state(false);
+	let previousNodeOutput = $state({});
+	let previousNode = $state(null);
 
 	// Validate on changes
 	$effect(() => {
@@ -145,6 +147,9 @@
 	function handleNodeClick(node) {
 		// Clone the node to avoid immutability issues
 		selectedNode = JSON.parse(JSON.stringify(node));
+		// Store previous node data in state to avoid immutability issues
+		previousNodeOutput = getPreviousNodeOutput(node);
+		previousNode = getPreviousNode(node);
 		showConfigModal = true;
 	}
 	
@@ -156,12 +161,16 @@
 		);
 		showConfigModal = false;
 		selectedNode = null;
+		previousNodeOutput = {};
+		previousNode = null;
 	}
 	
 	// Handle modal cancel
 	function handleModalCancel() {
 		showConfigModal = false;
 		selectedNode = null;
+		previousNodeOutput = {};
+		previousNode = null;
 	}
 
 	// Save workflow
@@ -298,8 +307,8 @@
 	{#if showConfigModal && selectedNode}
 		<NodeConfigModal
 			node={selectedNode}
-			previousNodeOutput={getPreviousNodeOutput(selectedNode)}
-			previousNode={getPreviousNode(selectedNode)}
+			{previousNodeOutput}
+			{previousNode}
 			onRefreshPreviousNode={handleRefreshPreviousNode}
 			onSave={handleNodeConfigSave}
 			onCancel={handleModalCancel}
