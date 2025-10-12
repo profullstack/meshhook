@@ -29,7 +29,8 @@
 	
 	// Handle node click to open configuration
 	function handleNodeClick(node) {
-		selectedNode = node;
+		// Clone the node to avoid immutability issues
+		selectedNode = JSON.parse(JSON.stringify(node));
 		showConfigModal = true;
 	}
 	
