@@ -1,10 +1,10 @@
 <script>
 	/**
-	 * HTTP Call Modal Component
+	 * Webhook Modal Component
 	 * 
-	 * HTTP-specific configuration modal using ThreePanelModal base.
-	 * Provides HTTP method selection, URL configuration, headers, body,
-	 * and test functionality with response preview.
+	 * Webhook-specific configuration modal using ThreePanelModal base.
+	 * Provides webhook URL configuration, HTTP method selection, headers,
+	 * body template, and test functionality.
 	 */
 	
 	import ThreePanelModal from './ThreePanelModal.svelte';
@@ -22,24 +22,29 @@
 	// Local config state
 	let config = $state(JSON.parse(JSON.stringify(node.data?.config || {
 		url: '',
-		method: 'GET',
+		method: 'POST',
 		headers: '{}',
-		body: '',
-		timeout: 30000
+		bodyTemplate: '',
+		description: ''
 	})));
 	
 	/**
-	 * Test HTTP call with current configuration
+	 * Test webhook call with current configuration
 	 */
-	async function testHttpCall(currentConfig, inputData) {
+	async function testWebhook(currentConfig, inputData) {
 		try {
+			// For webhook testing, we'll use the same endpoint as HTTP calls
+			// since webhooks are essentially HTTP POST/PUT/PATCH requests
 			const response = await fetch('/api/test-http', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					...currentConfig,
+					url: currentConfig.url,
+					method: currentConfig.method,
+					headers: currentConfig.headers,
+					body: currentConfig.bodyTemplate,
 					inputData
 				})
 			});
@@ -93,11 +98,11 @@
 	inputRequired={false}
 	showInputPanel={true}
 	showOutputPanel={true}
-	testFunction={testHttpCall}
+	testFunction={testWebhook}
 >
 	{#snippet children(ctx)}
 		<div class="modal-header">
-			<h2>Configure {ctx.editedNode.data?.label || 'HTTP Call'}</h2>
+			<h2>Configure {ctx.editedNode.data?.label || 'Webhook'}</h2>
 			<button class="close-btn" onclick={ctx.onCancel} aria-label="Close">&times;</button>
 		</div>
 		
@@ -113,67 +118,60 @@
 			</div>
 			
 			<div class="form-group">
-				<label for="http-method">HTTP Method</label>
-				<select
-					id="http-method"
-					bind:value={config.method}
-				>
-					<option value="GET">GET</option>
-					<option value="POST">POST</option>
-					<option value="PUT">PUT</option>
-					<option value="DELETE">DELETE</option>
-					<option value="PATCH">PATCH</option>
-				</select>
-			</div>
-			
-			<div class="form-group">
-				<label for="http-url">URL</label>
+				<label for="webhook-url">Webhook URL</label>
 				<input
-					id="http-url"
+					id="webhook-url"
 					type="text"
 					bind:value={config.url}
-					placeholder="https://api.example.com/users/{`{{userId}}`}"
+					placeholder="https://api.example.com/webhook/{`{{webhookId}}`}"
 				/>
 				<small class="help-text">Use {`{{variable}}`} syntax for dynamic values</small>
 			</div>
 			
 			<div class="form-group">
-				<label for="http-headers">Headers (JSON)</label>
+				<label for="webhook-method">HTTP Method</label>
+				<select
+					id="webhook-method"
+					bind:value={config.method}
+				>
+					<option value="POST">POST</option>
+					<option value="PUT">PUT</option>
+					<option value="PATCH">PATCH</option>
+				</select>
+			</div>
+			
+			<div class="form-group">
+				<label for="webhook-headers">Headers (JSON)</label>
 				<textarea
-					id="http-headers"
+					id="webhook-headers"
 					bind:value={config.headers}
 					placeholder={'{"Authorization": "Bearer {{token}}", "Content-Type": "application/json"}'}
 					rows="4"
 					spellcheck="false"
 				></textarea>
-				<small class="help-text">JSON object with header key-value pairs</small>
+				<small class="help-text">JSON object with header key-value pairs. Use {`{{variable}}`} for dynamic values</small>
 			</div>
 			
-			{#if config.method !== 'GET' && config.method !== 'DELETE'}
-				<div class="form-group">
-					<label for="http-body">Body (JSON)</label>
-					<textarea
-						id="http-body"
-						bind:value={config.body}
-						placeholder={'{"name": "{{user.name}}", "email": "{{user.email}}"}'}
-						rows="6"
-						spellcheck="false"
-					></textarea>
-					<small class="help-text">Leave empty to use input data directly</small>
-				</div>
-			{/if}
+			<div class="form-group">
+				<label for="webhook-body">Body Template</label>
+				<textarea
+					id="webhook-body"
+					bind:value={config.bodyTemplate}
+					placeholder={'{\n  "title": "{{title}}",\n  "content": "{{content}}",\n  "user": "{{user.name}}"\n}'}
+					rows="8"
+					spellcheck="false"
+				></textarea>
+				<small class="help-text">Use {`{{variable}}`} syntax. Supports nested paths like {`{{user.profile.name}}`}</small>
+			</div>
 			
 			<div class="form-group">
-				<label for="http-timeout">Timeout (ms)</label>
+				<label for="webhook-description">Description (optional)</label>
 				<input
-					id="http-timeout"
-					type="number"
-					bind:value={config.timeout}
-					placeholder="30000"
-					min="1000"
-					max="300000"
+					id="webhook-description"
+					type="text"
+					bind:value={config.description}
+					placeholder="Webhook description"
 				/>
-				<small class="help-text">Request timeout in milliseconds (1000-300000)</small>
 			</div>
 		</div>
 		
@@ -183,7 +181,7 @@
 					<span class="spinner-small"></span>
 					Testing...
 				{:else}
-					🧪 Test Request
+					🧪 Test Webhook
 				{/if}
 			</button>
 			<button class="btn-secondary" onclick={ctx.onCancel}>Cancel</button>
@@ -195,11 +193,11 @@
 		{#if outputProps.testingOutput}
 			<div class="loading-state">
 				<span class="spinner"></span>
-				<p>Testing HTTP request...</p>
+				<p>Testing webhook...</p>
 			</div>
 		{:else if outputProps.testResult}
 			{#if outputProps.activeOutputTab === 'preview'}
-				<div class="http-response-preview">
+				<div class="webhook-response-preview">
 					{#if outputProps.testResult.success}
 						<div class="response-section">
 							<h4>Response Status</h4>
@@ -223,7 +221,7 @@
 						</div>
 					{:else}
 						<div class="error-state">
-							<h4>❌ Request Failed</h4>
+							<h4>❌ Webhook Failed</h4>
 							<p class="error-message">{outputProps.testResult.error}</p>
 						</div>
 					{/if}
@@ -235,8 +233,8 @@
 			{/if}
 		{:else}
 			<div class="empty-state">
-				<p>Test the HTTP request to see the response</p>
-				<small>Click "Test Request" button to execute</small>
+				<p>Test the webhook to see the response</p>
+				<small>Click "Test Webhook" button to execute</small>
 			</div>
 		{/if}
 	{/snippet}
@@ -433,7 +431,7 @@
 		font-size: 0.875rem;
 	}
 	
-	.http-response-preview {
+	.webhook-response-preview {
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;

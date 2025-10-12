@@ -2,8 +2,10 @@
 	import HttpResponseViewer from './HttpResponseViewer.svelte';
 	import VariablePickerTemplate from './VariablePickerTemplate.svelte';
 	import TransformNodeModal from './TransformNodeModal.svelte';
+	import HttpCallModal from './HttpCallModal.svelte';
+	import WebhookModal from './WebhookModal.svelte';
 	
-	let { node, onSave, onCancel, previousNodeOutput = {}, previousNode = null, onRefreshPreviousNode = null } = $props();
+	let { node, onSave, onCancel, previousNodeOutput = {}, previousNode = null, onRefreshPreviousNode = null, onExecuteWorkflow = null } = $props();
 	
 	// Local state for editing - deep clone to avoid immutability
 	let editedNode = $state(JSON.parse(JSON.stringify(node)));
@@ -230,6 +232,29 @@
 		{previousNodeOutput}
 		{previousNode}
 		{onRefreshPreviousNode}
+		{onExecuteWorkflow}
+	/>
+{:else if editedNode.data?.type === 'httpCall'}
+	<!-- Use HTTP Call Modal with three-panel layout -->
+	<HttpCallModal
+		{node}
+		{onSave}
+		{onCancel}
+		{previousNodeOutput}
+		{previousNode}
+		{onRefreshPreviousNode}
+		{onExecuteWorkflow}
+	/>
+{:else if editedNode.data?.type === 'webhook'}
+	<!-- Use Webhook Modal with three-panel layout -->
+	<WebhookModal
+		{node}
+		{onSave}
+		{onCancel}
+		{previousNodeOutput}
+		{previousNode}
+		{onRefreshPreviousNode}
+		{onExecuteWorkflow}
 	/>
 {:else}
 	<!-- Standard Node Configuration Modal -->

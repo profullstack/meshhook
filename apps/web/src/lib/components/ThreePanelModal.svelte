@@ -18,6 +18,7 @@
 		previousNodeOutput = {},
 		previousNode = null,
 		onRefreshPreviousNode = null,
+		onExecuteWorkflow = null,
 		inputRequired = false,
 		showInputPanel = true,
 		showOutputPanel = true,
@@ -33,6 +34,9 @@
 	let testingPreviousNode = $state(false);
 	let refreshedOutput = $state(null);
 	let hasExecutedPreviousNode = $state(false);
+	
+	// Workflow execution state
+	let executingWorkflow = $state(false);
 	
 	// Input panel tab state
 	let activeInputTab = $state('schema'); // 'schema', 'table', 'json'
@@ -91,6 +95,31 @@
 			alert(`Error testing previous node: ${err.message}`);
 		} finally {
 			testingPreviousNode = false;
+		}
+	}
+	
+	/**
+	 * Execute workflow up to this node to get real data
+	 */
+	async function handleExecuteWorkflow() {
+		if (!onExecuteWorkflow) {
+			return;
+		}
+		
+		executingWorkflow = true;
+		
+		try {
+			const result = await onExecuteWorkflow(node.id);
+			if (result && result.success) {
+				refreshedOutput = result.output;
+				hasExecutedPreviousNode = true;
+			} else {
+				alert(`Failed to execute workflow: ${result?.error || 'Unknown error'}`);
+			}
+		} catch (err) {
+			alert(`Error executing workflow: ${err.message}`);
+		} finally {
+			executingWorkflow = false;
 		}
 	}
 	
@@ -344,20 +373,36 @@
 				<div class="panel-header">
 					<div class="header-content">
 						<h3>Input</h3>
-						{#if previousNode && previousNode.data?.type === 'httpCall' && (hasExecutedPreviousNode || Object.keys(currentPreviousOutput).length > 0)}
-							<button
-								class="btn-refresh-small"
-								onclick={handleTestPreviousNode}
-								disabled={testingPreviousNode}
-								title="Re-execute previous node"
-							>
-								{#if testingPreviousNode}
-									<span class="spinner-small"></span>
-								{:else}
-									🔄
-								{/if}
-							</button>
-						{/if}
+						<div class="header-actions">
+							{#if onExecuteWorkflow}
+								<button
+									class="btn-execute-workflow"
+									onclick={handleExecuteWorkflow}
+									disabled={executingWorkflow}
+									title="Execute workflow up to this node"
+								>
+									{#if executingWorkflow}
+										<span class="spinner-small"></span>
+									{:else}
+										▶️
+									{/if}
+								</button>
+							{/if}
+							{#if previousNode && previousNode.data?.type === 'httpCall' && (hasExecutedPreviousNode || Object.keys(currentPreviousOutput).length > 0)}
+								<button
+									class="btn-refresh-small"
+									onclick={handleTestPreviousNode}
+									disabled={testingPreviousNode}
+									title="Re-execute previous node only"
+								>
+									{#if testingPreviousNode}
+										<span class="spinner-small"></span>
+									{:else}
+										🔄
+									{/if}
+								</button>
+							{/if}
+						</div>
 					</div>
 					{#if hasExecutedPreviousNode || Object.keys(currentPreviousOutput).length > 0}
 						<div class="tabs">
@@ -582,6 +627,34 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+	}
+	
+	.header-actions {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
+	}
+	
+	.btn-execute-workflow {
+		background: none;
+		border: none;
+		padding: 0.25rem 0.5rem;
+		cursor: pointer;
+		font-size: 0.875rem;
+		border-radius: 4px;
+		transition: background 0.2s;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+	
+	.btn-execute-workflow:hover:not(:disabled) {
+		background: #f0f0f0;
+	}
+	
+	.btn-execute-workflow:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 	
 	.panel-header h3 {
