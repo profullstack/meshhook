@@ -29,6 +29,7 @@
 	// Input panel tab state
 	let activeInputTab = $state('schema'); // 'schema', 'table', 'json'
 	let draggedVariable = $state(null);
+	let expandedPaths = $state(new Set());
 	
 	// Current previous output
 	let currentPreviousOutput = $state({});
@@ -124,52 +125,78 @@
 	}
 	
 	/**
-	 * Extract schema from data (variable paths with types)
+	 * Extract schema as a tree structure with nesting
 	 */
-	function extractSchema(obj, prefix = '') {
-		const schema = [];
+	function extractSchemaTree(obj, prefix = '', level = 0) {
+		const items = [];
 		
 		if (obj === null || obj === undefined) {
-			return schema;
+			return items;
 		}
 		
 		if (typeof obj !== 'object') {
-			return schema;
+			return items;
 		}
 		
 		if (Array.isArray(obj)) {
-			schema.push({
-				path: prefix,
-				type: 'array',
-				value: obj,
-				isExpandable: true
-			});
-			if (obj.length > 0) {
-				obj.forEach((item, index) => {
-					const itemPath = `${prefix}[${index}]`;
-					schema.push(...extractSchema(item, itemPath));
+			// For arrays, show each index as a separate item
+			obj.forEach((item, index) => {
+				const itemPath = prefix ? `${prefix}[${index}]` : `[${index}]`;
+				const itemType = Array.isArray(item) ? 'array' : typeof item;
+				const isExpandable = typeof item === 'object' && item !== null;
+				
+				items.push({
+					path: itemPath,
+					label: `[${index}]`,
+					type: itemType,
+					value: item,
+					level,
+					isExpandable,
+					isExpanded: expandedPaths.has(itemPath)
 				});
-			}
+				
+				// If expanded, show children
+				if (isExpandable && expandedPaths.has(itemPath)) {
+					items.push(...extractSchemaTree(item, itemPath, level + 1));
+				}
+			});
 		} else {
+			// For objects, show each property
 			Object.entries(obj).forEach(([key, value]) => {
 				const newPath = prefix ? `${prefix}.${key}` : key;
-				const type = Array.isArray(value) ? 'array' : typeof value;
+				const valueType = Array.isArray(value) ? 'array' : typeof value;
 				const isExpandable = typeof value === 'object' && value !== null;
 				
-				schema.push({
+				items.push({
 					path: newPath,
-					type,
+					label: key,
+					type: valueType,
 					value,
-					isExpandable
+					level,
+					isExpandable,
+					isExpanded: expandedPaths.has(newPath)
 				});
 				
-				if (isExpandable) {
-					schema.push(...extractSchema(value, newPath));
+				// If expanded, show children
+				if (isExpandable && expandedPaths.has(newPath)) {
+					items.push(...extractSchemaTree(value, newPath, level + 1));
 				}
 			});
 		}
 		
-		return schema;
+		return items;
+	}
+	
+	/**
+	 * Toggle expand/collapse for a path
+	 */
+	function toggleExpand(path) {
+		if (expandedPaths.has(path)) {
+			expandedPaths.delete(path);
+		} else {
+			expandedPaths.add(path);
+		}
+		expandedPaths = new Set(expandedPaths); // Trigger reactivity
 	}
 	
 	/**
@@ -265,7 +292,7 @@
 	}
 	
 	// Derived state
-	const schemaData = $derived(extractSchema(currentPreviousOutput));
+	const schemaData = $derived(extractSchemaTree(currentPreviousOutput));
 	const tableData = $derived(dataToTable(currentPreviousOutput));
 	
 	function handleSave() {
@@ -368,17 +395,34 @@
 										<div
 											class="schema-item"
 											class:dragging={draggedVariable === item.path}
-											draggable="true"
-											ondragstart={(e) => handleDragStart(e, item.path)}
-											ondragend={handleDragEnd}
-											onclick={() => !item.isExpandable && insertVariable(item.path)}
-											title={item.isExpandable ? 'Object/Array - expand to see properties' : `Click or drag to insert {{${item.path}}}`}
+											style="padding-left: {item.level * 1.5 + 0.5}rem"
 										>
-											<span class="type-icon">{getTypeIcon(item.type)}</span>
-											<span class="variable-path">{item.path}</span>
-											{#if !item.isExpandable}
-												<span class="variable-value">{String(item.value).substring(0, 50)}{String(item.value).length > 50 ? '...' : ''}</span>
+											{#if item.isExpandable}
+												<button
+													class="expand-btn"
+													onclick={() => toggleExpand(item.path)}
+													aria-label={item.isExpanded ? 'Collapse' : 'Expand'}
+												>
+													{item.isExpanded ? '▼' : '▶'}
+												</button>
+											{:else}
+												<span class="expand-spacer"></span>
 											{/if}
+											
+											<div
+												class="schema-item-content"
+												draggable={!item.isExpandable}
+												ondragstart={(e) => !item.isExpandable && handleDragStart(e, item.path)}
+												ondragend={handleDragEnd}
+												onclick={() => !item.isExpandable && insertVariable(item.path)}
+												title={item.isExpandable ? `${item.type} - click arrow to expand` : `Click or drag to insert {{${item.path}}}`}
+											>
+												<span class="type-icon">{getTypeIcon(item.type)}</span>
+												<span class="variable-label">{item.label}</span>
+												{#if !item.isExpandable}
+													<span class="variable-value">{String(item.value).substring(0, 40)}{String(item.value).length > 40 ? '...' : ''}</span>
+												{/if}
+											</div>
 										</div>
 									{/each}
 								</div>
@@ -542,9 +586,15 @@
 	}
 	
 	.panel-header {
-		padding: 1rem;
 		border-bottom: 1px solid #e0e0e0;
 		background: #f8f9fa;
+	}
+	
+	.header-content {
+		padding: 1rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 	}
 	
 	.panel-header h3 {
@@ -554,6 +604,43 @@
 		color: #333;
 		text-transform: uppercase;
 		letter-spacing: 0.5px;
+	}
+	
+	.tabs {
+		display: flex;
+		gap: 0;
+		border-top: 1px solid #e0e0e0;
+	}
+	
+	.tab {
+		flex: 1;
+		padding: 0.75rem 1rem;
+		background: #f8f9fa;
+		border: none;
+		border-right: 1px solid #e0e0e0;
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: #666;
+		cursor: pointer;
+		transition: all 0.2s;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
+	
+	.tab:last-child {
+		border-right: none;
+	}
+	
+	.tab:hover {
+		background: #e9ecef;
+		color: #333;
+	}
+	
+	.tab.active {
+		background: white;
+		color: var(--color-theme-1, #4075a6);
+		font-weight: 600;
+		border-bottom: 2px solid var(--color-theme-1, #4075a6);
 	}
 	
 	.panel-content {
