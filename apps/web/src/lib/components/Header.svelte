@@ -22,7 +22,7 @@
 	<div class="container">
 		<div class="logo">
 			<a href="/">
-				<span class="logo-icon">🪝</span>
+				<img src="/logo.black.svg" alt="MeshHook Logo" class="logo-image" />
 				<span class="logo-text">MeshHook</span>
 			</a>
 		</div>
@@ -83,8 +83,9 @@
 		opacity: 0.8;
 	}
 
-	.logo-icon {
-		font-size: 1.5rem;
+	.logo-image {
+		height: 32px;
+		width: auto;
 	}
 
 	.logo-text {
@@ -166,6 +167,10 @@
 			display: none;
 		}
 
+		.logo-image {
+			height: 28px;
+		}
+		
 		.logo-text {
 			display: none;
 		}
