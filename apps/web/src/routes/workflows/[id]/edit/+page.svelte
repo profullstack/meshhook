@@ -64,7 +64,10 @@
 		} else {
 			// Get the first previous node (for now, we'll support single input)
 			const previousNodeId = incomingEdges[0].source;
-			const previousNode = nodes.find(n => n.id === previousNodeId);
+			const foundNode = nodes.find(n => n.id === previousNodeId);
+			
+			// Clone to avoid immutability issues
+			const previousNode = foundNode ? JSON.parse(JSON.stringify(foundNode)) : null;
 			
 			// If previous node has test result data, use it
 			if (previousNode?.data?.testResult) {
