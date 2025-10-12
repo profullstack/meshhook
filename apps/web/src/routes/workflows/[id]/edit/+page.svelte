@@ -39,6 +39,67 @@
 		edges = updatedEdges;
 	}
 	
+	// Get previous node output for template preview
+	function getPreviousNodeOutput(node) {
+		// Find edges that connect to this node
+		const incomingEdges = edges.filter(edge => edge.target === node.id);
+		
+		if (incomingEdges.length === 0) {
+			// No previous node - provide sample data
+			return {
+				status: 'success',
+				data: {
+					user: { name: 'John Doe', email: 'john@example.com' },
+					order: { id: 12345, total: 99.99 },
+					items: [
+						{ name: 'Product A', price: 29.99 },
+						{ name: 'Product B', price: 69.99 }
+					]
+				},
+				timestamp: new Date().toISOString()
+			};
+		}
+		
+		// Get the first previous node (for now, we'll support single input)
+		const previousNodeId = incomingEdges[0].source;
+		const previousNode = nodes.find(n => n.id === previousNodeId);
+		
+		// If previous node has test result data, use it
+		if (previousNode?.data?.testResult) {
+			return previousNode.data.testResult;
+		}
+		
+		// Otherwise provide sample data based on node type
+		if (previousNode?.data?.type === 'httpCall') {
+			return {
+				status: 200,
+				statusText: 'OK',
+				ok: true,
+				headers: {
+					'content-type': 'application/json'
+				},
+				data: {
+					user: { name: 'Alice Smith', email: 'alice@example.com' },
+					order: { id: 67890, status: 'shipped', total: 149.99 },
+					items: [
+						{ id: 1, name: 'Widget', price: 49.99, quantity: 2 },
+						{ id: 2, name: 'Gadget', price: 99.99, quantity: 1 }
+					]
+				}
+			};
+		}
+		
+		// Default sample data
+		return {
+			message: 'Sample data from previous node',
+			data: {
+				value: 42,
+				text: 'Hello World',
+				nested: { property: 'value' }
+			}
+		};
+	}
+	
 	// Handle node click - open configuration modal
 	function handleNodeClick(node) {
 		selectedNode = node;
@@ -195,6 +256,7 @@
 	{#if showConfigModal && selectedNode}
 		<NodeConfigModal
 			node={selectedNode}
+			previousNodeOutput={getPreviousNodeOutput(selectedNode)}
 			onSave={handleNodeConfigSave}
 			onCancel={handleModalCancel}
 		/>
