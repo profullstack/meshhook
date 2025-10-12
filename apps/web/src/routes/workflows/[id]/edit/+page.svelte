@@ -103,13 +103,16 @@
 		return JSON.parse(JSON.stringify(sampleData));
 	}
 	
-	// Get the previous node for a given node
+	// Get the previous node for a given node (returns a plain object copy)
 	function getPreviousNode(node) {
 		const incomingEdges = edges.filter(edge => edge.target === node.id);
 		if (incomingEdges.length === 0) return null;
 		
 		const previousNodeId = incomingEdges[0].source;
-		return nodes.find(n => n.id === previousNodeId) || null;
+		const foundNode = nodes.find(n => n.id === previousNodeId);
+		
+		// Return a deep clone to avoid immutability issues
+		return foundNode ? JSON.parse(JSON.stringify(foundNode)) : null;
 	}
 	
 	// Handle refreshing previous node data
