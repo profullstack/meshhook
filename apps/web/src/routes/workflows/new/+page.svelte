@@ -46,6 +46,105 @@
 		showConfigModal = false;
 		selectedNode = null;
 	}
+	
+	// Handle executing workflow up to a specific node
+	async function handleExecuteWorkflow(targetNodeId) {
+		try {
+			// Find the target node
+			const targetNode = nodes.find(n => n.id === targetNodeId);
+			if (!targetNode) {
+				return { success: false, error: 'Target node not found' };
+			}
+			
+			// Build execution path by traversing backwards from target node
+			const executionPath = [];
+			const visited = new Set();
+			
+			function buildPath(nodeId) {
+				if (visited.has(nodeId)) return;
+				visited.add(nodeId);
+				
+				const node = nodes.find(n => n.id === nodeId);
+				if (!node) return;
+				
+				// Find incoming edges
+				const incomingEdges = edges.filter(e => e.target === nodeId);
+				
+				// Process dependencies first
+				for (const edge of incomingEdges) {
+					buildPath(edge.source);
+				}
+				
+				// Add current node to path
+				executionPath.push(node);
+			}
+			
+			buildPath(targetNodeId);
+			
+			// Execute nodes in order
+			let lastOutput = {};
+			
+			for (const node of executionPath) {
+				if (node.data?.type === 'httpCall') {
+					// Execute HTTP call
+					const response = await fetch('/api/test-http', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(node.data?.config || {})
+					});
+					
+					const result = await response.json();
+					
+					if (result.success) {
+						lastOutput = result.response;
+						// Update node with test result
+						nodes = nodes.map(n =>
+							n.id === node.id
+								? { ...n, data: { ...n.data, testResult: lastOutput } }
+								: n
+						);
+					} else {
+						return {
+							success: false,
+							error: `Failed to execute ${node.data?.label || node.id}: ${result.error?.message || 'Unknown error'}`
+						};
+					}
+				} else if (node.data?.type === 'transform') {
+					// Execute transform node
+					const response = await fetch('/api/test-transform', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							config: node.data?.config || {},
+							input: lastOutput
+						})
+					});
+					
+					const result = await response.json();
+					
+					if (result.success) {
+						lastOutput = result.output;
+						// Update node with test result
+						nodes = nodes.map(n =>
+							n.id === node.id
+								? { ...n, data: { ...n.data, testResult: lastOutput } }
+								: n
+						);
+					} else {
+						return {
+							success: false,
+							error: `Failed to execute ${node.data?.label || node.id}: ${result.error || 'Unknown error'}`
+						};
+					}
+				}
+				// Add more node types as needed
+			}
+			
+			return { success: true, output: lastOutput };
+		} catch (error) {
+			return { success: false, error: error.message };
+		}
+	}
 
 	// Save workflow
 	async function saveWorkflow() {
@@ -121,6 +220,7 @@
 	{#if showConfigModal && selectedNode}
 		<NodeConfigModal
 			node={selectedNode}
+			onExecuteWorkflow={handleExecuteWorkflow}
 			onSave={handleNodeConfigSave}
 			onCancel={handleNodeConfigCancel}
 		/>
