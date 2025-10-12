@@ -66,13 +66,24 @@
 			const previousNodeId = incomingEdges[0].source;
 			const foundNode = nodes.find(n => n.id === previousNodeId);
 			
-			// Clone to avoid immutability issues
-			const previousNode = foundNode ? JSON.parse(JSON.stringify(foundNode)) : null;
-			
-			// If previous node has test result data, use it
-			if (previousNode?.data?.testResult) {
-				sampleData = previousNode.data.testResult;
-			} else if (previousNode?.data?.type === 'httpCall') {
+			if (!foundNode) {
+				// No node found, use default
+				sampleData = {
+					message: 'Sample data from previous node',
+					data: {
+						value: 42,
+						text: 'Hello World',
+						nested: { property: 'value' }
+					}
+				};
+			} else {
+				// Clone the found node to avoid immutability issues
+				const previousNode = JSON.parse(JSON.stringify(foundNode));
+				
+				// If previous node has test result data, use it
+				if (previousNode.data?.testResult) {
+					sampleData = previousNode.data.testResult;
+				} else if (previousNode.data?.type === 'httpCall') {
 				// Otherwise provide sample data based on node type
 				sampleData = {
 					status: 200,
@@ -90,16 +101,17 @@
 						]
 					}
 				};
-			} else {
-				// Default sample data
-				sampleData = {
-					message: 'Sample data from previous node',
-					data: {
-						value: 42,
-						text: 'Hello World',
-						nested: { property: 'value' }
-					}
-				};
+				} else {
+					// Default sample data
+					sampleData = {
+						message: 'Sample data from previous node',
+						data: {
+							value: 42,
+							text: 'Hello World',
+							nested: { property: 'value' }
+						}
+					};
+				}
 			}
 		}
 		
