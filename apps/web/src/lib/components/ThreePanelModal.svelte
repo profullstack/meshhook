@@ -103,6 +103,7 @@
 	 */
 	async function handleExecuteWorkflow() {
 		if (!onExecuteWorkflow) {
+			alert('Workflow execution not yet implemented. This feature will execute the entire workflow up to this node to provide real input data.');
 			return;
 		}
 		
@@ -374,21 +375,19 @@
 					<div class="header-content">
 						<h3>Input</h3>
 						<div class="header-actions">
-							{#if onExecuteWorkflow}
-								<button
-									class="btn-execute-workflow"
-									onclick={handleExecuteWorkflow}
-									disabled={executingWorkflow}
-									title="Execute workflow up to this node"
-								>
-									{#if executingWorkflow}
-										<span class="spinner-small"></span>
-									{:else}
-										▶️
-									{/if}
-								</button>
-							{/if}
-							{#if previousNode && previousNode.data?.type === 'httpCall' && (hasExecutedPreviousNode || Object.keys(currentPreviousOutput).length > 0)}
+							<button
+								class="btn-execute-workflow"
+								onclick={handleExecuteWorkflow}
+								disabled={executingWorkflow}
+								title="Execute workflow up to this node"
+							>
+								{#if executingWorkflow}
+									<span class="spinner-small"></span>
+								{:else}
+									▶️ Execute
+								{/if}
+							</button>
+							{#if previousNode && previousNode.data?.type === 'httpCall'}
 								<button
 									class="btn-refresh-small"
 									onclick={handleTestPreviousNode}
@@ -398,7 +397,7 @@
 									{#if testingPreviousNode}
 										<span class="spinner-small"></span>
 									{:else}
-										🔄
+										🔄 Refresh
 									{/if}
 								</button>
 							{/if}
