@@ -8,11 +8,14 @@
 	 * 3. Preview sample output (right pane)
 	 */
 	
-	let { 
+	let {
 		previousNodeOutput = {},
 		template = $bindable(''),
 		onTemplateChange = () => {}
 	} = $props();
+	
+	// Convert previousNodeOutput to a plain object to avoid immutability issues
+	const nodeOutput = $derived(previousNodeOutput ? JSON.parse(JSON.stringify(previousNodeOutput)) : {});
 	
 	// State
 	let sampleOutput = $state('');
@@ -191,7 +194,7 @@
 	 * Update preview when template changes
 	 */
 	function updatePreview() {
-		sampleOutput = processTemplate(template, previousNodeOutput);
+		sampleOutput = processTemplate(template, nodeOutput);
 	}
 	
 	/**
@@ -226,7 +229,7 @@
 		updatePreview();
 	});
 	
-	const treeItems = $derived(getTreeStructure(previousNodeOutput));
+	const treeItems = $derived(getTreeStructure(nodeOutput));
 </script>
 
 <div class="variable-picker-container">

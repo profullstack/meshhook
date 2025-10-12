@@ -85,6 +85,7 @@
 	.logo-image {
 		height: 64px;
 		width: auto;
+		padding: 0.5rem;
 	}
 
 	.logo-text {
