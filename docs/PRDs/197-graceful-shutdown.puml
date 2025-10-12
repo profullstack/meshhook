@@ -1,7 +1,47 @@
 @startuml
-!theme plain
+!theme amiga
 
 title Graceful Shutdown Process
 
+actor "Supabase Queue" as Queue
+entity "SvelteKit Service" as SvelteKit
+database "Postgres DB" as Postgres
+control "Worker Process" as Worker
+cloud "External Services" as External
+
+Queue --> SvelteKit : enqueue job
+SvelteKit --> Worker : dispatch job
+Worker --> Postgres : update job status
+Postgres --> SvelteKit : notify on job completion
+SvelteKit --> External : fetch data
+External --> SvelteKit : return data
+
+note right of Worker : Graceful Shutdown Signal\nreceived here
+
+group Graceful Shutdown Sequence
+    Worker --> Worker : finish current job
+    Worker --> Postgres : update final job status
+    Worker --> SvelteKit : notify job completion
+    SvelteKit --> Queue : acknowledge job completion
+    deactivate Worker
+    deactivate SvelteKit
+    deactivate Queue
+end
+
+note over SvelteKit, Postgres : Shutdown Hooks Triggered Here
+SvelteKit --> Postgres : close connections
+Postgres --> SvelteKit : confirm disconnection
+
+note over SvelteKit : Resource Cleanup
+SvelteKit --> SvelteKit : release resources
+
+legend left
+  -- Key --
+  Actor : External initiator
+  Entity : System component
+  Database : Data storage
+  Control : Processing unit
+  Cloud : External system integration
+endlegend
 
 @enduml

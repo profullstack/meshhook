@@ -1,28 +1,32 @@
 @startuml
 !theme plain
 
-title Webhook Endpoint Creation Workflow
+title Webhook Endpoint Creation Process
 
-actor Developer
-boundary "Webhook API" as API
-control "Validation Service" as Validator
+actor User as user
+boundary "SvelteKit API" as API
 database "Supabase Postgres" as DB
-entity "Existing System Components" as ExistingSystem
-control "Webhook Orchestrator" as Orchestrator
+control "Webhook Module" as WM
+entity "Webhook Configurations Table" as WCT
 
-Developer -> API : Request to create webhook endpoint
-API -> Validator : Validate request
-Validator -> DB : Check existing endpoints
-DB --> Validator : Validation result
-Validator --> API : Validation response
-API -> Orchestrator : Create endpoint
-Orchestrator -> DB : Store new endpoint data
-DB --> Orchestrator : Confirmation
-Orchestrator --> API : Endpoint creation status
-API --> Developer : Response (success/failure)
+user -> API : Request to create webhook
+API -> WM : Validate request
+API -> WM : Create webhook config
+WM -> DB : Store config in\nWebhook Configurations Table
+DB --> WM : Return confirmation
+WM --> API : Webhook creation success
+API --> user : Return success response
 
-note right of DB : Uses existing schema
-note left of Orchestrator : Integrates with\nexisting workflow engine
-note over API, Validator : RESTful API endpoint(s)
+note right of WM : Validates signature,\npayload, and applies rate limiting
+
+WCT : + id (PK)
+WCT : + project_id (FK)
+WCT : + url_path
+WCT : + workflow_id (FK)
+WCT : + secret_key
+WCT : + rate_limit
+WCT : + validation_schema
+WCT : + created_at
+WCT : + updated_at
 
 @enduml

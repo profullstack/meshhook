@@ -1,6 +1,32 @@
 @startuml
 !theme plain
 
-package "MeshHook System" {
+title Health Check Endpoint Implementation
+
+component "API Gateway" as API
+component "Health Check\nEndpoint" as HealthCheck
+database "Postgres" as DB
+component "Supabase\nServices" as Supabase
+component "Worker\nProcesses" as Workers
+cloud "External\nMonitoring Tools" as Monitoring
+
+API --> HealthCheck : routes /health
+HealthCheck --> DB : queries to verify\noperational status
+HealthCheck --> Supabase : API calls to check\nservice health
+HealthCheck --> Workers : checks worker\nstatus
+HealthCheck --> Monitoring : sends health data\nfor observability
+
+note right of HealthCheck
+  Health Check Logic:
+  1. Perform DB health query
+  2. Call Supabase health endpoints
+  3. Verify worker process signals
+  4. Compile status report
+end note
+
+note over Monitoring
+  Uses unauthenticated access
+  to periodically check system health
+end note
 
 @enduml

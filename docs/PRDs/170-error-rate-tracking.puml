@@ -1,46 +1,46 @@
 @startuml
 !theme plain
 
-title Error Rate Tracking Implementation
-
 package "MeshHook System" {
-    [Webhook Intake] <<SvelteKit>>
-    [Workflow CRUD] <<SvelteKit>>
-    [Publish Versions] <<SvelteKit>>
-    [Run Console] <<SvelteKit>>
-    [Orchestrator Worker] <<Worker>>
-    [HTTP Executor Worker] <<Worker>>
-    database "Supabase" {
-        [Postgres Data + Queues]
-        [Realtime Log Streaming]
-        [Storage Artifacts]
-        [Edge Cron/Timers]
+    [Workers] --> [Error Tracking System] : captures and classifies errors
+    [SvelteKit UI] --> [Error Tracking System] : displays dashboards
+    database "Supabase (Postgres)" {
+        [ErrorMetrics Table]
     }
+    [Error Tracking System] --> [Supabase (Postgres)] : stores error metrics
+    [Error Tracking System] ..> [Notification Service] : triggers alerts
 }
 
-package "Error Rate Tracking Feature" {
-    [Error Rate Tracker] <<Component>>
-    [Error Logger] <<Component>>
-    [Metrics Dashboard] <<Component>>
-    [Alert System] <<Component>>
+cloud {
+    [External Services]
+    [Notification Service] --> [External Services] : Slack/Email notifications
 }
 
-[Webhook Intake] --> [Error Logger] : Logs errors
-[Orchestrator Worker] --> [Error Logger] : Logs errors
-[HTTP Executor Worker] --> [Error Logger] : Logs errors
-[Error Logger] --> [Postgres Data + Queues] : Stores error logs
-[Error Logger] --> [Error Rate Tracker] : Sends error data
-[Error Rate Tracker] --> [Metrics Dashboard] : Updates error metrics
-[Error Rate Tracker] --> [Alert System] : Triggers alerts on threshold
-[Metrics Dashboard] ..> [Supabase] : Fetches updated metrics
-[Alert System] ..> [Supabase] : Registers alerts
+[Workers] ..> [External Services] : interacts for workflow executions
+[SvelteKit UI] ..> [External Services] : fetches data for UI
 
-note right of [Error Rate Tracker]
-  Key Considerations:
-  - Maintain backward compatibility
-  - Follow event sourcing patterns
-  - Implement proper error handling and logging
-  - Consider rate limiting and resource constraints
+note right of [Error Tracking System]
+  Functions:
+  - Collect error metrics
+  - Classify errors
+  - Real-time monitoring
+  - Alerting mechanism
+end note
+
+note right of [ErrorMetrics Table]
+  Schema:
+  - error_id: UUID
+  - timestamp: Timestamp
+  - error_type: VARCHAR
+  - severity: ENUM
+  - workflow_id: UUID
+  - metadata: JSONB
+end note
+
+note right of [External Services]
+  Includes:
+  - Workflow execution services
+  - Email/Slack for notifications
 end note
 
 @enduml

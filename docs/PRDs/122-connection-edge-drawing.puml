@@ -1,0 +1,59 @@
+@startuml
+!theme plain
+
+package "Workflow Builder" {
+    [Connection/Edge Drawing] as Drawing
+    [Visual DAG Builder] as DAG
+    [Supabase Realtime] as Realtime
+    [Postgres Database] as Postgres
+    [Webhook Triggers] as Webhooks
+}
+
+package "Supabase" {
+    [Realtime Log Streaming] as Logs
+    [Postgres (data + queues)] as DataQueues
+}
+
+package "SvelteKit" {
+    [SSR/API] as SSR
+}
+
+[Drawing] --> [DAG] : Uses
+[DAG] --> [SSR] : Renders in
+[Webhooks] --> [Postgres] : Stores triggers
+[Realtime] --> [Logs] : Streams logs
+[Postgres] --> [DataQueues] : Utilizes
+
+note right of [Drawing]
+  Implement connection/edge drawing
+  for visually creating and managing
+  workflow tasks.
+end note
+
+note right of [Webhooks]
+  Trigger workflows based on
+  incoming webhooks with signature
+  verification.
+end note
+
+note "No new data model changes required for this task." as NoteDataModel
+[Drawing] .. NoteDataModel
+NoteDataModel .. [Postgres]
+
+note "Follow TDD approach for implementation." as NoteTDD
+[Drawing] .. NoteTDD
+
+note "Ensure integration with existing components." as NoteIntegration
+[Drawing] .. NoteIntegration
+NoteIntegration .. [DAG]
+NoteIntegration .. [Postgres]
+
+note "Use Supabase Realtime for live log updates." as NoteSupabase
+[Realtime] .. NoteSupabase
+NoteSupabase .. [Logs]
+
+note over [SSR], [DataQueues]
+  Core Infrastructure
+end note
+
+@enduml

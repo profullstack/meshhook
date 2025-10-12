@@ -1,23 +1,46 @@
 @startuml
 !theme plain
 
-title Webhook Logs Implementation Flow
+package "Webhook System" {
+    [Webhook Management UI] as UI
+    [Webhook Processor] as Processor
+    [Supabase Realtime] as Realtime
+    database "Postgres" as DB {
+        [webhook_logs] as Logs
+    }
+}
 
-actor User as user
-boundary "Webhook Management UI" as UI
-control "Webhook Service" as Service
-database "Supabase Postgres" as DB
-collections "Supabase Realtime" as Realtime
+[API Gateway] as API
 
-user -> UI : Access logs
-UI -> Service : Request logs
-Service -> DB : Query log data
-DB --> Service : Return logs
-Service -> Realtime : Subscribe to log updates
-Realtime --> UI : Stream updates
-UI --> user : Display logs
+package "External System" {
+    [Client Application] as Client
+}
 
-note right of Service : Integration Points:\n- Query existing Postgres schema for logs\n- Subscribe to Supabase Realtime for live updates
-note left of UI : SvelteKit (SSR/API) handles rendering and API requests
+Client --> API : sends webhook events
+API --> Processor : processes events
+Processor --> Logs : writes log entries
+Logs --> DB : stores logs
+UI ..> Realtime : subscribes for updates
+Realtime ..> DB : streams updates
+UI --> DB : queries logs with filters
+
+note right of Logs
+  Columns:
+  - id
+  - webhook_id
+  - timestamp
+  - request_headers
+  - request_body
+  - response_status
+  - response_body
+  - created_at
+end note
+
+note right of API
+  GET /api/webhooks/{webhook_id}/logs
+  WebSocket /realtime/logs
+end note
+
+Processor .down.> API : Fetches logs\nfor specific webhook
 
 @enduml

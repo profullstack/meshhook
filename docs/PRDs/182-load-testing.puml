@@ -1,22 +1,35 @@
 @startuml
-!define RECTANGLE class
+!theme plain
 
-RECTANGLE SvelteKit << (S,#FF7700) SSR/API >>
-RECTANGLE Supabase << (D,#0073E6) Database >>
-RECTANGLE Workers << (W,#FFAA00) Worker >>
+title Load Testing for MeshHook Platform
 
-note right of SvelteKit : webhook intake\nworkflow CRUD\npublish versions\nrun console
-note right of Supabase : Postgres (data + queues)\nRealtime (log streaming)\nStorage (artifacts)\nEdge (cron/timers)
-note right of Workers : Orchestrator (state machine + scheduling)\nHTTP Executor (robust HTTP with retries/backoff)
+actor Tester
+boundary "Load Testing Tools\n(JMeter, Locust.io)" as Tools
+control "Load Test Orchestrator" as Orchestrator
+database "Supabase Backend" as Supabase
+entity "Webhook Triggers" as Webhooks
+entity "Workflow Executions" as Workflows
+entity "Live Log Streaming" as Logs
+entity "Multi-tenant RLS Security" as Security
 
-RECTANGLE LoadTesting << (T,#FF0000) Task >>
-note right of LoadTesting : Implement Load Testing\nAnalyze & Design\nWrite Tests\nRefactor & Document
+Tester --> Tools : Configures\nand Prepares
+Tools --> Orchestrator : Executes Load Tests
+Orchestrator --> Supabase : Simulates\nReal-world Usage
+Supabase --> Webhooks : Triggers
+Supabase --> Workflows : Manages
+Supabase --> Logs : Streams
+Supabase --> Security : Enforces RLS
 
-SvelteKit -down-> LoadTesting : Triggers Load Testing
-LoadTesting -down-> Supabase : Utilizes\n<<Database>>
-LoadTesting -down-> Workers : Orchestrates\n<<Tasks>>
+note right of Orchestrator : Monitors Performance\nIdentifies Bottlenecks
+note right of Supabase : SvelteKit Frontend\nServerless Workers
 
-Supabase -[hidden]-> Workers : 
-SvelteKit -[hidden]-> Workers : 
+legend right
+  **Data Flow:**
+  1. Test Plan Creation
+  2. Tool Configuration
+  3. Execution & Monitoring
+  4. Result Analysis
+  5. Optimization & Retesting
+endlegend
 
 @enduml

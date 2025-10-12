@@ -1,173 +1,112 @@
 # PRD: Workflow settings
 
+**Issue:** [#129](https://github.com/profullstack/meshhook/issues/129)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** workflow-management, hacktoberfest
+
+---
+
+# PRD: Workflow Settings
+
 **Issue:** [#129](https://github.com/profullstack/meshhook/issues/129)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
-**Labels:** workflow-management  
+**Labels:** workflow-management, hacktoberfest  
 **Phase:** Phase 3  
 **Section:** Workflow Management
 
 ---
 
-## Overview
+## 1. Overview
 
-This task is part of Phase 3 in the Workflow Management section of the MeshHook project. 
+The objective of this task is to implement and enhance the workflow settings functionality within MeshHook, aligning with the application's core features and project goals. Workflow settings are crucial for users to configure and manage various aspects of their workflows, including trigger configurations, node settings, execution parameters, and security settings. This feature is aimed at providing users with the flexibility to customize their workflows to meet specific requirements, while maintaining the simplicity and ease of use that MeshHook is known for.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Purpose
 
-**Task Objective:** Workflow settings
+- To allow users to configure workflow-specific settings, enhancing customization and control.
+- To align with MeshHook's goals of delivering a user-friendly, visual DAG builder with robust, durable execution capabilities.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## 2. Functional Requirements
 
-## Requirements
+1. **CRUD Operations for Workflow Settings:** Users must be able to create, read, update, and delete settings for each workflow.
+2. **UI for Workflow Settings:** Implement a user-friendly interface for configuring workflow settings using SvelteKit/Svelte 5.
+3. **Validation and Error Handling:** Ensure input validation for settings and provide clear error messages for invalid configurations.
+4. **Versioning and Drafts:** Support versioning of workflow settings, allowing users to save drafts before publishing.
+5. **Webhook Trigger Configuration:** Include settings for webhook triggers, such as URL generation, signature verification method selection, and secret key management.
+6. **Node Settings Customization:** Allow users to configure settings for individual nodes within the workflow, including timeout values, retry policies, and data transformation scripts.
+7. **Execution Parameters:** Enable users to set global execution parameters for the workflow, such as maximum execution time, concurrency limits, and error handling strategies.
 
-### Functional Requirements
+## 3. Non-Functional Requirements
 
-1. Implement the core functionality described in the task: "Workflow settings"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+- **Performance:** Workflow settings operations must be responsive, aiming for sub-second load and save times.
+- **Reliability:** Ensure high availability and error resilience, maintaining MeshHook's 99.9% uptime goal.
+- **Security:** Adhere to MeshHook's security practices, including RLS, secure storage and handling of secrets, and input validation to prevent injection attacks.
+- **Maintainability:** Code should be clean, well-commented, and adhere to the project's coding standards and best practices.
 
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
-
-## Technical Specifications
+## 4. Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a SvelteKit/Svelte 5 frontend with a Supabase backend, leveraging Postgres for data storage and queuing, and Realtime for log streaming.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis:** Review the current workflow management features to understand the settings' scope.
+2. **UI Design:** Design the UI components for settings management, ensuring they integrate seamlessly with the existing DAG builder interface.
+3. **Backend Integration:** Develop the necessary API endpoints and database schema modifications to support new settings, focusing on secure data handling and validation.
+4. **Frontend Implementation:** Implement the settings UI in SvelteKit, ensuring dynamic updates and immediate feedback for user actions.
+5. **Testing and Validation:** Conduct thorough testing, including unit, integration, and user acceptance tests, to ensure reliability and usability.
+6. **Documentation:** Update the project documentation to include details on managing workflow settings.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- A new `workflow_settings` table may be introduced to store user-defined settings for each workflow, linked to the `workflows` table via a foreign key.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+- **GET `/api/workflows/{id}/settings`:** Retrieve the current settings for a workflow.
+- **PUT `/api/workflows/{id}/settings`:** Update the settings for a workflow.
 
-### API Endpoints (if applicable)
+## 5. Acceptance Criteria
 
-No new API endpoints required for this task.
+- [ ] CRUD operations for workflow settings are implemented and functional.
+- [ ] UI for managing workflow settings is intuitive and aligns with MeshHook's design language.
+- [ ] Input validation and error handling are implemented for all settings.
+- [ ] Changes to workflow settings are versioned, with support for drafts and publishing.
+- [ ] Performance, security, and reliability standards are met.
+- [ ] Documentation is updated to reflect the new workflow settings feature.
 
-## Acceptance Criteria
+## 6. Dependencies
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- SvelteKit/Svelte 5 for frontend development.
+- Supabase for backend services.
+- Existing MeshHook codebase and infrastructure.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
-
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Utilize modern JavaScript features and follow the project's existing coding standards.
+- Implement features in a modular, reusable manner where possible.
+- Prioritize security and performance at all stages of development.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Implement unit tests for new backend logic and API endpoints.
+- Develop integration tests to cover the interaction between the frontend, API, and database.
+- Perform manual end-to-end testing with realistic user scenarios.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all user input is validated and sanitized to prevent injection attacks.
+- Securely handle secrets and sensitive settings, using encryption for storage and secure APIs for management.
+- Follow MeshHook's RLS policies for multi-tenancy support.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
-
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Workflow settings
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Workflow Management
-
-**Task:** Workflow settings
-
----
-_Auto-generated from TODO.md_
+- Implement logging for key actions and settings changes, integrating with Supabase Realtime where applicable.
+- Monitor performance metrics, particularly for settings management operations, to detect and address any bottlenecks or issues promptly.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #129*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #129*
+*Generated: 2025-10-10*

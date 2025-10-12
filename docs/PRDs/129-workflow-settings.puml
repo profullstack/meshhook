@@ -1,0 +1,101 @@
+@startuml
+!theme plain
+
+package "MeshHook Workflow Management" {
+    [Workflow Settings UI] - [SvelteKit SSR/API]
+    [SvelteKit SSR/API] - [Supabase Postgres]
+    [SvelteKit SSR/API] - [Supabase Realtime]
+    [SvelteKit SSR/API] - [Supabase Storage]
+    [Supabase Postgres] - [Orchestrator Worker]
+    [Orchestrator Worker] - [HTTP Executor Worker]
+    [Supabase Realtime] - [Live Logs]
+    [Supabase Storage] - [Artifacts]
+
+    package "External Services" {
+        [Supabase Postgres] 
+        [Supabase Realtime] 
+        [Supabase Storage]
+    }
+}
+
+[Workflow Settings UI] --> [User]: Displays\nWorkflow Settings
+[User] --> [Workflow Settings UI]: Updates\nSettings
+[SvelteKit SSR/API] --> [Supabase Postgres]: CRUD Operations
+[Supabase Postgres] --> [Orchestrator Worker]: Triggers\nWorkflows
+[Orchestrator Worker] --> [HTTP Executor Worker]: Executes\nHTTP Requests
+[Supabase Realtime] --> [Live Logs]: Streams\nLogs
+[Supabase Storage] --> [Artifacts]: Stores\nWorkflow Artifacts
+
+class User {
+    +Interact with UI
+}
+
+class WorkflowSettingsUI {
+    +Display Settings
+    +Receive User Inputs
+}
+
+class SvelteKitSSRAPI {
+    +Handle Requests
+    +CRUD Operations
+}
+
+class SupabasePostgres {
+    +Store Data
+    +Queue Management
+}
+
+class OrchestratorWorker {
+    +Manage Workflow State
+    +Schedule Tasks
+}
+
+class HTTPExecutorWorker {
+    +Perform HTTP Requests
+    +Handle Retries/Backoff
+}
+
+class SupabaseRealtime {
+    +Stream Logs
+}
+
+class SupabaseStorage {
+    +Store Artifacts
+}
+
+class LiveLogs {
+    +Display Real-time Logs
+}
+
+class Artifacts {
+    +Workflow Execution Artifacts
+}
+
+note right of [Workflow Settings UI]
+  Frontend implemented with SvelteKit.
+  Provides interface for workflow settings management.
+end note
+
+note right of [SvelteKit SSR/API]
+  Serves as the backend API.
+  Handles requests and integrates with Supabase services.
+end note
+
+note right of [Orchestrator Worker]
+  Orchestrates workflow execution.
+  Manages state and scheduling.
+end note
+
+note right of [HTTP Executor Worker]
+  Executes HTTP tasks with robust error handling.
+end note
+
+note right of [Supabase Realtime]
+  Enables live log streaming to the UI.
+end note
+
+note right of [Supabase Storage]
+  Stores workflow execution artifacts.
+end note
+
+@enduml

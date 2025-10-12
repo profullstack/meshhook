@@ -1,173 +1,116 @@
 # PRD: AES-GCM encryption implementation
 
-**Issue:** [#144](https://github.com/profullstack/meshhook/issues/144)  
-**Milestone:** Phase 4: Security  
-**Labels:** secrets-encryption  
-**Phase:** Phase 4  
-**Section:** Secrets Encryption
+**Issue:** [#144](https://github.com/profullstack/meshhook/issues/144)
+**Milestone:** Phase 4: Security
+**Labels:** secrets-encryption, hacktoberfest
 
 ---
 
+# PRD: AES-GCM Encryption Implementation
+
 ## Overview
 
-This task is part of Phase 4 in the Secrets Encryption section of the MeshHook project. 
+The AES-GCM encryption implementation is a critical feature for the MeshHook project, directly contributing to our goal of offering a secure, multi-tenant workflow engine. As part of Phase 4: Security, this task focuses on enhancing the security of stored secrets by adopting AES-GCM, an authenticated encryption algorithm that provides both data confidentiality and integrity. This aligns with our commitment to multi-tenant RLS security and secrets encryption, ensuring that sensitive data is protected at rest.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** AES-GCM encryption implementation
+1. **Encryption Mechanism**: Implement AES-GCM encryption for all secrets stored by MeshHook. This includes, but is not limited to, webhook secrets, access tokens, and any user-defined secrets within workflows.
+2. **Key Management**: Implement a Key Encryption Key (KEK) management system, allowing for regular rotation of KEKs without losing access to data encrypted with previous keys.
+3. **API for Encryption and Decryption**: Provide internal API methods for encrypting and decrypting data, ensuring these methods can be easily utilized wherever secrets management is required in the MeshHook codebase.
+4. **Migration Path**: Develop a secure migration path for existing secrets to be encrypted with AES-GCM, ensuring zero data loss and minimal service interruption.
+5. **Utility Functions**: Include utility functions for generating secure nonces for AES-GCM, as this is crucial for maintaining the security guarantees of AES-GCM.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "AES-GCM encryption implementation"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance**: The encryption and decryption operations must be optimized for performance, ensuring minimal impact on request processing times.
+- **Security**: Adhere to best practices in cryptographic implementations, avoiding common pitfalls such as insecure nonce usage or key management flaws.
+- **Reliability**: Ensure that the encryption system is robust, with fail-safes in place to prevent data loss or corruption.
+- **Maintainability**: Write clear, well-documented code with an emphasis on maintainability and ease of understanding, following the project's established coding standards.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook leverages a combination of SvelteKit for front-end interactions, Supabase for backend services including Postgres for data storage, and a distributed system of workers for task execution. The AES-GCM encryption feature will primarily interact with the components responsible for secrets management and storage within the Supabase Postgres database.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis**: Review the current secrets storage mechanism to identify all areas where encryption needs to be integrated.
+2. **Design**:
+   - Define a schema for storing encrypted secrets along with their nonces and associated KEK identifiers.
+   - Design the KEK management system, including database schema for KEK storage and rotation logic.
+3. **Implementation**:
+   - Develop the encryption/decryption API, incorporating AES-GCM and KEK management.
+   - Implement utility functions for nonce generation and secure storage of encryption metadata.
+   - Integrate the encryption API into existing secrets management workflows.
+   - Create a migration tool/script for encrypting existing secrets.
+4. **Testing**: Perform thorough testing, including unit, integration, and end-to-end tests, to ensure the encryption system functions correctly across all scenarios.
+5. **Documentation**: Update internal documentation to reflect the new encryption mechanism and provide guidelines for developers on using the encryption API.
+6. **Review & Deployment**: Conduct a code review with the team and prepare for deployment, including planning any required downtime for secret migration.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- `encrypted_secrets` table:
+  - `id` SERIAL PRIMARY KEY
+  - `project_id` INT REFERENCES projects(id)
+  - `encrypted_data` BYTEA
+  - `nonce` BYTEA
+  - `kek_id` INT REFERENCES kek(id)
+  
+- `kek` table:
+  - `id` SERIAL PRIMARY KEY
+  - `key` BYTEA
+  - `created_at` TIMESTAMP
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+- No new external API endpoints required for this task.
+- Internal APIs for encrypt/decrypt operations will be added to the project's service layer.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] AES-GCM encryption implemented for all new and existing secrets.
+- [ ] KEK management system operational with the ability to rotate keys without data loss.
+- [ ] Migration tool/scripts developed and tested for encrypting existing secrets.
+- [ ] Encryption and decryption operations meet performance benchmarks.
+- [ ] All unit and integration tests pass, ensuring encryption system reliability.
+- [ ] Documentation updated to include details on the encryption implementation and usage.
+- [ ] Security audit completed with no major issues found.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the current MeshHook codebase and database schema.
+- Supabase Postgres for database changes.
+- Security libraries supporting AES-GCM (e.g., Node.js crypto module).
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Use Node.js' built-in `crypto` module for AES-GCM operations to avoid additional dependencies.
+- Follow TDD principles by writing tests before implementing the encryption logic.
+- Ensure that all encryption operations are asynchronous to avoid blocking the event loop.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Implement unit tests for all new utility functions and API methods.
+- Integration tests should cover the encryption and decryption workflow, including key rotation.
+- Performance tests to measure the impact of encryption on processing times.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure secure generation and storage of nonces for AES-GCM to prevent reuse.
+- Follow best practices for key management, including secure storage and regular rotation of KEKs.
+- Conduct a thorough security review of the implementation to identify potential vulnerabilities.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Monitor the performance of encryption and decryption operations to identify potential bottlenecks.
+- Log key rotation events and any encryption-related errors for auditability.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-AES-GCM encryption implementation
-
-**Full Issue Body:**
-**Phase:** Phase 4
-**Section:** Secrets Encryption
-
-**Task:** AES-GCM encryption implementation
-
----
-_Auto-generated from TODO.md_
+By adhering to this PRD, the MeshHook project will enhance its security posture through the secure management of secrets, aligning with our goal of providing a reliable, secure, and user-friendly workflow engine.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #144*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #144*
+*Generated: 2025-10-10*

@@ -2,34 +2,33 @@
 !define RECTANGLE class
 !define DATABASE entity
 
-title Webhook Setup Guide - Workflow
+title Webhook Setup Guide Workflow
 
-actor User as user
-RECTANGLE "Webhook Service" as webhookService
-RECTANGLE "SvelteKit SSR/API" as svelteKit
-DATABASE "Supabase Postgres" as supabasePostgres
-RECTANGLE "Supabase Realtime" as supabaseRealtime
-RECTANGLE "HTTP Executor Worker" as httpExecutor
-RECTANGLE "Orchestrator Worker" as orchestrator
+RECTANGLE UserDocumentationSystem {
+  component "Webhook Setup Guide" as Guide
+  component "Markdown Content Management" as Markdown
+  component "Static Site Generation Pipeline" as StaticSite
+  component "SvelteKit User Documentation System" as SvelteKit
+  DATABASE "Visual Content & Screenshots" as VisualContent
+}
 
-user -> webhookService : Requests webhook setup
-webhookService -> svelteKit : Validates request\nand creates webhook config
-svelteKit -> supabasePostgres : Stores webhook config
-supabasePostgres --> svelteKit : Returns success confirmation
-svelteKit -> supabaseRealtime : Triggers webhook config update notification
-svelteKit --> user : Returns webhook setup success
+component DevelopmentTeam
+component MeshHookWebhookFunctionality
+component UserFeedbackMechanism
 
-group Triggering Webhook
-    user -> webhookService : Triggers webhook with payload
-    webhookService -> httpExecutor : Sends payload for processing
-    httpExecutor -> orchestrator : Initiates workflow based on webhook
-    orchestrator -> supabasePostgres : Updates workflow state
-    supabasePostgres --> orchestrator : Confirms state update
-    orchestrator -> supabaseRealtime : Streams workflow logs
-end
+UserDocumentationSystem --> DevelopmentTeam : Collaborates for\nContent Drafting
+UserDocumentationSystem --> MeshHookWebhookFunctionality : Details on\nWebhook Functionalities
+DevelopmentTeam --> Guide : Provides Technical Insights
+Guide --> VisualContent : Includes
+Guide --> Markdown : Written in
+Markdown --> StaticSite : Utilized by
+StaticSite --> SvelteKit : Part of
+Guide --> UserFeedbackMechanism : Incorporates Feedback Mechanism
 
-note right of orchestrator : Orchestrator manages\nworkflow execution and scheduling
+note right of Guide : Comprehensive Guide Covering:\n- Webhook Concepts\n- Configuration Instructions\n- Signature Verification\n- Security Best Practices\n- Troubleshooting
 
-note over supabasePostgres : Uses existing data model\nNo schema changes required
+note right of VisualContent : Utilize Tools Aligning with\nMeshHook's Visual Identity Guidelines
+
+note over UserFeedbackMechanism : Collects User Insights\nfor Future Improvements
 
 @enduml

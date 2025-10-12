@@ -28,6 +28,36 @@
 		}
 	}
 
+	// Handle edge deletion
+	function handleEdgesDelete(edgesToDelete) {
+		const edgeIdsToDelete = new Set(edgesToDelete.map(e => e.id));
+		edges = edges.filter(edge => !edgeIdsToDelete.has(edge.id));
+		
+		if (onEdgesChange) {
+			onEdgesChange(edges);
+		}
+	}
+
+	// Handle node deletion
+	function handleNodesDelete(nodesToDelete) {
+		const nodeIdsToDelete = new Set(nodesToDelete.map(n => n.id));
+		
+		// Remove nodes
+		nodes = nodes.filter(node => !nodeIdsToDelete.has(node.id));
+		
+		// Remove edges connected to deleted nodes
+		edges = edges.filter(edge =>
+			!nodeIdsToDelete.has(edge.source) && !nodeIdsToDelete.has(edge.target)
+		);
+		
+		if (onNodesChange) {
+			onNodesChange(nodes);
+		}
+		if (onEdgesChange) {
+			onEdgesChange(edges);
+		}
+	}
+
 	// Handle drag over (required to enable drop)
 	function handleDragOver(event) {
 		event.preventDefault();
@@ -103,6 +133,14 @@
 		{edges}
 		fitView
 		onconnect={handleConnect}
+		ondelete={(event) => {
+			if (event.nodes && event.nodes.length > 0) {
+				handleNodesDelete(event.nodes);
+			}
+			if (event.edges && event.edges.length > 0) {
+				handleEdgesDelete(event.edges);
+			}
+		}}
 		defaultEdgeOptions={{ type: 'smoothstep', animated: true }}
 	>
 		<Background gap={12} size={1} />
@@ -113,6 +151,7 @@
 			<div class="info-panel">
 				<h3>Workflow Editor</h3>
 				<p class="hint">Drag nodes from the palette to the canvas</p>
+				<p class="hint">Select and press Delete to remove nodes/edges</p>
 			</div>
 		</Panel>
 

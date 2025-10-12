@@ -1,173 +1,107 @@
 # PRD: Queue depth monitoring
 
-**Issue:** [#169](https://github.com/profullstack/meshhook/issues/169)  
-**Milestone:** Phase 6: Observability  
-**Labels:** metrics  
-**Phase:** Phase 6  
-**Section:** Metrics
+**Issue:** [#169](https://github.com/profullstack/meshhook/issues/169)
+**Milestone:** Phase 6: Observability
+**Labels:** metrics, hacktoberfest
 
 ---
 
-## Overview
+# PRD: Queue Depth Monitoring for MeshHook
 
-This task is part of Phase 6 in the Metrics section of the MeshHook project. 
+## 1. Overview
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+In the realm of workflow engines, monitoring the depth of job queues is paramount for maintaining system health and ensuring efficient operation. For MeshHook, implementing a robust queue depth monitoring system is essential to fulfill its objectives of providing a reliable, high-performance, and observably transparent workflow engine. This PRD outlines the requirements and approach for integrating queue depth monitoring into MeshHook's architecture, thereby enhancing its operational observability and reliability.
 
-**Task Objective:** Queue depth monitoring
+### Purpose
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+The primary purpose of this initiative is to develop a system within MeshHook that can continuously monitor and report the depth of various job queues, enabling the identification and mitigation of potential bottlenecks or system stress points before they impact performance or reliability.
 
-## Requirements
+### Alignment with Project Goals
 
-### Functional Requirements
+Implementing queue depth monitoring directly supports MeshHook's core objectives:
+- **Performance:** By monitoring queue depths, we can ensure that the system scales effectively under varying loads, maintaining optimal performance.
+- **Reliability:** Early detection of queue depth anomalies will aid in preemptive problem-solving, enhancing system uptime.
+- **Observability:** Enhancing internal state visibility allows for better operational insight and decision-making.
 
-1. Implement the core functionality described in the task: "Queue depth monitoring"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+## 2. Functional Requirements
 
+1. **Queue Depth Measurement:** The system must periodically measure and report the depth (the number of pending tasks) for each queue used by MeshHook.
+2. **Configurable Reporting Frequency:** Administrators should be able to configure the frequency at which queue depths are reported.
+3. **Threshold Alerts:** The system must allow for the configuration of queue depth thresholds that, when exceeded, will trigger alerts.
+4. **Historical Data Management:** The system should store historical queue depth data to facilitate trend analysis and capacity planning.
 
-### Non-Functional Requirements
+## 3. Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The monitoring system must operate with minimal performance overhead, not detracting from the core functionalities of MeshHook.
+- **Reliability:** This system should be highly reliable, ensuring continuous queue depth monitoring and reporting.
+- **Security:** Implementations must adhere to MeshHook's security protocols, ensuring that monitoring mechanisms do not expose the system to new vulnerabilities.
+- **Maintainability:** The system should be designed with maintainability in mind, following MeshHook's coding standards and practices.
 
-## Technical Specifications
+## 4. Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook leverages **pg-boss** or **pgmq** for queue management, tightly integrated within its Supabase/Postgres ecosystem. The queue depth monitoring solution must seamlessly integrate with these components, utilizing existing infrastructure where possible to minimize architectural disruptions.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Component Design:**
+   - Develop a metrics collection component capable of querying queue depths from **pg-boss** or **pgmq**.
+   - Design a reporting interface, potentially integrating with MeshHook's existing dashboard or logging system, to display current queue depths.
+   - Formulate a strategy for storing historical queue depth data, leveraging existing storage solutions if feasible.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+2. **Integration and Development:**
+   - Integrate the metrics collection component within MeshHook's architecture, ensuring it functions efficiently with minimal impact on overall system performance.
+   - Implement database schema modifications for storing historical queue depth data, aligning with MeshHook's existing data model patterns.
+   - Develop threshold-based alerting capabilities, utilizing MeshHook's existing alert mechanisms or integrating third-party services as necessary.
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+### Data Model Changes
 
-### Data Model
+- Introduction of a `queue_metrics` table, including fields for `timestamp`, `queue_name`, and `depth`, to store historical data regarding queue depths.
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+### API Endpoints
 
-### API Endpoints (if applicable)
+- **GET /api/metrics/queue-depth**: Retrieves current depth for all queues.
+- **POST /api/metrics/queue-depth/alerts**: Configures alerts for specific queue depth thresholds.
 
-No new API endpoints required for this task.
+## 5. Acceptance Criteria
 
-## Acceptance Criteria
+- Accurate measurement and reporting of queue depths at predefined intervals.
+- Ability to configure depth thresholds and receive alerts upon exceeding these thresholds.
+- Historical queue depth data is stored and accessible for trend analysis.
+- System performance impact is minimal, as demonstrated by benchmarks.
+- Security review confirms the implementation complies with MeshHook's security guidelines.
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+## 6. Dependencies and Prerequisites
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- **Technical Dependencies:** Access to the database and queue management systems (**pg-boss**/**pgmq**) is required.
+- **Prerequisite Tasks:** An existing metrics infrastructure capable of supporting the additional data introduced by this feature.
 
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to MeshHook's existing Node.js/JavaScript coding standards and architectural patterns.
+- Ensure the new code is modular, testable, and integrates well with the existing metrics collection and reporting frameworks.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Cover functionality for queue depth measurement and reporting.
+- **Integration Tests:** Validate integration with the queue management system and the effectiveness of the reporting/dashboarding features.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Secure new API endpoints with MeshHook's existing authentication and authorization mechanisms.
+- Apply RLS policies where applicable to maintain tenant data isolation.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Ensure integration of queue depth metrics into MeshHook's existing observability stack.
+- Implement comprehensive logging for key actions and error conditions to aid in troubleshooting and operational monitoring.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Queue depth monitoring
-
-**Full Issue Body:**
-**Phase:** Phase 6
-**Section:** Metrics
-
-**Task:** Queue depth monitoring
-
----
-_Auto-generated from TODO.md_
+By adhering to these guidelines and specifications, MeshHook will enhance its operational observability and reliability through effective queue depth monitoring.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #169*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #169*
+*Generated: 2025-10-10*

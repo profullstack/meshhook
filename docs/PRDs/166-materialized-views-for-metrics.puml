@@ -1,52 +1,54 @@
 @startuml
-!define RECTANGLE class
-!define DATABASE entity
+!theme plain
 
-skinparam rectangle {
-    BackgroundColor<<Metrics>> Wheat
-    BorderColor Black
-    ArrowColor Black
+package "MeshHook System" {
+    [Metrics Collection] --> [Database: Postgres]
+    [API Endpoints] --> [Database: Postgres]
+    [Database: Postgres] --> [Materialized Views Refresh Mechanism]
+    database "Database: Postgres" {
+        [mv_workflow_metrics] - [Materialized Views]
+    }
+    [Materialized Views] ..> [Metrics Selection] : aggregates
+    [Materialized Views Refresh Mechanism] ..> [mv_workflow_metrics] : updates
 }
 
-skinparam database {
-    BackgroundColor<<Database>> LightYellow
-    BorderColor Black
-    ArrowColor Black
+package "Supabase" {
+    [Realtime Monitoring] ..> [Materialized Views Refresh Mechanism] : monitors
+    [Database Management] --> [Database: Postgres]
 }
 
-rectangle "MeshHook System" as MeshHook {
-    RECTANGLE "Webhook Intake\n(SvelteKit)" as Webhook <<Metrics>>
-    RECTANGLE "Workflow CRUD\n(SvelteKit)" as CRUD <<Metrics>>
-    RECTANGLE "Publish Versions\n(SvelteKit)" as Publish <<Metrics>>
-    RECTANGLE "Run Console\n(SvelteKit)" as Console <<Metrics>>
-    DATABASE "Postgres\n(Supabase)" as Postgres <<Database>>
-    RECTANGLE "Realtime Logs\n(Supabase Realtime)" as Realtime <<Metrics>>
-    RECTANGLE "Orchestrator\n(Worker)" as Orchestrator <<Metrics>>
-    RECTANGLE "HTTP Executor\n(Worker)" as Executor <<Metrics>>
-}
+[Metrics Collection] --> [Metrics Selection]
+[API Endpoints] ..> [Materialized Views] : queries
+[Materialized Views] ..> [Query Optimization]
 
-rectangle "Materialized Views\nfor Metrics" as MaterializedViews {
-    DATABASE "Metrics View\n(Postgres)" as MetricsView <<Database>>
-}
+note right of [Materialized Views]
+  Key Columns:
+  - workflow_id
+  - execution_count
+  - average_duration
+  - success_rate
+  - failure_rate
+  - last_updated
+end note
 
-Webhook -[hidden]-> CRUD
-CRUD -[hidden]-> Publish
-Publish -[hidden]-> Console
-Console -[hidden]-> Realtime
-Realtime -[hidden]-> Orchestrator
-Orchestrator -[hidden]-> Executor
+note right of [Materialized Views Refresh Mechanism]
+  Refresh Strategies:
+  - On-demand
+  - Periodic
+end note
 
-Postgres -[hidden]-> MaterializedViews
+note "Integration with existing metrics\ncollection mechanisms" as N1
+[Metrics Collection] .. N1
+N1 .. [Materialized Views]
 
-Webhook --> Postgres : triggers & data
-CRUD --> Postgres : manage workflows
-Publish --> Postgres : versioning
-Console --> Postgres : run data
-Realtime --> Postgres : log streaming
-Orchestrator --> Postgres : state & scheduling
-Executor --> Postgres : HTTP tasks
+note "Documentation\n- Schema Design\n- Refresh Strategy\n- Selected Metrics" as N2
+[Materialized Views] .. N2
 
-Postgres --> MetricsView : aggregates data
-MetricsView --> Realtime : updates metrics
+legend right
+  -- Key --
+  [ ] : Component
+  ..> : Data Flow/Dependency
+  --> : Direct Interaction
+endlegend
 
 @enduml

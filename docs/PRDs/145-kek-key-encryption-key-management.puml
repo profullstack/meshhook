@@ -1,32 +1,59 @@
 @startuml
 !theme plain
 
+package "MeshHook Platform" {
+    [Supabase DB] <<Database>>
+    [KEK Management Service] <<Service>>
+    [Frontend (SvelteKit)] <<Frontend>>
+    [API Gateway] <<Gateway>>
+    [Audit Logging Service] <<Service>>
+}
+
+database "kek_storage Table" as KekStorage {
+    [kek_id]
+    [kek_encrypted]
+    [created_at]
+    [rotated_at]
+    [status]
+}
+
+[Supabase DB] - [KekStorage]
+
 package "KEK Management System" {
-    [KEK Rotation Service] as KEKRotation
-    [KEK Storage] as KEKStore
-    [Audit Log] as AuditLog
-    database "Postgres DB" as Postgres {
-        [Secrets Table]
-        [Audit Table]
-    }
-    [Supabase Realtime] as SupabaseRT
-    [Webhook Service] as Webhook
-    [API Gateway] as API
+    [KEK Generation] <<Function>>
+    [KEK Rotation] <<Function>>
+    [Secure Storage] <<Function>>
+    [Access Control] <<Function>>
+    [Audit Logging] <<Function>>
 }
 
-package "External Systems" {
-    [Supabase Storage] as SupabaseStorage
-}
+[KEK Management Service] --> [KEK Generation] : uses
+[KEK Management Service] --> [KEK Rotation] : uses
+[KEK Management Service] --> [Secure Storage] : uses
+[KEK Management Service] --> [Access Control] : uses
+[KEK Management Service] --> [Audit Logging] : uses
 
-API --> Webhook : triggers
-Webhook --> KEKRotation : requests KEK rotation
-KEKRotation --> KEKStore : fetches current KEK
-KEKStore --> Postgres.Secrets Table : accesses encrypted secrets
-KEKRotation --> KEKStore : updates KEK
-KEKStore --> Postgres.Secrets Table : re-encrypts secrets
-KEKRotation --> AuditLog : logs rotation event
-AuditLog --> Postgres.Audit Table : stores logs
-SupabaseRT <.. Postgres : streams updates
-Postgres --> SupabaseStorage : backs up encrypted secrets
+[KEK Generation] --> [Supabase DB] : stores KEK
+[KEK Rotation] --> [Supabase DB] : updates KEK
+[Secure Storage] .> [KekStorage] : encrypts data in
+[Access Control] --> [API Gateway] : controls access through
+[Audit Logging] --> [Audit Logging Service] : logs operations
+
+[API Gateway] --> [Frontend (SvelteKit)] : serves API to
+[API Gateway] --> [KEK Management Service] : routes KEK management requests
+
+note right of [KEK Management Service]
+  KEK Management operations include:
+  - KEK Generation
+  - KEK Rotation
+  - Secure Storage
+  - Access Control
+  - Audit Logging
+end note
+
+note left of [KekStorage]
+  Stores KEKs encrypted at rest,
+  with metadata for management
+end note
 
 @enduml

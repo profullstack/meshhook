@@ -1,30 +1,38 @@
 @startuml
 !theme plain
 
-title Signature Verification (HMAC) Process Flow
+title Signature Verification (HMAC) Process
 
-actor "Webhook Provider" as provider
-boundary "MeshHook Webhook System" as system
-control "Webhook Receiver" as receiver
-database "Supabase Postgres" as db
-entity "Existing Workflow Engine" as engine
-participant "Signature Validator" as validator
-participant "Workflow Executor" as executor
+actor "Webhook Source" as source
+boundary "SvelteKit SSR/API" as sveltekit
+database "Supabase Postgres" as supabase
+entity "HMAC Secrets" as secrets
+control "Middleware" as middleware
+control "Webhook Handler" as handler
 
-provider -> receiver : Sends webhook with HMAC signature
-receiver -> validator : Extracts HMAC signature\nand payload
-validator -> db : Fetches secret key for HMAC
-db --> validator : Returns secret key
-validator -> validator : Computes HMAC with secret\nand compares to received signature
-alt HMAC signature valid
-    validator -> executor : Initiates workflow execution
-    executor -> engine : Triggers configured workflow
-    engine --> executor : Workflow execution result
-    executor --> system : Responds with success\nand execution details
-    system --> provider : Acknowledges receipt
-else HMAC signature invalid
-    validator --> system : Responds with error\n(signature mismatch)
-    system --> provider : Notifies about invalid signature
+source -> sveltekit : Webhook Request\n(with Signature)
+sveltekit -> middleware : Intercept Request
+middleware -> supabase : Fetch HMAC Secret\n(project-specific)
+supabase -> middleware : Return Secret
+middleware -> middleware : Verify Signature\n(using HMAC-SHA256)
+alt Signature Valid
+    middleware -> handler : Proceed with Processing
+    handler -> supabase : Trigger Workflow Execution
+else Signature Invalid
+    middleware -> source : HTTP 401 Unauthorized
 end
+
+note right of handler
+  - Workflows are initiated\n  based on the webhook's payload.
+  - Only webhooks with verified\n  signatures trigger workflows.
+end note
+
+note over supabase
+  Stores project-specific\n  HMAC secrets securely.
+end note
+
+note over middleware
+  Responsible for signature\n  verification logic.
+end note
 
 @enduml

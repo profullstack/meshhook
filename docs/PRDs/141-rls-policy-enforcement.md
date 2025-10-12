@@ -1,173 +1,108 @@
 # PRD: RLS policy enforcement
 
+**Issue:** [#141](https://github.com/profullstack/meshhook/issues/141)
+**Milestone:** Phase 4: Security
+**Labels:** authentication-authorization, hacktoberfest
+
+---
+
+# PRD: RLS Policy Enforcement
+
 **Issue:** [#141](https://github.com/profullstack/meshhook/issues/141)  
 **Milestone:** Phase 4: Security  
-**Labels:** authentication-authorization  
+**Labels:** authentication-authorization, hacktoberfest  
 **Phase:** Phase 4  
-**Section:** Authentication & Authorization
+**Section:** Authentication & Authorization  
 
 ---
 
 ## Overview
 
-This task is part of Phase 4 in the Authentication & Authorization section of the MeshHook project. 
+Row-Level Security (RLS) policy enforcement is a critical feature for MeshHook to ensure data isolation and security across multi-tenant environments. This task focuses on implementing RLS policies that will dynamically restrict access to data at the database level based on the tenant (project) identity. Aligning with MeshHook's goals, RLS enforcement will bolster security, ensuring that webhook triggers, workflow executions, and logs are accessible only by authorized users within their respective projects.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+**Objective:** Implement and enforce RLS policies to ensure data isolation across tenants.
 
-**Task Objective:** RLS policy enforcement
+## Functional Requirements
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+1. **RLS Implementation:** Develop and apply RLS policies for all relevant tables and views in the MeshHook database, ensuring data isolation is enforced based on `project_id`.
+2. **Tenant Context:** Automatically set the tenant context (`project_id`) for all database queries based on the authenticated user's session or API request metadata.
+3. **Policy Management:** Provide mechanisms for defining, altering, and removing RLS policies as part of the administrative functions, with changes audited for compliance.
+4. **Integration Testing:** Ensure that RLS policies are correctly enforced across different scenarios, including cross-tenant data access attempts and tenant data modifications.
 
-## Requirements
+## Non-Functional Requirements
 
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "RLS policy enforcement"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Security:** RLS policies must be robust, preventing any unauthorized data access or leakage between tenants.
+- **Performance:** The enforcement of RLS policies should not significantly degrade database performance or application responsiveness.
+- **Maintainability:** RLS policies and the logic for setting tenant context must be maintainable, with clear documentation for future adjustments.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a PostgreSQL database managed through Supabase, with SvelteKit serving the frontend and various server-side functionalities. The implementation of RLS will primarily involve PostgreSQL for policy definitions and enforcement, with necessary adjustments in the application layer for context setting.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis:**
+   - Review the existing database schema and identify tables and views requiring RLS policies.
+   - Determine the current method of tenant identification and context setting within the application.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+2. **Design:**
+   - Define RLS policies for each identified table/view, ensuring they enforce data isolation based on `project_id`.
+   - Design the mechanism for dynamically setting the tenant context on each database connection/request.
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+3. **Implementation:**
+   - Apply RLS policies to the database, using PostgreSQL's `CREATE POLICY` and related commands.
+   - Implement the tenant context-setting logic within the application, ensuring it's applied to every database query.
+
+4. **Integration and Testing:**
+   - Perform thorough integration testing to verify that RLS policies are enforced as expected across all operations.
+   - Validate performance impacts and optimize RLS policies and context-setting logic as necessary.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No direct changes to the data model are required for the implementation of RLS policies. However, this task involves creating and applying RLS policies to existing tables and potentially adjusting indexes or views for performance optimization.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+No new API endpoints are required specifically for RLS policy enforcement. However, existing endpoints may require adjustments to ensure the correct tenant context is applied to all operations.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- [ ] RLS policies implemented for all identified tables and views, enforcing data isolation based on `project_id`.
+- [ ] Mechanism for setting tenant context is integrated and functioning across all database operations.
+- [ ] Integration tests confirm that RLS policies are correctly enforced, with no cross-tenant data access or leakage.
+- [ ] Performance benchmarks indicate no significant degradation due to RLS policy enforcement.
+- [ ] Documentation is updated to include details on RLS policy definitions and the context-setting mechanism.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+## Dependencies and Prerequisites
 
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the MeshHook PostgreSQL database for policy implementation.
+- Existing authentication and authorization mechanisms within MeshHook for tenant identification.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Utilize PostgreSQL's native RLS features for policy definition and enforcement.
+- Ensure that all code changes related to tenant context setting are modular and reusable across different parts of the application.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Verify the functionality of the tenant context-setting mechanism.
+- **Integration Tests:** Test the enforcement of RLS policies across various operations and scenarios.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Verify that RLS policies correctly isolate tenant data, with rigorous testing of edge cases and potential bypass mechanisms.
+- Ensure that the tenant context-setting mechanism securely identifies and applies the correct tenant context without vulnerabilities.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
-
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-RLS policy enforcement
-
-**Full Issue Body:**
-**Phase:** Phase 4
-**Section:** Authentication & Authorization
-
-**Task:** RLS policy enforcement
-
----
-_Auto-generated from TODO.md_
+- Monitor database performance to identify any impacts from RLS policy enforcement.
+- Implement logging for tenant context-setting operations to troubleshoot potential issues.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #141*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #141*
+*Generated: 2025-10-10*

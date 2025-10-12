@@ -1,28 +1,44 @@
 @startuml
 !theme plain
 
-title Webhook for Alerts - Sequence Diagram
+title Webhook for Alerts Implementation
 
-actor User as user
-boundary "Webhook API" as webhook
-control "Webhook Controller" as controller
-database "Supabase Postgres" as db
-entity "Orchestrator Worker" as worker
-control "HTTP Executor" as httpExecutor
-boundary "External Alerting Service" as externalService
+package "MeshHook System" {
+    [Supabase Realtime] as Realtime
+    [HTTP Executor Worker] as Worker
+    [SvelteKit UI] as UI
+    database "Database" {
+        [alert_configs]
+        [alert_logs]
+    }
+}
 
-user -> webhook : Sends alert payload
-webhook -> controller : Validates & processes payload
-controller -> db : Logs incoming webhook
-db --> controller : Acknowledgement
-controller -> worker : Triggers alert processing
-worker -> httpExecutor : Calls HTTP Executor with alert details
-httpExecutor -> externalService : Sends alert notification
-externalService --> httpExecutor : Acknowledgement
-httpExecutor --> worker : Notification status
-worker --> db : Updates alert status
-db --> worker : Acknowledgement
-worker -> db : Logs processing outcome
-db --> worker : Acknowledgement
+cloud {
+    [External Webhook Endpoints] as Webhooks
+}
+
+package "API" {
+    [POST /api/alerts/config] as PostConfig
+    [GET /api/alerts/config/{workflowId}] as GetConfig
+    [POST /api/alerts/test] as PostTest
+}
+
+UI --> PostConfig : configure alerts
+UI --> GetConfig : retrieve alert config
+UI --> PostTest : test webhook
+
+Realtime --> Worker : workflow events
+Worker --> Database : log attempts
+Worker --> Webhooks : dispatch webhook\nwith retry
+PostConfig --> Database : store config
+GetConfig --> Database : query config
+
+note right of Webhooks : Signature Verification
+
+legend right
+  **Data Model Changes**
+  - alert_configs
+  - alert_logs
+endlegend
 
 @enduml

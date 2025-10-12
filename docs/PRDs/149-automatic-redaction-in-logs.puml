@@ -2,60 +2,44 @@
 !theme plain
 
 package "MeshHook System" {
-    [Webhook Intake] --> [Workflow Engine]
-    [Workflow Engine] --> [Log Processor]
-    [Log Processor] --> [Log Storage]
-    [Log Storage] --> [Supabase Realtime]
-    [Workflow Engine] --> [HTTP Executor]
-
-    database "Supabase Postgres" as Postgres {
-        [Log Storage] --> Postgres
-    }
-
-    [Supabase Realtime] ..> [Client Dashboard] : live updates
-    [Client Dashboard] .up.> [Webhook Intake] : configures
+    [Logging Service] --> [Redaction Engine]: Sends logs for redaction
+    [Redaction Engine] --> [Database]: Stores audit trails
+    [Redaction Engine] -right-> [Supabase Realtime]: Subscribes to log updates
+    [Database] --> [Management API]: CRUD operations for rules
+    [Logging Service] .> [SvelteKit Components]: Generates logs
+    [Logging Service] .> [Workers]: Generates logs
+    [Management API] --> [Client]: Exposes redaction rules management
 }
 
-package "External Services" {
-    [Supabase Storage] --> [Artifact Storage]
-    [Supabase Edge] --> [Cron/Timers]
+package "External Systems" {
+    [Supabase Realtime] -[hidden]-> [Database]
 }
 
-[Log Processor] ..> [PII Redaction] : uses
-[PII Redaction] .right.> [Redaction Rules] : follows
+[Client] --> [Management API]: "POST /api/redaction-rules\nGET /api/redaction-rules\nDELETE /api/redaction-rules/{id}"
 
-note right of [PII Redaction]
-  Redacts PII from logs based on
-  predefined rules before storage.
+note right of [Redaction Engine]
+    1. Detects PII in logs
+    2. Applies redaction rules
+    3. Stores audit trail
 end note
 
-note right of [Log Storage]
-  Stores processed logs in
-  Postgres and streams to clients
-  via Supabase Realtime.
+note right of [Database]
+    Stores:
+    - log_redaction_rules
+    - log_redaction_audit
 end note
 
-[Workflow Engine] -right-> [Orchestrator]
-[Orchestrator] --> [State Machine]
-[Orchestrator] --> [Scheduling]
-
-[HTTP Executor] ..> [Retry/Backoff] : implements
-
-note "Key Components:\n- Webhook Intake\n- Workflow Engine\n- Log Processor\n- PII Redaction\n- Supabase Realtime\n- Client Dashboard" as KeyComponents
-
-note over Postgres, Supabase Storage, Supabase Edge
-  Supabase Services
+note right of [Management API]
+    Manages:
+    - Creation of rules
+    - Listing of rules
+    - Deletion of rules
 end note
 
-note over [Workflow Engine], [HTTP Executor]
-  Core Processing Components
+note right of [Logging Service]
+    Integrates with:
+    - SvelteKit Components
+    - Workers
 end note
-
-' Sequence of operations for log processing and redaction
-[Webhook Intake] -> [Workflow Engine] : Receives event
-[Workflow Engine] -> [Log Processor] : Generates log
-[Log Processor] -> [PII Redaction] : Redacts sensitive info
-[PII Redaction] -> [Log Storage] : Stores redacted log
-[Log Storage] -> [Supabase Realtime] : Streams to dashboard
 
 @enduml

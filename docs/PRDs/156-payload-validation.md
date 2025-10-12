@@ -1,173 +1,111 @@
 # PRD: Payload validation
 
-**Issue:** [#156](https://github.com/profullstack/meshhook/issues/156)  
-**Milestone:** Phase 5: Webhook System  
-**Labels:** webhook-triggers  
-**Phase:** Phase 5  
-**Section:** Webhook Triggers
+**Issue:** [#156](https://github.com/profullstack/meshhook/issues/156)
+**Milestone:** Phase 5: Webhook System
+**Labels:** webhook-triggers, hacktoberfest
 
 ---
 
-## Overview
+# PRD: Payload Validation for Webhook Triggers
 
-This task is part of Phase 5 in the Webhook Triggers section of the MeshHook project. 
+## 1. Overview
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+In the continuous evolution of MeshHook's webhook system, enhancing security and operational integrity is paramount. Phase 5 introduces payload validation for webhook triggers, a critical feature designed to verify the structure and data of incoming payloads against user-defined schemas. This addition aligns with MeshHook’s objectives of delivering secure, efficient, and reliable automation workflows. It ensures that only data conforming to predefined specifications triggers workflow execution, thus reducing errors, enhancing security, and improving user experience by preemptively filtering out invalid or malicious payloads.
 
-**Task Objective:** Payload validation
+## 2. Functional Requirements
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+1. **Schema Definition Interface:** Users should be able to define and manage JSON schemas within the workflow editor. This interface must support creating, editing, and deleting schemas tied to specific webhook triggers.
+   
+2. **Validation Mechanism:** A robust validation mechanism will be implemented, comparing incoming webhook payloads against the corresponding JSON schemas. This process should occur before any workflow logic is executed.
 
-## Requirements
+3. **Error Handling and Reporting:** Webhook calls with payloads failing validation checks will be rejected. The system will log these events and provide detailed feedback, including the reason for rejection, to the user through the UI and API responses.
 
-### Functional Requirements
+4. **Schema Management API:** Extend MeshHook's API to support schema management operations, enabling programmatic definition, retrieval, and deletion of payload schemas.
 
-1. Implement the core functionality described in the task: "Payload validation"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+5. **User Feedback for Validation Errors:** Enhance the UI to display validation errors, offering users immediate insight into issues with incoming payloads, facilitating quick troubleshooting and resolution.
 
+## 3. Non-Functional Requirements
 
-### Non-Functional Requirements
+- **Performance:** The validation process must be optimized to ensure minimal impact on webhook processing latency, aiming for less than 50ms overhead per request.
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Reliability:** The payload validation feature must be reliable, consistently checking and accurately reporting on payload integrity and schema conformity.
 
-## Technical Specifications
+- **Security:** Implement validation in a manner that does not expose sensitive information or introduce security vulnerabilities, adhering to best practices for input handling and error reporting.
+
+- **Maintainability:** Code related to payload validation should be modular, well-documented, and covered by automated tests to ensure maintainability and ease of future enhancements.
+
+## 4. Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook leverages a SvelteKit-based frontend, Supabase for backend services, and a distributed worker system for processing webhook events. This feature will be integrated into the webhook intake process managed by SvelteKit, with validation logic executed by the initial processing worker.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Schema Storage:** Modify the `webhook_triggers` table to include a `payload_schema` JSONB field for storing user-defined JSON schemas.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+2. **Validation Library Integration:** Integrate a JSON schema validation library, such as AJV (Another JSON Schema Validator), which is compatible with the existing Node.js backend.
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+3. **Frontend Enhancements:** Update the SvelteKit frontend to include a schema editor within the workflow configuration UI, enabling users to define and edit JSON schemas for their webhooks.
 
-### Data Model
+4. **Validation Process:** In the webhook processing worker, implement logic to fetch the associated JSON schema for incoming webhooks and validate payloads against these schemas before proceeding with workflow execution.
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+5. **Error Handling and Feedback:** Improve error logging to capture detailed validation failure messages. Adjust webhook responses to include user-friendly error messages without exposing sensitive information.
 
-### API Endpoints (if applicable)
+### Data Model Changes
 
-No new API endpoints required for this task.
+- Modify `webhook_triggers`:
+  - Add `payload_schema` JSONB field to store JSON schema definitions.
 
-## Acceptance Criteria
+### API Endpoints
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- Extend existing webhook configuration endpoints to support payload schema management:
+  - `POST /api/webhooks/{id}/schema` to create/update a schema.
+  - `GET /api/webhooks/{id}/schema` to retrieve the current schema.
+  - `DELETE /api/webhooks/{id}/schema` to remove the schema.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+## 5. Acceptance Criteria
 
-## Dependencies
+- [ ] Users can define, edit, and delete JSON schemas for webhook payloads through the UI.
+- [ ] Webhook payloads are validated against user-defined schemas before workflow execution.
+- [ ] Invalid payloads result in the webhook being rejected and an appropriate error response.
+- [ ] Validation errors and reasons for webhook rejection are clearly displayed in the UI and logged.
+- [ ] Payload validation introduces less than 50ms additional latency to webhook processing.
+- [ ] Documentation is updated to include payload validation guidelines and schema management API details.
 
-### Technical Dependencies
+## 6. Dependencies
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- Selection and integration of a JSON schema validation library compatible with the current tech stack.
+- UI enhancements requiring frontend development resources familiar with SvelteKit.
 
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to existing code style and project structure conventions.
+- Optimize validation logic for performance to meet non-functional requirements.
+- Ensure comprehensive test coverage, including unit tests for schema management and validation logic, and integration tests covering the full validation workflow.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Focus on schema storage operations and validation logic.
+- **Integration Tests:** Cover end-to-end functionality, from schema definition in the UI through to webhook payload validation and error handling.
+- **Performance Tests:** Evaluate the impact of payload validation on webhook processing latency to ensure compliance with performance targets.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Validate and sanitize schema definitions to prevent injection attacks.
+- Ensure error messages related to payload validation do not leak sensitive information.
+- Follow security best practices for handling user-generated schema definitions.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement logging for all schema management operations and validation outcomes.
+- Monitor the performance impact of payload validation on the webhook processing pipeline.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Payload validation
-
-**Full Issue Body:**
-**Phase:** Phase 5
-**Section:** Webhook Triggers
-
-**Task:** Payload validation
-
----
-_Auto-generated from TODO.md_
+By adhering to these detailed requirements and specifications, MeshHook will enhance its webhook system with robust payload validation capabilities, further strengthening its position as a secure and reliable automation platform.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #156*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #156*
+*Generated: 2025-10-10*

@@ -1,173 +1,97 @@
 # PRD: Node palette (drag & drop)
 
-**Issue:** [#121](https://github.com/profullstack/meshhook/issues/121)  
-**Milestone:** Phase 3: Frontend (SvelteKit)  
-**Labels:** workflow-builder  
-**Phase:** Phase 3  
-**Section:** Workflow Builder
+**Issue:** [#121](https://github.com/profullstack/meshhook/issues/121)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** workflow-builder, hacktoberfest
 
 ---
 
+# PRD: Node Palette (Drag & Drop)
+
 ## Overview
 
-This task is part of Phase 3 in the Workflow Builder section of the MeshHook project. 
+This task focuses on enhancing the visual workflow builder within the MeshHook project by implementing a node palette that supports drag-and-drop functionality. This feature is pivotal for MeshHook's objective to provide a user-friendly, visually intuitive workflow engine, akin to n8n's ease of use but with the robust, deterministic execution model inspired by Temporal. The drag-and-drop node palette will allow users to easily construct and modify workflows by dragging nodes from the palette into the DAG (Directed Acyclic Graph) builder interface. This capability aligns with our goals to enhance user experience and efficiency in workflow creation and modification.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Node palette (drag & drop)
+1. **Node Palette UI:** Develop a user interface for the node palette that lists available workflow nodes (e.g., transform, http_call, branch, delay, terminate).
+2. **Drag-and-Drop Mechanism:** Implement a mechanism that allows users to drag nodes from the palette and drop them into the DAG builder area.
+3. **Node Placement Validation:** Ensure that nodes dropped into the DAG builder are validated for correct placement within the workflow structure.
+4. **State Management:** Update the workflow's state in real-time as nodes are added or repositioned within the DAG builder.
+5. **Visual Feedback:** Provide visual feedback during drag operations to indicate valid drop zones within the DAG builder.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Node palette (drag & drop)"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The drag-and-drop operations must be smooth and responsive, with no perceptible lag to the user.
+- **Usability:** The UI/UX design of the node palette and drag-and-drop functionality should be intuitive, requiring minimal instruction for new users.
+- **Reliability:** The feature should function consistently across different browsers and devices.
+- **Scalability:** The implementation must be able to handle an expanding library of nodes as new types are added to the system.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Frontend:** SvelteKit/Svelte 5 for the DAG builder UI.
+- **State Management:** Local component state and/or global state management (e.g., Svelte stores) to handle the drag-and-drop operations and workflow modifications.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **UI Design:** Sketch the node palette UI and drag-and-drop interactions, focusing on usability and simplicity.
+2. **Frontend Implementation:**
+   - Develop the node palette component with a list of available nodes.
+   - Implement the drag-and-drop functionality using Svelte's action and store mechanisms to manage state during drag operations.
+   - Validate node placements within the DAG builder to ensure logical workflow construction.
+3. **State Management:** Utilize Svelte stores to manage and update the workflow state as nodes are added or moved.
+4. **Integration Testing:** Ensure the new feature integrates seamlessly with existing workflow builder components, maintaining state consistency and performance.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No changes to the backend data model are required for this feature. The focus is on frontend enhancements to improve the user experience in workflow construction.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+No new API endpoints are required. This feature operates within the frontend, utilizing existing endpoints for workflow state management and persistence.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Node palette UI is implemented and visually aligns with the existing design language of MeshHook.
+- [ ] Users can drag nodes from the palette and drop them into the DAG builder.
+- [ ] Drag-and-drop operations provide real-time visual feedback and validation.
+- [ ] Workflow state updates accurately reflect changes made through the drag-and-drop interface.
+- [ ] The feature works reliably across supported browsers and devices.
+- [ ] Performance benchmarks are met, ensuring smooth and responsive interactions.
+- [ ] Integration tests confirm that the feature integrates well with existing components.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- SvelteKit/Svelte 5 for frontend development.
+- Existing workflow builder components and state management logic.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Utilize Svelte's reactivity model and stores for efficient state management during drag-and-drop operations.
+- Adhere to the project's coding standards and best practices for Svelte and JavaScript development.
+- Prioritize accessibility and usability in UI design and interaction patterns.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Cover drag-and-drop logic and state updates with unit tests.
+- **Integration Tests:** Test the integration of the node palette with the existing DAG builder and workflow state management system.
+- **User Acceptance Testing (UAT):** Conduct UAT to gather feedback on the usability and functionality of the drag-and-drop feature.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure that client-side operations do not expose or allow manipulation of workflow data beyond the user's permissions.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Instrument frontend performance monitoring to track the responsiveness and efficiency of the drag-and-drop operations.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Node palette (drag & drop)
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Workflow Builder
-
-**Task:** Node palette (drag & drop)
-
----
-_Auto-generated from TODO.md_
+This PRD aligns the node palette (drag & drop) feature with the overarching goals of the MeshHook project, focusing on enhancing the user experience in workflow creation and modification while adhering to the project's technical and architectural standards.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #121*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #121*
+*Generated: 2025-10-10*

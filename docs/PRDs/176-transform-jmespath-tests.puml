@@ -1,48 +1,60 @@
 @startuml
 !theme plain
 
+title Transform/JMESPath Tests Architecture
+
 package "MeshHook System" {
-    [Webhook Intake] 
-    [Workflow CRUD API] 
-    [Publish Versions] 
-    [Run Console] 
-    [Event Sourcing] 
-    [Supabase Realtime]
-    [Postgres Database]
-    [Orchestrator Worker]
-    [HTTP Executor Worker]
+    [Webhook Ingestion] - [Workflow Execution]
+    [Workflow Execution] --> [Transform/JMESPath]
+    [Transform/JMESPath] ..> [Logging] : logs transformations
+    [Workflow Execution] ..> [Database] : reads/writes
+    database "Database" {
+        [Postgres]
+    }
 }
 
-package "Transform/JMESPath Tests" {
-    [Unit Tests] - [Integration Tests] 
-    [Integration Tests] - [E2E Tests]
-    [Test Runner]
-    [Test Data]
-    [Test Scenarios]
-    [Test Documentation]
+package "Testing Framework" {
+    [Test Runner] - [Unit Tests]
+    [Test Runner] - [Integration Tests]
+    [Test Runner] - [End-to-End Tests]
+    [Unit Tests] --> [Mock Data]
+    [Integration Tests] --> [Transform/JMESPath]
+    [End-to-End Tests] --> [MeshHook System]
 }
 
-[Webhook Intake] --> [Event Sourcing]: Triggers
-[Workflow CRUD API] --> [Event Sourcing]: Updates
-[Publish Versions] --> [Event Sourcing]: Versioning
-[Run Console] --> [Supabase Realtime]: Live Logs
-[Event Sourcing] --> [Postgres Database]: Stores State
-[Orchestrator Worker] --> [HTTP Executor Worker]: Dispatches Tasks
-[Orchestrator Worker] --> [Event Sourcing]: Manages State
-[HTTP Executor Worker] --> [Webhook Intake]: Callbacks
+[Transform/JMESPath] <.. [Unit Tests] : tested by
+[Transform/JMESPath] <.. [Integration Tests] : tested by
+[MeshHook System] <.. [End-to-End Tests] : tested by
 
-' Integration with existing components
-[Test Runner] --> [Unit Tests]
-[Test Runner] --> [Integration Tests]
-[Test Runner] --> [E2E Tests]
-
-[Unit Tests] .right.> [Event Sourcing]: Validates
-[Integration Tests] .right.> [Orchestrator Worker]: Validates Integration
-[E2E Tests] .right.> [Webhook Intake]: Validates Flow
-
-note right of [Test Documentation]
-  Document test scenarios,
-  edge cases, and public APIs
+note right of [Unit Tests]
+  Focus on logic of JMESPath
+  transformations using mock data
 end note
+
+note right of [Integration Tests]
+  Ensure compatibility with other
+  MeshHook components
+end note
+
+note right of [End-to-End Tests]
+  Simulate real-world usage
+  scenarios
+end note
+
+note right of [Logging]
+  Important for monitoring and
+  observability of test executions
+end note
+
+[Test Runner] ..> [CI/CD Pipeline] : integrates with
+[CI/CD Pipeline] ..> [Test Results] : generates
+[Test Results] ..> [Monitoring & Observability] : informs
+
+legend right
+  -- Key --
+  [ ] = Component
+  --> = Direct Interaction
+  ..> = Indirect Interaction/Dependency
+endlegend
 
 @enduml

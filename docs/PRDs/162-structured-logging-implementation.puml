@@ -1,34 +1,46 @@
 @startuml
 !theme plain
 
+title Structured Logging Implementation
+
 package "MeshHook System" {
-    component [SvelteKit SSR/API] as SvelteKit
-    component [Supabase\nPostgres + Realtime + Storage + Edge] as Supabase
-    component [Workers\nOrchestrator + HTTP Executor] as Workers
-    database [Postgres DB] as Postgres
-    [Structured Logging] as StructuredLogging
+    [Webhook Intake] - [Structured Logging]
+    [Orchestrator] - [Structured Logging]
+    [HTTP Executors] - [Structured Logging]
+    [SvelteKit Frontend] - [Structured Logging]
+    [Supabase (Postgres)] - [Structured Logging]
+    database "Log Storage" as Storage {
+        folder "JSON Logs" as JSON
+    }
+    [Structured Logging] ..> JSON : writes
 }
 
 cloud {
-    [External Services] as ExtServices
+    [External Logging Services] <-- [Structured Logging] : sends logs
 }
 
-SvelteKit --> Supabase : Uses for data & log streaming
-Workers --> Supabase : Uses for job scheduling & execution
-Supabase --> Postgres : Persists data & logs
-StructuredLogging .> SvelteKit : Implements logging
-StructuredLogging .> Workers : Implements logging
-StructuredLogging ..> Supabase : Streams logs in realtime
-StructuredLogging ..> Postgres : Writes logs
+node "Configuration" {
+    [Logging Configuration] ..> [Structured Logging] : configures
+}
 
-Supabase --> ExtServices : Interacts with\n(Supabase services)
-StructuredLogging --> ExtServices : Utilizes for external logging
+node "Integration & Testing" {
+    [Unit Tests] ..> [Structured Logging]
+    [Integration Tests] ..> [Structured Logging]
+    [Performance Tests] ..> [Structured Logging]
+}
 
-note right of StructuredLogging
-  Structured logging implementation includes:
-  - Consistent log format
-  - Error handling & reporting
-  - Integration with Supabase Realtime for live updates
-end note
+node "Security" {
+    [Sensitive Data Redaction] ..> [Structured Logging] : ensures
+}
+
+[Structured Logging] --> [Supabase Realtime] : integrates for live logging
+
+legend right
+    KEY
+    ====
+    [ ] = Component
+    --> = Interaction
+    ..> = Configuration/Data flow
+endlegend
 
 @enduml

@@ -1,30 +1,45 @@
 @startuml
 !theme plain
 
-title Node Reference Documentation Workflow
+title Node Reference Documentation for MeshHook
 
-actor Developer as dev
-participant "Documentation System" as docs
-participant "MeshHook Core" as core
-database "Supabase" as supabase
-participant "GitHub" as github
+package "MeshHook Workflow Engine" {
+    [Webhook Triggers] as Webhooks
+    [Transform Nodes] as Transforms
+    [HTTP Calls] as HTTPCalls
+    [Branches] as Branches
+    [Delays] as Delays
+    [Termination Nodes] as Terminations
+}
 
-dev -> docs : Request documentation
-docs -> core : Analyze existing codebase
-activate core
+package "Documentation Site (SvelteKit)" {
+    [Node Reference Docs] as Docs
+    database "Supabase (Versioned Content)" as Supabase
+}
 
-core -> supabase : Query workflow\nand node details
-activate supabase
-supabase --> core : Return data
-deactivate supabase
+cloud {
+    [Developer and Automation Engineers] as Developers
+}
 
-core -> core : Generate node reference
-core --> docs : Return generated documentation
-deactivate core
+[Developers] --> [Docs] : Uses
+[Docs] ..> Supabase : Fetches versioned content
+[Docs] ..> [Webhooks] : Documents
+[Docs] ..> [Transforms] : Documents
+[Docs] ..> [HTTPCalls] : Documents
+[Docs] ..> [Branches] : Documents
+[Docs] ..> [Delays] : Documents
+[Docs] ..> [Terminations] : Documents
 
-docs -> github : Update documentation\nin repo
-activate github
-github --> dev : Notify documentation update
-deactivate github
+note right of [Docs] : - Comprehensive Coverage\n- Examples\n- Searchability\n- Version Compatibility
+note right of Supabase : No data model changes required
+
+legend right
+  **Documentation Integration**
+  - Content Creation with development team collaboration
+  - Structured documentation template for consistency
+  - Markdown formatted for SvelteKit compatibility
+  - Technical and usability review for improvements
+  - Publication on SvelteKit site
+endlegend
 
 @enduml

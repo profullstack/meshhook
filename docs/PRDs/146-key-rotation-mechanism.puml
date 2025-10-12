@@ -1,34 +1,43 @@
 @startuml
 !theme plain
 
-title Key Rotation Mechanism for MeshHook
+title Key Rotation Mechanism Workflow
 
-actor Admin
-boundary "Webhook System" as Webhook
-boundary "CRUD System" as CRUD
-database "Supabase" as DB
-entity "Key Rotation Service" as KRS
-control "Orchestrator Worker" as OW
-control "HTTP Executor Worker" as HEW
+actor Admin as admin
+boundary "CLI/API" as cli
+control "Key Rotation Service" as krs
+database "Supabase Postgres" as db
+entity "EncryptionKeys Table" as ekt
+control "Secrets Encryption Service" as ses
+control "Audit Log Service" as als
 
-Admin --> Webhook : Requests key rotation
-Webhook --> KRS : Triggers rotation process
-KRS --> DB : Validates existing keys
-DB --> KRS : Returns validation result
-KRS --> OW : Initiates new key generation
-OW --> KRS : Returns new key
-KRS --> DB : Stores new key
-KRS --> HEW : Instructs cache update
-HEW --> KRS : Confirms update
-KRS --> Webhook : Confirms rotation completion
-Webhook --> Admin : Notifies success
+== Key Rotation Trigger ==
+admin -> cli : Trigger Rotation\n(Manual or Scheduled)
+cli -> krs : Initiate Key Rotation
 
-note right of KRS : Handles key generation,\nrotation, and validation
+== Key Generation ==
+krs -> db : Request current active key
+db --> krs : Return active key details
+krs -> krs : Generate new encryption key
 
-note over DB : Uses Postgres for\n durable storage
+== Secrets Re-encryption ==
+krs -> ses : Start re-encryption with new key
+ses -> db : Fetch secrets encrypted with old key
+db --> ses : Return secrets
+ses -> ses : Re-encrypt secrets with new key
+ses -> db : Update secrets with new encryption
 
-note over HEW : Ensures robust HTTP\n with retries/backoff
+== Key Versioning ==
+krs -> db : Deactivate old key
+krs -> ekt : Insert new key as active
+ekt -> db : Update EncryptionKeys Table
 
-note over OW : Manages state machine\n and scheduling
+== Audit Logging ==
+krs -> als : Log key rotation activity
+als -> db : Store log in audit table
+
+== Completion ==
+krs --> cli : Key Rotation Complete
+cli --> admin : Notify completion
 
 @enduml

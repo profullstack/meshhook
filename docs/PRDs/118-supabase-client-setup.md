@@ -1,173 +1,101 @@
 # PRD: Supabase client setup
 
-**Issue:** [#118](https://github.com/profullstack/meshhook/issues/118)  
-**Milestone:** Phase 3: Frontend (SvelteKit)  
-**Labels:** project-setup  
-**Phase:** Phase 3  
-**Section:** Project Setup
+**Issue:** [#118](https://github.com/profullstack/meshhook/issues/118)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** project-setup, hacktoberfest
 
 ---
 
+# PRD: Supabase Client Setup
+
 ## Overview
 
-This task is part of Phase 3 in the Project Setup section of the MeshHook project. 
+The purpose of this task is to set up the Supabase client for the MeshHook project, under Phase 3: Frontend (SvelteKit). This setup is fundamental for integrating MeshHook's frontend with Supabase services, including Postgres databases, Realtime subscriptions, and Storage. By successfully implementing the Supabase client, MeshHook will leverage Supabase's capabilities to achieve real-time data updates, secure and scalable data storage, and efficient data retrieval mechanisms. This task aligns with MeshHook's goals by ensuring the application's backend services are seamlessly connected to the SvelteKit-based frontend, facilitating features such as live logs via Supabase Realtime and multi-tenant RLS security.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Supabase client setup
+1. **Supabase Client Initialization:** Implement and configure the Supabase client within the SvelteKit application to connect with the Supabase project.
+2. **Environment Variable Configuration:** Securely manage Supabase credentials (URL and anon/public key) using environment variables.
+3. **Realtime Subscriptions Setup:** Enable subscriptions for live updates from Supabase Realtime, ensuring that the frontend can receive and display updates without manual refresh.
+4. **Database Querying:** Facilitate querying the Supabase Postgres database directly from the SvelteKit frontend where necessary, following best practices for security and efficiency.
+5. **Storage Access:** Implement methods to interact with Supabase Storage for uploading, retrieving, and managing artifacts.
+6. **Security Integration:** Ensure the setup respects Row-Level Security (RLS) policies defined in Supabase, securing multi-tenant access controls.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Supabase client setup"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The Supabase client must handle requests efficiently, ensuring minimal latency in user interactions, particularly for live updates.
+- **Reliability:** The client setup must include error handling to manage and recover from potential failures in communication with Supabase services.
+- **Security:** Secure handling of API keys and user data, adhering to MeshHook's security guidelines, including RLS and secrets management.
+- **Maintainability:** The implementation should be modular, well-documented, and easy to extend as MeshHook's requirements evolve.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook uses SvelteKit for its frontend, with backend services including database, realtime updates, and storage handled by Supabase. The Supabase client setup is a critical bridge that connects these components, enabling dynamic, real-time web applications. This task will involve configuring the Supabase JavaScript client within the SvelteKit application, establishing patterns for its use throughout the project.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Analysis:** Review the current frontend architecture to determine the best integration points for the Supabase client.
+2. **Environment Configuration:** Set up project environment variables for Supabase URL and keys, ensuring they are securely managed and not hard-coded.
+3. **Client Initialization:** Implement a module for initializing the Supabase client with the environment variables, exporting the client for use across the frontend application.
+4. **Realtime Subscriptions:** Create a utility function or Svelte store for managing Realtime subscriptions, ensuring components can subscribe and unsubscribe efficiently.
+5. **Database and Storage Integration:** Develop functions or utilities for common database operations (CRUD) and interacting with Supabase Storage, adhering to security best practices.
+6. **Testing and Validation:** Test the integration extensively, both in isolation and as part of the overall system, to ensure reliability and performance.
+7. **Documentation:** Document the setup process, including code comments and updates to the project's README or developer documentation, detailing how to use the Supabase client within the SvelteKit application.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No changes to the data model are required for this task. However, developers should be familiar with the existing schema to effectively implement and use database operations.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+No new API endpoints are being introduced in this task. This task focuses on the client-side integration with existing Supabase services.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Supabase client successfully initialized and configured with environment variables.
+- [ ] Realtime updates from Supabase are accurately reflected in the frontend without manual refresh.
+- [ ] Database queries and storage operations through the Supabase client are secure, efficient, and functional.
+- [ ] Environment variables for Supabase credentials are managed securely and not exposed.
+- [ ] Implementation is well-documented, with clear instructions for future developers on how to utilize the Supabase client in the frontend application.
+- [ ] All functionality is tested and verified in a development environment.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the MeshHook Supabase project and credentials.
+- SvelteKit environment setup and understanding of the existing frontend codebase.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Use async/await for handling asynchronous operations with the Supabase client.
+- Modularize the Supabase client setup for reusability across the frontend application.
+- Ensure all Supabase interactions adhere to security best practices, especially regarding RLS and sensitive data handling.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For functions and utilities interacting with the Supabase client.
+- **Integration Tests:** To verify that frontend components correctly interact with Supabase services (e.g., Realtime updates and data fetching).
+- **Manual Testing:** For end-to-end verification of the setup, especially focusing on live updates and multi-tenant security aspects.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure that Supabase credentials are securely stored and accessed through environment variables.
+- Verify that RLS policies on Supabase are correctly enforced in all frontend data interactions.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement logging for critical steps in the Supabase client interaction, particularly for error handling.
+- Where applicable, use Supabase's built-in monitoring tools to track usage and performance issues.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Supabase client setup
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Project Setup
-
-**Task:** Supabase client setup
-
----
-_Auto-generated from TODO.md_
+- Supabase JavaScript client documentation for detailed API usage and best practices.
+- MeshHook's existing documentation on security guidelines, architecture, and the current frontend implementation setup.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #118*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #118*
+*Generated: 2025-10-10*

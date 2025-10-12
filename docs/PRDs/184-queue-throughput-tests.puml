@@ -1,27 +1,44 @@
 @startuml
 !theme plain
 
-title Queue Throughput Tests - MeshHook Project
+title Queue Throughput Tests for MeshHook
 
-actor Tester
-entity "Queue Throughput Test Suite" as TestSuite
-component "Test Orchestrator" as Orchestrator
-component "Supabase Postgres" as Postgres
-component "Supabase Realtime" as Realtime
-component "HTTP Executor" as Executor
-database "Workflow Engine DB" as WorkflowDB
+package "MeshHook System" {
+    [Queueing System] as Queue
+    [Test Framework] as TestFramework
+    [Performance Metrics] as Metrics
+    [Monitoring Tools] as Monitoring
+    database "Postgres DB" as DB {
+        [pg-boss / pgmq]
+    }
+}
 
-Tester --> TestSuite : initiates tests
-TestSuite --> Orchestrator : triggers test scenarios
-Orchestrator --> Postgres : utilizes queue system
-Orchestrator --> Executor : dispatches HTTP tasks
-Postgres --> WorkflowDB : reads/writes test data
-Postgres --> Realtime : streams logs
-Realtime --> TestSuite : provides live test logs
-Executor --> Postgres : updates task status
+cloud {
+    [Load Generator] as LoadGen
+}
 
-note right of Postgres : Queue Management
-note right of Realtime : Log Streaming
-note right of Executor : HTTP Requests Handling
+Queue -up-> DB : uses
+TestFramework .right.> LoadGen : configures
+LoadGen .down.> Queue : simulates load
+Queue --> Metrics : reports
+Metrics --> TestFramework : analyzes
+TestFramework --> Monitoring : logs performance
+Monitoring --> DB : stores logs
+
+note right of LoadGen
+  Simulate realistic and\npeak load conditions
+end note
+
+note right of Metrics
+  Collect throughput,\nlatency, and resource usage
+end note
+
+note over TestFramework, Queue
+  Test scenarios include\nvarying load patterns and\ndata volumes
+end note
+
+note over Monitoring
+  Track system performance\nand behavior during tests
+end note
 
 @enduml

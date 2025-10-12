@@ -1,76 +1,44 @@
 @startuml
 !theme plain
 
-package "Webhook Management UI" {
-    [Signature Key Management] as SKM
-    [Webhook Trigger with Verification] as WTV
-    [Visual DAG Builder] as VDB
-    [Event Sourcing] as ES
-    [Live Logs via Supabase] as LL
-    [Multi-tenant RLS Security] as MRLS
-}
-
-database "Supabase" {
-    frame Postgres {
-        [Data + Queues] as DBQ
-        [Schema.sql] as Schema
-    }
-    frame Realtime {
-        [Log Streaming] as LS
-    }
-    frame Storage {
-        [Artifacts] as Artifacts
-    }
-    frame Edge {
-        [Cron/Timers] as Cron
+package "MeshHook Webhook System" {
+    [Webhook Management UI] as UI
+    [Supabase API] as API
+    database "Supabase (Postgres)" as DB {
+        [signature_keys] as Keys
     }
 }
 
-[SKM] --> [WTV] : Verifies Signatures
-[SKM] --> [MRLS] : Utilizes\nSecurity Model
-[SKM] ..> [DBQ] : Reads/Writes\nKeys
-[SKM] ..> [Schema] : May Update\nIf Required
-[SKM] --> [ES] : Triggers Events
-[SKM] --> [LL] : Logs Key\nManagement Actions
-
-note right of [SKM]
-  Implement key management
-  functionalities including:
-  - Generation
-  - Rotation
-  - Revocation
-end note
-
-package "External Services" {
-    [SvelteKit SSR/API] as SvelteKit
-    [Workers] as Workers
-    [HTTP Executor] as HTTPExec
+package "External Systems" {
+    [UI Design Tools] as DesignTools
 }
 
-[SvelteKit] --> [VDB] : Provides UI for\nDAG Configuration
-[Workers] --> [ES] : Handles State\nMachine & Scheduling
-[HTTPExec] --> [WTV] : Executes Webhook\nCalls with Retries
+UI --> API : Generate / List / Revoke / Reactivate keys
+API --> DB : CRUD Operations on signature_keys
+DB --> API : Real-time Updates
+DesignTools ..> UI : Mockups Creation
 
-note "Technical Stack" as TS
-note right of [SvelteKit]
-  SvelteKit is used for rendering
-  the Webhook Management UI and
-  handling API requests.
-end note
+note right of API : Extends API for\nkey management
+note right of DB : New Table: signature_keys
 
-note right of [Workers]
-  Orchestrates workflow
-  execution and scheduling.
-end note
+class Keys {
+    +id: UUID
+    +project_id: UUID
+    +key: Text (encrypted)
+    +status: Enum (active/revoked)
+    +created_at: Timestamp
+    +revoked_at: Nullable Timestamp
+}
 
-note right of [HTTPExec]
-  Robust HTTP client for
-  webhook execution with
-  retries and backoff.
-end note
+note "Security\n- Encrypted keys\n- RLS on operations" as SecNote
+DB .. SecNote
+SecNote .. API
 
-TS ..> SvelteKit
-TS ..> Workers
-TS ..> HTTPExec
+legend right
+  **Key Components**
+  [ ] : System Component
+  -- : Data Flow
+  .. : Influence or Guidance
+endlegend
 
 @enduml

@@ -1,16 +1,21 @@
 <script>
 	import HttpResponseViewer from './HttpResponseViewer.svelte';
+	import VariablePickerTemplate from './VariablePickerTemplate.svelte';
 	
-	let { node, onSave, onCancel } = $props();
+	let { node, onSave, onCancel, previousNodeOutput = {}, previousNode = null, onRefreshPreviousNode = null } = $props();
 	
-	// Local state for editing
-	let editedNode = $state({ ...node });
-	let config = $state(node.data?.config || {});
+	// Local state for editing - deep clone to avoid immutability
+	let editedNode = $state(JSON.parse(JSON.stringify(node)));
+	let config = $state(JSON.parse(JSON.stringify(node.data?.config || {})));
 	
 	// HTTP test state
 	let testing = $state(false);
 	let testResult = $state(null);
 	let showTestResult = $state(false);
+	
+	// Previous node test state
+	let testingPreviousNode = $state(false);
+	let refreshedOutput = $state(null);
 	
 	// Node type configurations
 	const nodeConfigs = {
@@ -25,7 +30,7 @@
 		},
 		transform: {
 			fields: [
-				{ name: 'expression', label: 'JMESPath Expression', type: 'textarea', required: true, placeholder: 'data.items[*].{id: id, name: name}' },
+				{ name: 'template', label: 'Template', type: 'template-picker', required: true },
 				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Transform description' }
 			]
 		},
@@ -78,7 +83,7 @@
 		}
 	};
 	
-	const currentConfig = nodeConfigs[node.data?.type] || { fields: [] };
+	const currentConfig = nodeConfigs[editedNode.data?.type] || { fields: [] };
 	
 	function handleSave() {
 		// Update the node with new configuration
@@ -157,12 +162,52 @@
 	function closeTestResult() {
 		showTestResult = false;
 	}
+	
+	/**
+	 * Test previous HTTP node to get fresh data
+	 */
+	async function handleTestPreviousNode() {
+		if (!previousNode || previousNode.data?.type !== 'httpCall') {
+			return;
+		}
+		
+		testingPreviousNode = true;
+		
+		try {
+			const response = await fetch('/api/test-http', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(previousNode.data?.config || {})
+			});
+			
+			const data = await response.json();
+			
+			if (data.success) {
+				refreshedOutput = data.response;
+				// Notify parent to update the previous node output
+				if (onRefreshPreviousNode) {
+					onRefreshPreviousNode(previousNode.id, data.response);
+				}
+			} else {
+				alert(`Failed to test previous node: ${data.error?.message || 'Unknown error'}`);
+			}
+		} catch (err) {
+			alert(`Error testing previous node: ${err.message}`);
+		} finally {
+			testingPreviousNode = false;
+		}
+	}
+	
+	// Use refreshed output if available, otherwise use the passed previousNodeOutput
+	const currentPreviousOutput = $derived(refreshedOutput || previousNodeOutput);
 </script>
 
 <div class="modal-overlay" onclick={handleOverlayClick} onkeydown={(e) => e.key === 'Escape' && handleCancel()} role="dialog" aria-modal="true" tabindex="-1">
 	<div class="modal-content">
 		<div class="modal-header">
-			<h2>Configure {node.data?.label || 'Node'}</h2>
+			<h2>Configure {editedNode.data?.label || 'Node'}</h2>
 			<button class="close-btn" onclick={handleCancel} aria-label="Close">&times;</button>
 		</div>
 		
@@ -178,37 +223,64 @@
 			</div>
 			
 			{#each currentConfig.fields as field}
-				<div class="form-group">
-					<label for={field.name}>
-						{field.label}
-						{#if field.required}<span class="required">*</span>{/if}
-					</label>
-					
-					{#if field.type === 'text' || field.type === 'number'}
-						<input
-							id={field.name}
-							type={field.type}
-							bind:value={config[field.name]}
-							placeholder={field.placeholder || ''}
-							required={field.required}
-							min={field.min}
-							max={field.max}
+				<div class="form-group" class:full-width={field.type === 'template-picker'}>
+					{#if field.type === 'template-picker'}
+						{#if previousNode && previousNode.data?.type === 'httpCall'}
+							<div class="previous-node-actions">
+								<button
+									class="btn-refresh-previous"
+									onclick={handleTestPreviousNode}
+									disabled={testingPreviousNode}
+									title="Re-test the previous HTTP call to get fresh data"
+								>
+									{#if testingPreviousNode}
+										<span class="spinner"></span>
+										Testing Previous Node...
+									{:else}
+										🔄 Refresh Previous Node Data
+									{/if}
+								</button>
+							</div>
+						{/if}
+						<VariablePickerTemplate
+							previousNodeOutput={currentPreviousOutput}
+							bind:template={config[field.name]}
+							onTemplateChange={(newTemplate) => {
+								config[field.name] = newTemplate;
+							}}
 						/>
-					{:else if field.type === 'textarea'}
-						<textarea
-							id={field.name}
-							bind:value={config[field.name]}
-							placeholder={field.placeholder || ''}
-							required={field.required}
-							rows={field.rows || 4}
-						></textarea>
-					{:else if field.type === 'select'}
-						<select id={field.name} bind:value={config[field.name]} required={field.required}>
-							<option value="">Select {field.label}</option>
-							{#each field.options as option}
-								<option value={option}>{option}</option>
-							{/each}
-						</select>
+					{:else}
+						<label for={field.name}>
+							{field.label}
+							{#if field.required}<span class="required">*</span>{/if}
+						</label>
+						
+						{#if field.type === 'text' || field.type === 'number'}
+							<input
+								id={field.name}
+								type={field.type}
+								bind:value={config[field.name]}
+								placeholder={field.placeholder || ''}
+								required={field.required}
+								min={field.min}
+								max={field.max}
+							/>
+						{:else if field.type === 'textarea'}
+							<textarea
+								id={field.name}
+								bind:value={config[field.name]}
+								placeholder={field.placeholder || ''}
+								required={field.required}
+								rows={field.rows || 4}
+							></textarea>
+						{:else if field.type === 'select'}
+							<select id={field.name} bind:value={config[field.name]} required={field.required}>
+								<option value="">Select {field.label}</option>
+								{#each field.options as option}
+									<option value={option}>{option}</option>
+								{/each}
+							</select>
+						{/if}
 					{/if}
 				</div>
 			{/each}
@@ -216,7 +288,7 @@
 		
 		<div class="modal-footer">
 			<div class="footer-left">
-				{#if node.data?.type === 'httpCall'}
+				{#if editedNode.data?.type === 'httpCall'}
 					<button
 						class="btn-test"
 						onclick={handleTestHttpCall}
@@ -330,6 +402,40 @@
 	
 	.form-group:last-child {
 		margin-bottom: 0;
+	}
+	
+	.form-group.full-width {
+		margin-bottom: 0;
+	}
+	
+	.previous-node-actions {
+		margin-bottom: 1rem;
+		display: flex;
+		justify-content: flex-end;
+	}
+	
+	.btn-refresh-previous {
+		background: #10b981;
+		color: white;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 1rem;
+		border: none;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	
+	.btn-refresh-previous:hover:not(:disabled) {
+		background: #059669;
+	}
+	
+	.btn-refresh-previous:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 	
 	label {

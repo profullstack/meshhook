@@ -1,58 +1,52 @@
 @startuml
 !theme plain
 
-package "MeshHook System" {
-    [Webhook Intake] <<SvelteKit>>
-    [Workflow CRUD] <<SvelteKit>>
-    [Publish Versions] <<SvelteKit>>
-    [Run Console] <<SvelteKit>>
-    [Orchestrator Worker]
-    [HTTP Executor Worker]
-    database "Supabase" {
-        [Postgres]
-        [Realtime]
-        [Storage]
-        [Edge Functions]
+package "MeshHook Architecture" {
+    [SvelteKit\n(SSR/API)] as SvelteKit
+    [Supabase] as Supabase
+    package "Workers" {
+        [Orchestrator] as Orchestrator
+        [HTTP Executor] as Executor
     }
+    database "Postgres" as Postgres
+    [Realtime] as Realtime
+    [Storage] as Storage
+    [Edge Functions\n(Cron/Timer)] as Edge
+    [Client Webhooks] as Webhooks
+    [Workflow Engine] as Workflow
+    [Security\n(RLS & Secrets Management)] as Security
 }
 
-[Webhook Intake] --> [Orchestrator Worker] : Triggers workflow
-[Workflow CRUD] --> [Postgres] : CRUD operations
-[Publish Versions] --> [Postgres] : Version management
-[Run Console] --> [Realtime] : Live logs
-[Orchestrator Worker] --> [HTTP Executor Worker] : Executes HTTP tasks
-[Orchestrator Worker] --> [Postgres] : Updates state
-[HTTP Executor Worker] --> [Edge Functions] : Schedules retries/backoffs
-[Realtime] .> [Run Console] : Streams logs
+SvelteKit --> Supabase : API Requests
+SvelteKit --> Webhooks : Webhook Intake
+Supabase --> Postgres : Data Storage & Queues
+Supabase --> Realtime : Log Streaming
+Supabase --> Storage : Artifacts Storage
+Supabase --> Edge : Cron/Timer Triggers
+Orchestrator --> Executor : Schedules HTTP Requests
+Executor --> Webhooks : Executes Webhooks
+Webhooks --> Workflow : Triggers Workflows
+Workflow --> Postgres : Logs Execution States
+Realtime -down-> Client : Streams Logs
+Postgres --> Security : Applies RLS & Manages Secrets
+Security .> SvelteKit : Secures API Endpoints
+Security .> Supabase : Secures Data Access
 
-note right of [Orchestrator Worker]
-  State machine + scheduling
+note right of Workflow
+  Handles:
+  - Webhook triggers
+  - Visual DAG builder
+  - Durable runs
+  - Live logs
+  - Multi-tenant security
 end note
 
-note right of [HTTP Executor Worker]
-  Robust HTTP requests
-  with retries/backoff
-end note
-
-note right of [Webhook Intake]
-  Webhook triggers
-  with signature verification
-end note
-
-note right of [Postgres]
-  Data + queues
-end note
-
-note right of [Realtime]
-  Log streaming
-end note
-
-note right of [Storage]
-  Artifacts
-end note
-
-note right of [Edge Functions]
-  Cron/Timers
+note right of Security
+  Includes:
+  - Row Level Security (RLS)
+  - Secrets management
+  - Webhook verification
+  - Audit logging
 end note
 
 @enduml

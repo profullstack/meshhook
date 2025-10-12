@@ -1,0 +1,47 @@
+@startuml
+!theme plain
+
+package "Run Console" {
+    [Run Detail View] -right-> [DAG Visualization]
+    [Run Detail View] ..> [Supabase Realtime] : <<stream>> Logs
+}
+
+package "Supabase" {
+    [Postgres] -down-> [Realtime] : Triggers
+    [Storage]
+}
+
+package "SvelteKit (SSR/API)" {
+    [Webhook Intake] -left-> [Workflow CRUD]
+    [Publish Versions] -left-> [Run Console]
+    [Run Console] ..> [Postgres] : <<read/write>> Runs
+}
+
+package "Workers" {
+    [Orchestrator] -down-> [HTTP Executor]
+    [Orchestrator] ..> [Postgres] : <<read/write>> State
+}
+
+[Workflow CRUD] .up.> [DAG Visualization] : <<use>>
+[DAG Visualization] .right.> [Orchestrator] : <<trigger>>
+
+note right of [DAG Visualization]
+  Visualize workflow execution
+  as a Directed Acyclic Graph
+end note
+
+note left of [Supabase Realtime]
+  Streams logs to the
+  Run Detail View in real-time
+end note
+
+note right of [Orchestrator]
+  Manages workflow execution,
+  scheduling, and state changes
+end note
+
+note over [Postgres], [Storage]
+  Supabase services
+end note
+
+@enduml

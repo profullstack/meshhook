@@ -1,0 +1,39 @@
+@startuml
+!theme plain
+
+title RLS Policy Enforcement Implementation
+
+actor Developer
+boundary "Supabase" as Supabase
+database "Postgres (RLS)" as Postgres
+control "Webhook Intake" as Webhook
+control "Workflow Engine" as Engine
+entity "Existing Codebase" as Codebase
+
+Developer -> Webhook: 1. Trigger webhook
+Webhook -> Supabase: 2. Verify signature
+Supabase -> Postgres: 3. Check RLS policies
+Postgres --> Supabase: 4. Policy check result
+Supabase --> Webhook: 5. Access granted/denied
+Webhook -> Engine: 6. Process workflow
+Engine -> Postgres: 7. Store/Update data
+Engine --> Developer: 8. Workflow result
+
+note right of Postgres
+  RLS policies enforce
+  multi-tenant security
+  by project_id
+end note
+
+note over Webhook, Engine
+  Core Components for
+  RLS Policy Enforcement
+end note
+
+note over Codebase
+  Integration Points:
+  - Webhook triggers
+  - Workflow processing
+end note
+
+@enduml

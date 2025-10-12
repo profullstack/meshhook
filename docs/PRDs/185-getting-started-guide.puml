@@ -1,60 +1,46 @@
 @startuml
 !theme plain
 
-package "MeshHook Project" {
+title Getting Started Guide for MeshHook
+
+package "MeshHook Documentation Site" {
     [Getting Started Guide] as Guide
-    [Existing Codebase] as Codebase
-    [SvelteKit SSR/API] as SvelteKit
-    [Supabase] as Supabase
-    [Workers] as Workers
-    [Documentation] as Documentation
+    [SvelteKit Framework] as SvelteKit
+    [Content Management System] as CMS
 }
 
-database "Postgres" as Postgres {
-    folder "schema.sql" as Schema
+package "MeshHook Core" {
+    [MeshHook API] as API
+    [UI/UX Team] as UIUX
+    [Development Team] as DevTeam
+    [Documentation Team] as DocTeam
 }
 
-cloud {
-    [Realtime] as Realtime
-    [Storage] as Storage
-    [Edge] as Edge
+[Guide] --> [SvelteKit] : Built with
+[Guide] --> [CMS] : Hosted on
+[Guide] ..> [API] : Includes references to
+[Guide] ..> [UIUX] : Collaborates with for media
+[Guide] ..> [DevTeam] : Reviewed by
+[Guide] ..> [DocTeam] : Reviewed by
+
+note right of [Guide] : Key Sections\n- Introduction\n- Setup Instructions\n- Example Workflows\n- Best Practices\n- Additional Resources
+
+class "Key Features" {
+    - Webhook Triggers
+    - Visual DAG Builder
+    - Live Logs
+    - Security Features
 }
 
-node "External Services" {
-    [Supabase Services] as ExtSupabase
-}
+[Guide] ..> "Key Features" : Demonstrates
 
-[Guide] --> [SvelteKit] : Implements\nusing
-[Guide] --> [Documentation] : Updates
-[SvelteKit] --> [Supabase] : Uses
-[Supabase] --> [Postgres] : Data & Queues
-[Supabase] --> [Realtime] : Log Streaming
-[Supabase] --> [Storage] : Stores Artifacts
-[Supabase] --> [Edge] : Cron/Timers
-[Workers] --> [SvelteKit] : Orchestrates & Executes
-[Codebase] --> [Guide] : Integration Points
-[ExtSupabase] --> [Supabase] : Includes
-
-note right of [Guide]
-  Phase 8: Documentation
-  Section: User Documentation
-  Task: Getting started guide
+note as N1
+  - Markdown for content
+  - Follow MeshHook documentation style
+  - Peer review for accuracy
+  - User feedback for usability
 end note
 
-note right of [SvelteKit]
-  Webhook intake
-  Workflow CRUD
-end note
-
-note right of [Workers]
-  - Orchestrator
-  - HTTP Executor
-end note
-
-note right of [Documentation]
-  - API Docs
-  - README
-  - Code comments
-end note
+[Guide] .. N1
 
 @enduml

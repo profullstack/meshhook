@@ -1,5 +1,13 @@
 # PRD: "Resume from step" functionality
 
+**Issue:** [#134](https://github.com/profullstack/meshhook/issues/134)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** run-console, hacktoberfest
+
+---
+
+# PRD: "Resume from step" functionality
+
 **Issue:** [#134](https://github.com/profullstack/meshhook/issues/134)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
 **Labels:** run-console  
@@ -10,164 +18,109 @@
 
 ## Overview
 
-This task is part of Phase 3 in the Run Console section of the MeshHook project. 
+The "Resume from step" functionality is a critical feature designed to enhance the user experience and operational resilience of the MeshHook workflow engine. This feature aligns with MeshHook's core goals by improving the engine's ability to handle failures and allowing users to manually intervene and resume workflow execution from a specific step after addressing any issues. This capability is essential for maintaining high reliability and flexibility in workflow management, especially in complex or long-running processes that may encounter intermittent issues.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Purpose
 
-**Task Objective:** "Resume from step" functionality
+To allow users to resume a workflow execution from a specific failed or paused step, thereby improving error recovery and reducing manual intervention time.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+### Alignment with Project Goals
+
+- **Durability:** Enhances the engine's robustness by making workflow runs more recoverable.
+- **Usability:** Improves the user experience by providing more control over workflow execution.
+- **Security and Multi-Tenancy:** Ensures that the feature adheres to the project's security model, including RLS and audit logging.
 
 ## Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: ""Resume from step" functionality"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. Users must be able to select a failed or paused step in the Run Console and initiate a "resume from step" action.
+2. The system must validate user permissions before allowing the action to proceed.
+3. The workflow engine must accurately restore the workflow state to the point of the selected step.
+4. The feature must support multi-tenant environments, ensuring that users can only resume steps within their authorized projects.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The "resume from step" action must complete within a reasonable time frame, aiming for sub-second response times where possible.
+- **Reliability:** This feature must have a 99.9% uptime, with comprehensive error handling to manage and log failures gracefully.
+- **Security:** Implement RLS and audit logging for each "resume from step" action to ensure compliance with MeshHook's security model.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook utilizes a combination of SvelteKit for the frontend and Supabase (Postgres, Realtime) for the backend services. The "resume from step" functionality involves interaction between these components and the workflow execution engine.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis:** Examine the current state management and execution flow of workflow runs to identify the best approach for implementing state restoration.
+2. **Design:** Outline the UI changes needed in the Run Console for the "resume from step" functionality, including permission checks and state restoration logic.
+3. **Implementation:** Develop the functionality, ensuring integration with existing authentication and authorization mechanisms.
+   - Modify the workflow execution engine to support state restoration.
+   - Update the UI to allow users to select a step and initiate the resume action.
+4. **Testing:** Implement unit and integration tests to cover new functionality and ensure no regressions in the execution engine.
+5. **Documentation:** Update user and API documentation to reflect the new feature.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+No immediate changes required to the existing data models. Any adjustments discovered during implementation should be documented and reviewed.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+No new API endpoints required. Existing endpoints may need adjustments to support state restoration actions.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Users can select a failed or paused step and initiate a "resume from step" action.
+- [ ] The system validates user permissions before resuming a step.
+- [ ] Workflow state is accurately restored to the point of the selected step.
+- [ ] The feature is compatible with the multi-tenant RLS security model.
+- [ ] All unit and integration tests pass.
+- [ ] Documentation is updated to reflect the new functionality.
 
 ## Dependencies
 
 ### Technical Dependencies
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- SvelteKit and Supabase services for frontend and backend integration.
+- Workflow execution engine for state management and execution flow.
 
 ### Prerequisite Tasks
 
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Ensure user authentication and authorization mechanisms are in place and functional.
+- Confirm that the workflow execution engine's state management supports partial state restoration.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow existing coding standards and patterns for the SvelteKit frontend and backend integrations.
+- Use TDD principles to guide development, ensuring comprehensive test coverage.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Focus on the logic for state restoration and permission validation.
+- **Integration Tests:** Cover interactions between the frontend, the backend services, and the workflow execution engine.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Implement RLS and audit logging for the "resume from step" actions.
+- Ensure that state restoration does not expose sensitive information or bypass security controls.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Integrate logging for the "resume from step" actions to monitor usage and identify potential issues.
+- Track metrics related to the performance and reliability of the feature.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
+- [MeshHook — PRD](https://github.com/profullstack/meshhook/blob/main/docs/PRDs/PRD.md)
+- [Architecture Overview](https://github.com/profullstack/meshhook/blob/main/docs/Architecture.md)
+- [Security & Multi-Tenancy Guidelines](https://github.com/profullstack/meshhook/blob/main/docs/Security.md)
 
-## Task Details
-
-**Original Task Description:**
-"Resume from step" functionality
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Run Console
-
-**Task:** "Resume from step" functionality
-
----
-_Auto-generated from TODO.md_
+*This PRD was created in response to GitHub issue #134 and is subject to updates based on implementation findings and team feedback.*
 
 ---
 
-*This PRD was auto-generated from GitHub issue #134*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #134*
+*Generated: 2025-10-10*

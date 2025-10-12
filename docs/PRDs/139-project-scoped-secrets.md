@@ -1,5 +1,13 @@
 # PRD: Project-scoped secrets
 
+**Issue:** [#139](https://github.com/profullstack/meshhook/issues/139)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** secrets-management, hacktoberfest
+
+---
+
+# PRD: Project-scoped secrets
+
 **Issue:** [#139](https://github.com/profullstack/meshhook/issues/139)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
 **Labels:** secrets-management  
@@ -10,164 +18,105 @@
 
 ## Overview
 
-This task is part of Phase 3 in the Secrets Management section of the MeshHook project. 
+The objective of this task is to implement project-scoped secrets within the MeshHook platform. This functionality is critical for enabling secure storage and access to sensitive information, such as API keys and passwords, specific to each project. It aligns with MeshHook's goal of providing a secure, multi-tenant workflow engine by ensuring that secrets are isolated per project, enhancing overall security posture and compliance with data protection standards.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Project-scoped secrets
+1. **Secrets Creation and Storage:** Enable users to create and store secrets scoped to individual projects.
+2. **Secrets Access and Retrieval:** Provide secure access and retrieval mechanisms for stored secrets during workflow execution, without exposing them in logs or UI.
+3. **Secrets Deletion and Rotation:** Allow users to delete or rotate secrets, enforcing best practices in secrets management.
+4. **UI Integration:** Integrate project-scoped secrets management in the MeshHook frontend, allowing users to manage secrets via the UI.
+5. **API Support:** Ensure that project-scoped secrets can be managed programmatically via MeshHook's API.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Project-scoped secrets"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Secret management operations should not significantly impact the platform's response times.
+- **Security:** Implement industry-standard encryption for secrets storage and access controls to ensure that only authorized users and workflows can access secrets.
+- **Reliability:** Secrets management feature should have a high availability, with proper fallback mechanisms in case of failures.
+- **Maintainability:** The implementation should be easy to maintain and extend, following the project's code structure and patterns.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Frontend:** SvelteKit will be used for the UI components related to secrets management.
+- **Backend:** Supabase Postgres will store the secrets, encrypted at rest. Secrets are accessed via secure server-side functions that enforce project scoping.
+- **Security:** AES-GCM encryption for secrets, with key encryption keys (KEKs) managed securely and rotated regularly.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Design UI and API Contracts:** Design the UI components and API contracts for managing project-scoped secrets.
+2. **Implement Secrets Storage:** Extend the `schema.sql` to include a table for storing encrypted secrets with references to their respective projects.
+3. **Develop Backend Logic:** Implement server-side logic for secrets management, including encryption/decryption, access control, and API endpoints.
+4. **Integrate with Frontend:** Develop the frontend components for secrets management within the SvelteKit application.
+5. **Testing and Documentation:** Write unit and integration tests covering the new functionality. Document the API endpoints and usage examples.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- Add a new table `project_secrets`:
+  - `id` (UUID): Primary key.
+  - `project_id` (UUID): Foreign key to the `projects` table.
+  - `name` (Text): The name of the secret.
+  - `value` (Text): Encrypted value of the secret.
+  - `created_at` (Timestamp): Creation timestamp.
+  - `updated_at` (Timestamp): Last updated timestamp.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+- **Create Secret:** `POST /api/projects/{projectId}/secrets`
+- **Retrieve Secrets:** `GET /api/projects/{projectId}/secrets`
+- **Delete Secret:** `DELETE /api/projects/{projectId}/secrets/{secretId}`
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Secrets can be created, retrieved, and deleted via both UI and API, scoped to projects.
+- [ ] Secrets storage and retrieval operations are secure and do not expose sensitive information.
+- [ ] Performance benchmarks are met, with minimal impact on response times.
+- [ ] New functionality is fully covered by automated tests.
+- [ ] Documentation for managing secrets is comprehensive and clear.
+- [ ] Code changes are reviewed and meet project standards.
 
 ## Dependencies
 
 ### Technical Dependencies
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- Supabase Postgres for data storage.
+- Existing project infrastructure for deployment and testing.
 
 ### Prerequisite Tasks
 
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Ensure all related components and services are operational and accessible.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the existing project structure and coding patterns.
+- Ensure code is modular, well-commented, and adheres to security best practices.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For backend logic and utility functions.
+- **Integration Tests:** For API endpoints and UI components interaction.
+- **Security Tests:** To verify encryption and access control measures.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Use AES-GCM for encryption, with secure management of KEKs.
+- Implement strict access controls and input validation for API endpoints.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Log operations related to secrets management, masking sensitive information.
+- Monitor performance and error rates for secrets management features.
 
 ## Related Documentation
 
 - [Main PRD](../PRD.md)
 - [Architecture](../Architecture.md)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Project-scoped secrets
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Secrets Management
-
-**Task:** Project-scoped secrets
-
----
-_Auto-generated from TODO.md_
 
 ---
 
-*This PRD was auto-generated from GitHub issue #139*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #139*
+*Generated: 2025-10-10*

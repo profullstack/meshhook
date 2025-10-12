@@ -1,173 +1,105 @@
 # PRD: Error rate tracking
 
-**Issue:** [#170](https://github.com/profullstack/meshhook/issues/170)  
-**Milestone:** Phase 6: Observability  
-**Labels:** metrics  
-**Phase:** Phase 6  
-**Section:** Metrics
+**Issue:** [#170](https://github.com/profullstack/meshhook/issues/170)
+**Milestone:** Phase 6: Observability
+**Labels:** metrics, hacktoberfest
 
 ---
 
-## Overview
+# PRD: Error Rate Tracking for MeshHook
 
-This task is part of Phase 6 in the Metrics section of the MeshHook project. 
+## 1. Overview
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+The purpose of this task is to integrate a sophisticated error rate tracking system into MeshHook. This system is designed to enhance the observability layer of the platform, allowing for real-time monitoring, classification, and analysis of errors across the system. This aligns with MeshHook's goals of providing robust, reliable workflow automation services by enabling proactive issue detection and resolution, thereby reducing downtime and improving user satisfaction.
 
-**Task Objective:** Error rate tracking
+## 2. Functional Requirements
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+1. **Automated Error Tracking:** Automatically capture and log errors from all components of the MeshHook system, including webhook triggers, workflow executions, and internal system errors.
+2. **Error Classification:** Classify errors based on type (e.g., system, execution, input) and severity levels (low, medium, high) to facilitate prioritized troubleshooting and remediation.
+3. **Real-Time Monitoring and Visualization:** Provide a real-time view of error occurrences, patterns, and trends through an intuitive dashboard, enabling immediate awareness and response.
+4. **Configurable Alerting Mechanism:** Implement a flexible alerting system that can notify administrators or designated users via email or Slack when error rates exceed configurable thresholds.
+5. **Historical Error Analysis:** Enable access to historical error data for trend analysis and to inform system improvements or bug fixes.
 
-## Requirements
+## 3. Non-Functional Requirements
 
-### Functional Requirements
+- **Performance:** The error tracking system must operate with minimal overhead to avoid impacting the overall performance of MeshHook workflows.
+- **Reliability:** Target 99.9% availability for the error tracking and reporting functionality, with robust error handling and failover mechanisms.
+- **Security:** Ensure that error logs and metrics are stored securely, with access restricted based on user roles and that sensitive data is appropriately masked or anonymized.
+- **Maintainability:** Adopt MeshHook's coding standards for clear, well-documented, and modular code to facilitate ease of maintenance and future enhancements.
 
-1. Implement the core functionality described in the task: "Error rate tracking"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
-
-## Technical Specifications
+## 4. Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook's architecture consists of SvelteKit for the SSR/API layer, Supabase for database and real-time functionalities, and a distributed system of workers for executing workflows. The error rate tracking system will be integrated as follows:
+
+- **Workers:** Enhanced to capture and report errors into the tracking system.
+- **Supabase (Postgres):** Utilized for storing error logs and metrics, leveraging the real-time capabilities for live monitoring.
+- **SvelteKit:** Extended to serve the error rate dashboards and alert configuration UI.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Schema Definition:** Define a PostgreSQL schema for error metrics, including fields for error type, severity, source, and a JSONB field for additional metadata.
+2. **Error Logging Enhancements:** Modify existing error handling in the workers and SvelteKit layers to log detailed error information, including categorization by type and severity.
+3. **Dashboard and Alerting UI:** Develop a dashboard using SvelteKit for visualizing error rates and trends, and a UI for configuring alert thresholds and notification channels.
+4. **Supabase Realtime Configuration:** Configure Supabase Realtime to stream error events to the dashboard for live monitoring.
+5. **Alerting System Implementation:** Integrate with external services (e.g., Slack, email) to dispatch alerts based on user-configured thresholds.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- **New Table: ErrorMetrics**
+  - `error_id`: UUID, Primary Key
+  - `timestamp`: TIMESTAMP WITH TIME ZONE
+  - `source`: VARCHAR (worker, webhook, system)
+  - `error_type`: VARCHAR
+  - `severity`: ENUM ('low', 'medium', 'high')
+  - `workflow_id`: UUID, Foreign Key (optional)
+  - `metadata`: JSONB
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+- **GET `/api/error-metrics`**: Retrieve error metrics with support for filtering by time range, source, type, and severity.
+- **POST `/api/error-events`**: Internal endpoint for logging errors, accepting JSON payloads conforming to the ErrorMetrics schema.
 
-### API Endpoints (if applicable)
+## 5. Acceptance Criteria
 
-No new API endpoints required for this task.
+- [ ] Error logging captures all specified data points with correct classification by type and severity.
+- [ ] Error metrics are stored securely in Supabase with minimal latency.
+- [ ] Real-time monitoring dashboard is responsive and accurately reflects current and historical error data.
+- [ ] Alerting system is configurable and reliably sends notifications within 1 minute of threshold breaches.
+- [ ] Documentation for error tracking system is comprehensive, covering schema, UI usage, and alert configuration.
 
-## Acceptance Criteria
+## 6. Dependencies
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- Supabase for database and real-time functionality.
+- Slack/email integration for alert notifications.
+- Existing MeshHook infrastructure and data models.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
-
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow MeshHook’s coding and security standards, including thorough code reviews and adherence to best practices for secure coding.
+- Implement features in a modular fashion to facilitate future extension and maintenance.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Cover new functions and components related to error logging and classification.
+- **Integration Tests:** Ensure correct interaction between error tracking components and other MeshHook systems.
+- **E2E Tests:** Validate the overall error tracking flow, including logging, visualization, and alerting.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Error data must be encrypted in transit and at rest.
+- Apply strict RBAC policies to error data access, ensuring only authorized users can view or modify error metrics and alerts.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Incorporate monitoring for the error tracking system itself, ensuring its components are performing as expected and alerting on any issues.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Error rate tracking
-
-**Full Issue Body:**
-**Phase:** Phase 6
-**Section:** Metrics
-
-**Task:** Error rate tracking
-
----
-_Auto-generated from TODO.md_
+By following this PRD, MeshHook will gain a comprehensive error rate tracking system that not only enhances its observability and reliability but also provides actionable insights for continuous improvement.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #170*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #170*
+*Generated: 2025-10-10*

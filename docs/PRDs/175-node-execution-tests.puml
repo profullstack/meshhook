@@ -1,75 +1,25 @@
 @startuml
-' Define skin and styling
-skinparam componentStyle uml2
-skinparam monochrome true
+!theme plain
 
-' Define components
-component "Node Execution Test Suite" as TestSuite {
-  [Unit Tests] as UT
-  [Integration Tests] as IT
-  [End-to-End Tests] as E2E
-}
+title Node Execution Tests Workflow
 
-component "Existing System" as Existing {
-  [Webhook Intake] as Webhook
-  [Workflow CRUD API] as CRUD
-  [Publish Versions] as Publish
-  [Run Console] as Console
-}
+actor Developer
+participant "Test Framework\n(Jest)" as Framework
+database "Supabase DB" as DB
+entity "External HTTP\nServices" as ExternalServices
+participant "Node Types:\ntransform, http_call, branch,\ndelay, terminate" as Nodes
+participant CI_CD as "CI/CD Pipeline"
 
-component Supabase {
-  [Postgres] as DB
-  [Realtime] as Realtime
-  [Storage] as Storage
-  [Edge] as Edge
-}
+Developer -> Framework : writes tests
+Framework -> Nodes : executes tests
+Nodes -> DB : interacts with\n(database rollbacks)
+Nodes -> ExternalServices : mocks external calls
+DB --> Nodes : returns test data
+ExternalServices --> Nodes : returns mock data
+Nodes --> Framework : test results
+Framework -> CI_CD : integrates tests
+CI_CD -> Developer : reports test outcomes
 
-component "External Services" {
-  [HTTP Executor] as HTTPExecutor
-  [Orchestrator Workers] as Workers
-}
-
-' Define relationships
-TestSuite ..> Existing : <<test>>
-TestSuite ..> Supabase : <<test>>
-TestSuite ..> "External Services" : <<test>>
-
-UT -[hidden]-> IT -[hidden]-> E2E
-
-Webhook -[hidden]-> CRUD -[hidden]-> Publish -[hidden]-> Console
-
-DB -[hidden]-> Realtime -[hidden]-> Storage -[hidden]-> Edge
-
-' Define data flow or sequence of operations
-[UT] --> [IT] : Test Data Flow
-[IT] --> [E2E] : Test Integration
-[E2E] --> [Webhook] : Trigger Workflow
-[Webhook] --> [CRUD] : Create/Update/Delete
-[CRUD] --> [Publish] : Publish Workflow
-[Publish] --> [Console] : Execute Workflow
-[Console] --> [HTTPExecutor] : HTTP Requests
-[Console] --> [Workers] : Task Scheduling
-[Workers] --> [DB] : Update State
-[DB] --> [Realtime] : Log Streaming
-
-' Add notes
-note right of [E2E]
-  End-to-End Tests validate
-  the complete workflow execution
-  and its integration with external
-  services and Supabase.
-end note
-
-note right of Supabase
-  Supabase provides the database,
-  real-time updates, storage, and
-  edge functions for the system.
-end note
-
-note right of [HTTPExecutor]
-  HTTP Executor handles robust
-  HTTP requests with retries and
-  backoff strategies.
-end note
+note over Framework, CI_CD : Continuous Integration
 
 @enduml

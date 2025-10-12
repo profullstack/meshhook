@@ -1,5 +1,13 @@
 # PRD: Event timeline
 
+**Issue:** [#133](https://github.com/profullstack/meshhook/issues/133)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** run-console, hacktoberfest
+
+---
+
+# PRD: Event Timeline
+
 **Issue:** [#133](https://github.com/profullstack/meshhook/issues/133)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
 **Labels:** run-console  
@@ -10,141 +18,84 @@
 
 ## Overview
 
-This task is part of Phase 3 in the Run Console section of the MeshHook project. 
+The Event Timeline is a critical feature in the Run Console section of MeshHook, aimed at enhancing user experience by providing a visual representation of event sequences in workflow runs. This feature aligns with MeshHook's goal to deliver a deterministic, Postgres-native workflow engine with a focus on simplicity, durability, and security. By implementing an Event Timeline, users will gain deeper insights into their workflow executions, enabling quicker diagnostics and understanding of each step within their workflows.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+## Functional Requirements
 
-**Task Objective:** Event timeline
+1. **Event Visualization:** Display a chronological timeline of events for each workflow run, including triggers, actions, and outcomes.
+2. **Filter and Search:** Users should be able to filter the timeline by event type and search for specific events.
+3. **Event Details:** Clicking on an event in the timeline should display detailed information about that event, such as timestamp, payload, and status.
+4. **Integration with Run Console:** The Event Timeline must seamlessly integrate with the existing Run Console UI and workflows.
+5. **Real-time Updates:** The timeline should update in real-time as events occur during workflow execution.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Non-Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Event timeline"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The Event Timeline must load quickly and update in real time without significant delays.
+- **Reliability:** The feature should accurately display all events in the order they occurred, ensuring data integrity and consistency.
+- **Security:** Adhere to MeshHook's security guidelines, ensuring that sensitive information in event payloads is appropriately masked or redacted.
+- **Maintainability:** Code for the Event Timeline should be modular, well-documented, and easy to update or extend.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Frontend:** SvelteKit (with Svelte 5) for implementing the interactive timeline UI.
+- **Backend:** Supabase Realtime for streaming event data to the frontend.
+- **Data Storage:** Postgres, leveraging existing database schemas for event logging.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **UI Design:** Design the Event Timeline component in Figma, ensuring it integrates well with the Run Console's current layout.
+2. **SvelteKit Component:** Develop the timeline as a SvelteKit component, utilizing Supabase Realtime subscriptions to receive event data.
+3. **Event Streaming:** Modify existing backend workflows to publish event data to Supabase Realtime, ensuring each event is tagged with a unique workflow run identifier.
+4. **Integration Testing:** Ensure the new component works seamlessly within the Run Console, displaying real-time data without impacting performance.
+5. **User Feedback:** Conduct user testing with a small group to gather feedback and make necessary adjustments.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No changes to the existing data model are required. The implementation will utilize existing event logging mechanisms.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+No new API endpoints will be created. The implementation will use existing Supabase Realtime subscriptions.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Event Timeline is integrated into the Run Console, displaying a chronological sequence of events.
+- [ ] Users can filter and search the timeline for specific events.
+- [ ] Detailed event information is accessible and displays correctly.
+- [ ] The timeline updates in real-time with minimal latency.
+- [ ] Performance benchmarks are met, with the timeline loading and updating quickly.
+- [ ] Security and privacy standards are upheld, with sensitive information properly masked.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- **Technical:** Supabase account access, existing Postgres database schema, and SvelteKit setup.
+- **Prerequisite:** Completion of prior Run Console features and user authentication mechanisms.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Utilize TypeScript for type safety and easier maintenance.
+- Follow SvelteKit best practices for component development and state management.
+- Subscribe to Supabase Realtime in a way that minimizes unnecessary re-renders and optimizes component performance.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For individual functions and utility methods.
+- **Component Tests:** Using Jest and Testing Library to verify the timeline component behaves as expected.
+- **Integration Tests:** To ensure the component interacts correctly with Supabase Realtime and displays data correctly.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure all event data displayed in the timeline is sanitized and free of sensitive information.
+- Utilize Supabase RLS policies to restrict access to event data based on user permissions.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Implement logging for any errors that occur when fetching or rendering event data.
+- Monitor the performance impact of the real-time subscription, optimizing as necessary.
 
 ## Related Documentation
 
@@ -153,21 +104,9 @@ No new API endpoints required for this task.
 - [Security Guidelines](../Security.md)
 - [Operations Guide](../Operations.md)
 
-## Task Details
-
-**Original Task Description:**
-Event timeline
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Run Console
-
-**Task:** Event timeline
-
----
-_Auto-generated from TODO.md_
-
----
-
-*This PRD was auto-generated from GitHub issue #133*  
 *Last updated: 2025-10-10*
+
+---
+
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #133*
+*Generated: 2025-10-10*

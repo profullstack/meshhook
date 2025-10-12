@@ -1,0 +1,53 @@
+@startuml
+!define SvelteKitApp RECTANGLE #D1F2A5
+!define Supabase RECTANGLE #FFD966
+!define Worker RECTANGLE #FF9999
+!define ExternalService RECTANGLE #AED6F1
+
+skinparam rectangle {
+    BackgroundColor<< SvelteKitApp >> #D1F2A5
+    BackgroundColor<< Supabase >> #FFD966
+    BackgroundColor<< Worker >> #FF9999
+    BackgroundColor<< ExternalService >> #AED6F1
+    BorderColor Black
+    BorderWidth 1
+}
+
+package "SvelteKit Application" as SvelteKit {
+    [Webhook Intake] as Webhook
+    [Workflow CRUD] as CRUD
+    [Publish Versions] as Publish
+    [Run Console] as Console
+}
+
+package "Supabase Services" as Supabase {
+    [Postgres] as Postgres
+    [Realtime] as Realtime
+    [Storage] as Storage
+    [Edge Functions] as Edge
+}
+
+package "Worker Services" as Workers {
+    [Orchestrator] as Orchestrator
+    [HTTP Executor] as Executor
+}
+
+package "External Services" as External {
+    [Supabase] <<ExternalService>>
+}
+
+Webhook --> Realtime : Triggers & Logs
+CRUD --> Postgres : CRUD Operations
+Publish --> Postgres : Version Management
+Console --> Realtime : Live Updates
+
+Orchestrator --> Postgres : Reads/Writes State
+Executor --> External : HTTP Requests
+
+Supabase ..> External : Uses
+
+' Integration Points
+Webhook ..> Orchestrator : Triggers Workflows
+Orchestrator ..> Executor : Delegates Tasks
+
+@enduml

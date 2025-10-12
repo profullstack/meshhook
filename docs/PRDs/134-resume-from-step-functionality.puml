@@ -1,0 +1,28 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Run Console] as RC
+    [Workflow Engine] as WE
+    [Supabase Realtime] as SR
+    [Database] as DB
+}
+
+package "External Services" {
+    [Supabase Services] as SS
+}
+
+RC --> WE : Resume Workflow from Step
+WE --> DB : Query Workflow State
+DB --> WE : Return State Data
+WE --> SR : Stream Logs
+SR --> RC : Display Live Logs
+WE --> DB : Update Workflow State
+DB --> WE : Confirm State Update
+WE --> SS : Trigger Supabase Realtime
+SS --> RC : Update UI in Real Time
+
+note right of WE : Orchestrator handles\nworkflow state changes
+note right of SR : Live log streaming via\nSupabase Realtime
+
+@enduml

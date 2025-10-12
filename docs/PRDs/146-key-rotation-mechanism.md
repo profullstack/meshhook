@@ -6,108 +6,102 @@
 
 ---
 
-# PRD: Key Rotation Mechanism
-
-**Issue:** [#146](https://github.com/profullstack/meshhook/issues/146)  
-**Milestone:** Phase 4: Security  
-**Labels:** secrets-encryption  
-**Phase:** Phase 4  
-**Section:** Secrets Encryption  
+# PRD: Key Rotation Mechanism for MeshHook
 
 ## Overview
 
-The introduction of a key rotation mechanism is a critical security enhancement for the MeshHook project. This task focuses on developing a system to periodically update the encryption keys used for securing secrets within the project's secret vault. The primary goal is to enhance the security posture of MeshHook by minimizing the risks associated with key compromise. This mechanism aligns with MeshHook's commitment to providing robust, multi-tenant RLS security and adheres to best practices in secrets management.
+The introduction of a key rotation mechanism represents a significant security enhancement for MeshHook, a webhook-first, deterministic, Postgres-native workflow engine. This mechanism is designed to periodically update the encryption keys used to secure secrets within the project's secrets vault, thus enhancing the security posture of MeshHook by minimizing the risks associated with key compromise. This feature is essential for maintaining MeshHook's commitment to robust, multi-tenant RLS security and adheres to best practices in secrets management.
+
+### Objectives
+
+- Enhance security by minimizing the risks associated with the compromise of long-standing encryption keys.
+- Ensure backward compatibility and access to data encrypted with previous keys.
+- Automate the process to reduce administrative overhead and potential human error.
+- Provide clear, actionable auditing trails for compliance and security analysis.
 
 ## Functional Requirements
 
-1. **Key Rotation Logic:** Implement logic for rotating encryption keys used in secrets encryption. This includes generating new keys and transitioning the secrets to use the newly generated keys.
-2. **Backward Compatibility:** Ensure the key rotation mechanism supports decrypting secrets encrypted with old keys to maintain access to historical data.
-3. **Automatic Rotation Schedule:** Implement a configurable schedule for automatic key rotation, allowing system administrators to define rotation frequency.
-4. **Manual Rotation Trigger:** Provide an interface (CLI/API) for manually triggering a key rotation, in addition to the automatic schedule.
-5. **Key Versioning:** Maintain a versioning system for encryption keys to track and manage the use of current and previous keys.
-6. **Key Rotation Audit:** Log all key rotation activities, including the initiation of a rotation, completion, and any errors encountered during the process.
+1. **Key Rotation Logic:** The system must support generating new encryption keys and transitioning encrypted secrets to use these new keys without service interruption.
+2. **Backward Compatibility:** It must be possible to decrypt secrets encrypted with previous keys after a rotation event, ensuring uninterrupted access to historical data.
+3. **Automatic Rotation Schedule:** Administrators should be able to configure an automatic rotation schedule (e.g., every 90 days) through a simple interface.
+4. **Manual Rotation Trigger:** Provide mechanisms (CLI and API) for administrators to manually initiate a key rotation event.
+5. **Key Versioning:** Implement a versioning scheme for keys to manage and reference different keys used over time.
+6. **Audit Logging:** All key rotation activities (initiations, completions, failures) must be logged for compliance and analysis.
 
 ## Non-Functional Requirements
 
-- **Performance:** Ensure the key rotation process does not significantly impact system performance or availability.
-- **Reliability:** Design the rotation mechanism to handle failures gracefully, with the ability to retry or rollback in case of errors.
-- **Security:** Use secure cryptographic practices for generating, storing, and handling encryption keys. Ensure all key rotation operations are authorized and authenticated.
-- **Maintainability:** Write clear, well-documented, and modular code to facilitate future updates and maintenance.
+- **Performance:** The key rotation process must be optimized to minimize impact on system performance and availability.
+- **Reliability:** The system should handle failures gracefully, allowing for retry or rollback without compromising security or data integrity.
+- **Security:** Secure cryptographic practices must be employed for key generation, storage, and handling, with appropriate access controls for rotation operations.
+- **Maintainability:** Code should be modular, well-documented, and align with existing project patterns for easy future maintenance and updates.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-MeshHook utilizes SvelteKit for its front-end and Supabase for backend services, including Postgres for data storage. The key rotation mechanism must integrate seamlessly with this existing architecture, particularly focusing on the secure handling and storage of encryption keys within Postgres.
+MeshHook leverages SvelteKit for its front end and Supabase, including Postgres, for backend services. The key rotation mechanism must integrate seamlessly, focusing on secure handling and storage of encryption keys within a Postgres environment, adhering to MeshHook's security-first design principles.
 
 ### Implementation Approach
 
-1. **Analysis:** Conduct a thorough review of the current encryption and secrets management implementation to identify the best integration points for the key rotation mechanism.
+1. **Analysis:** Review existing encryption and secrets management implementations to identify integration points for key rotation.
 2. **Design:**
-   - Define a new schema for storing encryption keys with versioning information in Postgres.
-   - Outline the process for migrating existing secrets to use new keys.
-   - Draft the logic for automatic and manual key rotation triggers.
+   - Define a schema in Postgres for storing encryption keys, incorporating versioning and active status indicators.
+   - Design a procedure for migrating secrets to new keys post-rotation.
+   - Develop logic for both automatic and manual rotation triggers, including administrative interfaces.
 3. **Implementation:**
-   - Develop the key rotation logic, including new key generation, secrets re-encryption, and version management.
-   - Implement the scheduling system for automatic rotations and API/CLI endpoints for manual triggers.
-   - Create audit logging for all key rotation activities.
-4. **Integration:** Ensure the new mechanism works in harmony with the existing secrets encryption and storage workflows.
-5. **Testing:** Perform comprehensive testing, including unit, integration, and end-to-end tests, to validate functionality and reliability.
-6. **Documentation:** Update the project documentation to include details on the key rotation mechanism, configuration options, and operational procedures.
+   - Implement key rotation logic, focusing on security and minimal performance impact.
+   - Develop the scheduling system for automatic rotations and the necessary API/CLI interfaces for manual triggers.
+   - Ensure comprehensive audit logging for all key rotation activities.
+4. **Testing:** Conduct thorough testing, including unit, integration, and system tests, to ensure reliability and security.
 
 ### Data Model Changes
 
-- **EncryptionKeys Table:** A new table to store encryption keys with fields for key ID, version, creation date, and an indicator of whether it's the active key.
+- **EncryptionKeys Table:** A new table to store information about encryption keys, including fields for key ID, version, creation date, and active status.
 
 ### API Endpoints
 
-- **POST /api/keys/rotate:** Triggers a manual key rotation. Requires administrative privileges.
-  
+- **POST /api/keys/rotate:** Endpoint to manually trigger a key rotation, accessible only to users with administrative privileges.
+
 ## Acceptance Criteria
 
-- [ ] Key rotation logic correctly generates new keys and re-encrypts secrets.
-- [ ] Automatic and manual rotation mechanisms are fully operational.
-- [ ] Key versioning system effectively tracks and manages multiple key versions.
-- [ ] Key rotation activities are accurately logged for audit purposes.
-- [ ] No significant performance degradation during or after key rotations.
-- [ ] Documentation accurately reflects the key rotation feature and its usage.
-- [ ] All security considerations are adequately addressed.
+- Key rotation seamlessly re-encrypts secrets without data loss or service interruption.
+- Automatic and manual rotation mechanisms operate according to specifications.
+- Key versioning effectively tracks and facilitates the management of multiple key generations.
+- Audit logs comprehensively record key rotation activities.
+- System performance remains stable during and after key rotation events.
+- Documentation accurately and clearly describes the key rotation feature, including configuration and operation.
 
 ## Dependencies
 
-- Access to the project's Supabase instance for schema modifications and integration testing.
-- Existing encryption and secrets management code for integration points analysis.
+- Access to the project's Supabase instance for schema modifications and testing.
+- Review of existing encryption and secrets management implementations for compatibility.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-- Follow modern JavaScript best practices and the existing project's coding standards.
-- Utilize secure cryptographic libraries recommended for key generation and management.
-- Ensure all new code is thoroughly covered with automated tests.
+- Adhere to modern JavaScript best practices and the project's coding standards.
+- Utilize recommended cryptographic libraries for key generation and management.
+- Ensure comprehensive automated test coverage for all new code.
 
 ### Testing Strategy
 
-- **Unit Tests:** For key rotation logic, version management, and scheduling.
-- **Integration Tests:** To verify the interaction between the key rotation mechanism and secrets encryption/storage.
-- **Manual Testing:** For the manual rotation trigger and audit log verification.
+- **Unit Tests:** Cover key rotation logic, version management, and scheduling with unit tests.
+- **Integration Tests:** Test the integration of the key rotation mechanism with the secrets encryption and storage systems.
+- **Manual Testing:** Manually verify the functionality of the manual rotation trigger and the integrity of audit logs.
 
 ### Security Considerations
 
-- Ensure all cryptographic operations use secure algorithms and libraries.
-- Restrict key rotation operations to authorized users only.
-- Securely manage old keys, ensuring they are accessible for decrypting historical data but protected from unauthorized use.
+- Employ secure cryptographic algorithms and libraries for all operations.
+- Restrict key rotation operations to authorized users through robust authentication and authorization mechanisms.
+- Manage old keys securely, ensuring they remain accessible for decrypting historical data while protecting against unauthorized use.
 
-### Monitoring & Observability
+### Monitoring and Observability
 
-- Implement monitoring for the key rotation process to track its success, duration, and any failures.
-- Enhance existing logging to include key rotation activities for audit and troubleshooting purposes.
+- Implement monitoring to track key rotation successes, durations, and failures.
+- Integrate key rotation activities into existing logging systems for audit and troubleshooting purposes.
 
-## Related Documentation
-
-- Updated schema definitions in `schema.sql` reflecting the new EncryptionKeys table.
-- API documentation to include details on the new /api/keys/rotate endpoint.
-- Operational documentation on configuring automatic key rotation schedules and performing manual rotations.
+By following this PRD, MeshHook will implement a robust key rotation mechanism that enhances its security posture, ensuring the protection of sensitive data and compliance with security best practices.
 
 ---
 

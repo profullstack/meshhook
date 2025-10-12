@@ -1,173 +1,120 @@
 # PRD: Webhook logs
 
-**Issue:** [#160](https://github.com/profullstack/meshhook/issues/160)  
-**Milestone:** Phase 5: Webhook System  
-**Labels:** webhook-management-ui  
-**Phase:** Phase 5  
-**Section:** Webhook Management UI
+**Issue:** [#160](https://github.com/profullstack/meshhook/issues/160)
+**Milestone:** Phase 5: Webhook System
+**Labels:** webhook-management-ui, hacktoberfest
 
 ---
 
+# PRD: Webhook Logs Enhancement
+
 ## Overview
 
-This task is part of Phase 5 in the Webhook Management UI section of the MeshHook project. 
+The enhancement of the Webhook Logs feature is a critical component in Phase 5 of the MeshHook project, specifically within the Webhook System. This task focuses on expanding the capabilities of logging, searching, and real-time monitoring of webhook events. By providing detailed visibility into webhook activities, this feature aims to significantly improve the debugging and auditing capabilities for users, aligning with MeshHook's goals of offering a robust, secure, and user-friendly workflow engine.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Objectives:
 
-**Task Objective:** Webhook logs
+- Enhance the logging of webhook events to include more detailed information for auditing and debugging purposes.
+- Improve the user interface for searching and filtering webhook logs, making it easier for users to find specific events.
+- Implement real-time updates to the webhook logs view, ensuring users have immediate visibility into webhook activities.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Functional Requirements
 
-## Requirements
-
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Webhook logs"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Detailed Logging**: Each webhook event should be logged with comprehensive details, including request and response headers, request and response bodies, status codes, execution times, and any errors encountered.
+2. **Enhanced Search and Filter**: The Webhook Management UI must support advanced filtering options, including filtering by execution time, error presence, and specific request or response content.
+3. **Real-time Log Viewing**: Implement a mechanism to push log updates to the Webhook Management UI in real-time, allowing users to observe webhook activities as they happen.
+4. **Log Retention Policy Configuration**: Allow users to configure log retention policies, specifying how long logs should be retained before automatic deletion.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Scalability**: The logging system must handle a high volume of webhook events without significant performance degradation.
+- **Security**: Ensure that logs do not expose sensitive information, applying MeshHook's existing security standards for data handling and storage.
+- **Usability**: The UI for viewing and filtering logs must be intuitive and responsive, providing a seamless experience for users.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Supabase Realtime**: Utilized for pushing log updates to the UI in real-time.
+- **Postgres**: Serves as the backend for storing detailed log information, requiring schema updates to accommodate new log details.
+- **SvelteKit/Svelte 5**: The frontend framework for developing the enhanced Webhook Management UI.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Database Schema Update**:
+   - Modify the `webhook_logs` table schema to include new columns for detailed request and response information, execution time, and error details.
+2. **Backend Enhancements**:
+   - Update the webhook processing logic to capture and store detailed log information.
+   - Implement new API endpoints for fetching logs with advanced filtering capabilities.
+   - Develop a background process for handling log retention based on user-configured policies.
+3. **Frontend Enhancements**:
+   - Design and implement new UI components for displaying detailed log information and real-time updates.
+   - Add advanced filtering options to the logs view.
+4. **Integration with Supabase Realtime**:
+   - Set up Supabase Realtime channels to stream log updates to the frontend in real-time.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- Modifications to `webhook_logs`:
+  - Add columns: `execution_time`, `error_details`.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
-
-### API Endpoints (if applicable)
-
-No new API endpoints required for this task.
+- New/Updated Endpoints:
+  - `GET /api/webhooks/{webhook_id}/logs/advanced`: Fetch logs with advanced filtering options.
+  - `POST /api/webhooks/{webhook_id}/logs/retention`: Configure log retention policies.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Detailed logging of webhook events is implemented and includes all required information.
+- [ ] The Webhook Management UI supports advanced filtering and displays logs in real-time.
+- [ ] Users can configure log retention policies through the UI.
+- [ ] The log retention background process operates as expected, deleting logs based on configured policies.
+- [ ] New functionalities are well-documented.
 
 ## Dependencies
 
 ### Technical Dependencies
 
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
+- Access to the current MeshHook infrastructure, including Supabase for Real-time functionality and Postgres for data storage.
+- SvelteKit setup for frontend development.
 
 ### Prerequisite Tasks
 
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Review and validation of the current Webhook Management System's capabilities.
+- Confirmation of the integration capability with Supabase Realtime for real-time log updates.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to MeshHook's coding standards and architectural patterns.
+- Implement modular, testable, and reusable code.
+- Ensure backward compatibility with existing webhook log features.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- Develop comprehensive unit and integration tests for new backend functionalities and API endpoints.
+- Implement frontend tests to ensure UI components render correctly and interact with the backend as expected.
+- Conduct end-to-end testing to validate real-time log updates and log retention functionalities.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure detailed logs do not store or display sensitive information.
+- Implement access controls to restrict log viewing to authorized users only.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Monitor the performance and reliability of the log streaming and retention features.
+- Set up appropriate alerts for any operational issues encountered with the logging system.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
+- [MeshHook Architecture Documentation](../Architecture.md)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Webhook logs
-
-**Full Issue Body:**
-**Phase:** Phase 5
-**Section:** Webhook Management UI
-
-**Task:** Webhook logs
-
----
-_Auto-generated from TODO.md_
+- [Supabase Realtime Documentation](https://supabase.com/docs/guides/database/realtime)
 
 ---
 
-*This PRD was auto-generated from GitHub issue #160*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #160*
+*Generated: 2025-10-10*

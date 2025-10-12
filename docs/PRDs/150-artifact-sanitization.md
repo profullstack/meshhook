@@ -10,90 +10,105 @@
 
 ## Overview
 
-The task of artifact sanitization is a crucial component in the security layer of the MeshHook project, focusing on the redaction of personally identifiable information (PII) from workflow artifacts. This process aligns with MeshHook's commitment to providing a secure, multi-tenant workflow engine that respects user privacy and complies with global data protection regulations.
-
-**Objective:** Enhance MeshHook's security by implementing a robust artifact sanitization mechanism to automatically redact PII from stored artifacts, ensuring the privacy of sensitive information.
+Artifact Sanitization is a critical feature designed to enhance the security posture of MeshHook by automatically redacting Personally Identifiable Information (PII) from workflow artifacts. This feature is integral to ensuring MeshHook remains compliant with global data protection regulations and maintains its commitment to user privacy within its multi-tenant environment. The objective is to seamlessly integrate PII redaction capabilities into the workflow engine, thereby safeguarding sensitive information without compromising the workflow's performance or integrity.
 
 ## Functional Requirements
 
-1. **Sanitization Engine Development:** Develop a sanitization engine capable of identifying and redacting PII from workflow artifacts.
-2. **Configuration Mechanism:** Enable users to define custom PII redaction rules per project, including the ability to specify what constitutes PII.
-3. **Integration with Workflow Pipeline:** Integrate the sanitization engine within the existing workflow pipeline, ensuring that all artifacts are scanned and sanitized before storage.
-4. **Audit Logging:** Log all sanitization actions, capturing details about what was redacted, by whom, and when, without storing PII in logs.
+1. **Sanitization Engine:** Develop a sanitization engine capable of detecting and redacting PII from workflow artifacts. This engine should support common PII types (e.g., names, email addresses, phone numbers) and allow for extensibility.
+   
+2. **Customization Capabilities:** Users must be able to define custom PII redaction rules per project. This includes specifying identifiers for what constitutes PII and determining the redaction technique (e.g., obfuscation, removal).
+   
+3. **Workflow Integration:** Embed the sanitization process within the workflow execution pipeline, ensuring artifacts are sanitized before storage. This should be a configurable step in the pipeline.
+   
+4. **Audit Trail:** Implement an audit logging mechanism for tracking sanitization actions. This includes logging what data was sanitized, the rule applied, and timestamp, without logging the PII itself.
 
 ## Non-Functional Requirements
 
-- **Performance:** Ensure that the sanitization process adds minimal overhead to the workflow execution time.
-- **Reliability:** Achieve a high level of accuracy in PII detection and redaction, minimizing false positives and negatives.
-- **Security:** Implement secure coding practices to prevent introducing vulnerabilities within the sanitization engine.
-- **Maintainability:** Design the sanitization engine for easy updates as PII detection techniques evolve.
+- **Performance:** The sanitization process must introduce minimal latency to the workflow execution, aiming for a sub-second impact per artifact.
+   
+- **Accuracy:** Employ advanced PII detection techniques to minimize false positives and negatives. The engine should correctly identify PII with high confidence.
+   
+- **Security:** Adopt secure coding practices throughout the development of the sanitization engine to prevent security vulnerabilities.
+   
+- **Maintainability:** Architect the sanitization engine for easy maintenance and updates, allowing for the evolution of PII detection algorithms and redaction methods.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-The artifact sanitization feature will be integrated into the existing MeshHook architecture, specifically within the workflow execution pipeline, immediately before artifact storage in Supabase.
+The artifact sanitization feature will be incorporated into MeshHook's existing architecture, specifically within the workflow execution pipeline. It will act as a filter, processing artifacts post-execution and pre-storage.
 
 **Integration Points:**
-- **Workflow Execution Pipeline:** Insert the sanitization step post-execution and pre-storage.
-- **Supabase Storage:** Ensure sanitized artifacts are stored, replacing or alongside original artifacts.
+- **Workflow Execution Pipeline:** Inject the sanitization step after workflow execution and before the artifact storage phase.
+- **Supabase Storage:** Store sanitized artifacts securely, ensuring that only cleaned versions are persisted.
 
 ### Implementation Approach
 
-1. **Requirement Analysis:** Evaluate current artifact handling processes and identify types of PII commonly stored in artifacts.
-2. **Design the Sanitization Engine:** Outline the engine's architecture, including PII detection methods (regex patterns, machine learning models, etc.) and redaction techniques.
-3. **Integration Planning:** Design the integration with the workflow pipeline, ensuring seamless insertion of the sanitization step.
-4. **Development:** Implement the sanitization engine and integration logic, following the TDD approach.
-5. **Testing and Validation:** Conduct thorough testing, including unit, integration, and E2E tests, to ensure effectiveness and performance.
-6. **Documentation and Deployment:** Update documentation to cover the new sanitization feature and its configuration. Prepare for deployment.
+1. **Requirement Analysis:** Conduct an initial analysis to understand the current handling of workflow artifacts and identify common PII categories.
+   
+2. **Sanitization Engine Design:** Architect the engine focusing on modular design for PII detection (using regex, ML models) and redaction methods.
+   
+3. **Integration Design:** Plan the integration with the workflow pipeline to ensure the sanitization step does not disrupt existing processes.
+   
+4. **Development:** Follow Test-Driven Development (TDD) to build the sanitization engine and integration components.
+   
+5. **Testing:** Perform comprehensive testing, including unit, integration, and end-to-end tests, to validate functionality and performance.
+   
+6. **Documentation:** Create detailed documentation for the sanitization feature, including setup, configuration, and usage guidelines.
+   
+7. **Deployment:** Prepare and execute a deployment plan for rolling out the sanitization feature to production environments.
 
 ### Data Model Changes
 
-- **Sanitization Rules Table:** Introduce a new table to store user-defined PII redaction rules, including pattern definitions and action specifications.
+- **SanitizationRules:** A new database table to store user-defined PII redaction rules. Columns include `rule_id`, `project_id`, `pattern`, `redaction_method`, and `created_at`.
 
 ### API Endpoints
 
-- **GET /projects/{projectId}/sanitization-rules:** Fetches the PII redaction rules for a project.
-- **POST /projects/{projectId}/sanitization-rules:** Creates or updates PII redaction rules for a project.
+- **GET /projects/{projectId}/sanitization-rules:** Retrieves a list of sanitization rules defined for a project.
+- **POST /projects/{projectId}/sanitization-rules:** Allows creation or updating of sanitization rules for a project.
 
 ## Acceptance Criteria
 
-- [ ] Sanitization engine accurately identifies and redacts PII from artifacts.
-- [ ] Users can define and manage custom PII redaction rules.
-- [ ] Integration with the workflow pipeline is seamless, with minimal performance impact.
-- [ ] All actions are audited and logged appropriately.
-- [ ] Documentation is updated to include details about the sanitization feature and how to configure it.
-- [ ] The feature passes all security, performance, and reliability benchmarks.
+- [ ] The sanitization engine can accurately identify and redact PII across various artifact types.
+- [ ] Users can create, update, and delete custom PII redaction rules.
+- [ ] Sanitization process is integrated within the workflow pipeline with negligible performance impact.
+- [ ] Sanitization actions are audited, with logs available for review.
+- [ ] Comprehensive documentation is available, guiding users on configuring and using the sanitization feature.
+- [ ] The feature meets all specified security and performance benchmarks.
 
 ## Dependencies
 
-- Access to the current MeshHook codebase and architecture documentation.
-- Supabase for storage and Realtime for log streaming.
-- Development tools and libraries for implementing PII detection and redaction algorithms.
+- Access to MeshHook's current codebase and infrastructure.
+- Supabase for artifact storage and log streaming capabilities.
+- Development libraries for regex and potentially machine learning models for PII detection.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-- Follow the established MeshHook coding standards, including ESLint and Prettier configurations.
-- Ensure code is modular, well-commented, and adheres to security best practices.
-- Utilize environment variables for sensitive configurations to facilitate KEK rotation and secure deployment.
+- Adhere to MeshHook's coding standards, ensuring code is modular, well-commented, and follows secure coding practices.
+   
+- Utilize environment variables for sensitive configurations to enhance security.
 
 ### Testing Strategy
 
-- Implement unit tests for individual components of the sanitization engine.
-- Design integration tests to evaluate the engine's integration with the workflow pipeline.
-- Conduct E2E tests to assess the overall system's performance and reliability in real-world scenarios.
+- Develop unit tests for the sanitization engine's core functionality.
+   
+- Create integration tests to verify the engine's integration with the workflow pipeline.
+   
+- Execute end-to-end tests to assess the feature's impact on the overall system performance and reliability.
 
 ### Security Considerations
 
-- Sanitization rules and logs must be stored securely, with access restricted based on `project_id`.
-- Review and apply secure coding practices to prevent injection attacks or unauthorized access to PII.
+- Ensure sanitization rules and logs are stored securely, implementing access control based on `project_id`.
+   
+- Review and implement secure coding practices to mitigate risks such as injection attacks and unauthorized access to sensitive information.
 
 ### Monitoring & Observability
 
-- Implement metrics to monitor the performance impact of the sanitization process.
-- Ensure comprehensive logging of the sanitization actions for auditability and debugging.
+- Integrate metrics to monitor the impact of the sanitization process on workflow execution times.
+   
+- Implement logging for all sanitization actions to support auditability and troubleshooting.
 
 ## Related Documentation
 

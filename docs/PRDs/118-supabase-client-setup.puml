@@ -1,0 +1,39 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [SvelteKit SSR/API] as SvelteKit
+    [Supabase Realtime] as Realtime
+    [Postgres] as DB
+    [Storage] as Storage
+    [Edge] as Edge
+    [Workers] as Workers
+}
+
+package "Supabase Client Setup" {
+    [Supabase Client] as Client
+    [Integration Tests] as IntegrationTests
+    [Unit Tests] as UnitTests
+    [Error Handling] as ErrorHandling
+}
+
+SvelteKit --> Client : Uses for frontend operations
+DB --> Client : Data queries and mutations
+Realtime --> Client : Subscribes to data changes
+Storage --> Client : Accesses and stores artifacts
+Edge --> Client : Utilizes for cron/timers
+Workers --> Client : Orchestrates workflows
+
+Client --> IntegrationTests : Integration testing
+Client --> UnitTests : Unit testing
+Client --> ErrorHandling : Implements error strategies
+
+note right of Client : Core implementation\nfor webhook triggers, live logs,\nand multi-tenant security
+
+note right of IntegrationTests : Test component\ninteractions and data flow
+
+note right of UnitTests : Test individual\nfunctions and modules
+
+note right of ErrorHandling : Comprehensive error\nhandling and logging
+
+@enduml

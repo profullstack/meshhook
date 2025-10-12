@@ -1,31 +1,45 @@
 @startuml
 !theme plain
 
-title Webhook Trigger Tests - Integration Flow
+title Webhook Trigger Tests - Workflow
 
-actor Tester
-entity "Webhook Service" as Webhook
-entity "Test Framework" as Framework
-database "Supabase" as Supabase
-control "Orchestrator Worker" as Orchestrator
-control "HTTP Executor Worker" as Executor
+actor Developer as dev
+participant "Test Framework\n(Jest)" as jest
+participant "Mock Service" as mock
+database "Supabase\n(Postgres, Realtime, Storage)" as supabase
+participant "MeshHook\nWebhook Engine" as meshhook
+participant "CI Environment" as ci
 
-Tester -> Webhook : Send test webhook payload
-Webhook -> Framework : Trigger test execution
-Framework -> Supabase : Log test initiation
-Supabase --> Framework : Confirm log entry
+== Test Preparation ==
+dev -> jest : Review & design tests
+dev -> mock : Identify mocks for\nexternal services
 
-Framework -> Orchestrator : Initiate webhook processing test
-Orchestrator -> Executor : Schedule HTTP requests
-Executor -> Supabase : Perform actions & log results
-Supabase --> Executor : Confirm actions & logging
+== Test Development ==
+jest -> mock : Develop mocks for\nisolated testing
+jest -> jest : Implement tests using TDD
 
-Executor -> Framework : Return test results
-Framework -> Webhook : Signal test completion
-Webhook -> Tester : Display test outcome
+== Execution and Refinement ==
+group Local Testing
+    dev -> jest : Execute tests locally
+    jest -> meshhook : Trigger webhook events
+    meshhook -> supabase : Process webhook\nvia workflow engine
+    supabase --> meshhook : Return processing results
+    meshhook --> jest : Test assertions
+    jest --> dev : Report results
+end
 
-note right of Executor : Retry mechanisms\nand backoff strategies\nare tested here.
+group CI Testing
+    dev -> ci : Push code\nfor CI tests
+    ci -> jest : Run tests in CI
+    jest -> meshhook : Trigger webhook events
+    meshhook -> supabase : Process webhook\nvia workflow engine
+    supabase --> meshhook : Return processing results
+    meshhook --> jest : Test assertions
+    jest --> ci : Report results
+    ci --> dev : CI test feedback
+end
 
-note right of Supabase : Uses Postgres for data,\nRealtime for logs, and\nStorage for artifacts.
+== Documentation ==
+dev -> meshhook : Document test cases\nand results
 
 @enduml

@@ -1,0 +1,26 @@
+@startuml
+!theme plain
+
+title Version Management Workflow - Draft to Publish
+
+actor User as user
+boundary "Web UI" as UI
+control "API Server\n(SvelteKit)" as API
+database "Postgres\n(Supabase)" as DB
+entity "Workflow Engine" as Engine
+queue "Realtime Updates\n(Supabase Realtime)" as Updates
+
+user -> UI : Select draft version
+UI -> API : Request to publish version
+API -> DB : Check version status
+DB --> API : Status: Draft
+API -> Engine : Initiate Publish Process
+Engine -> DB : Update version to Published
+DB --> Engine : Confirmation
+Engine -> Updates : Notify version change
+Updates -> UI : Update UI with Published status
+UI --> user : Display version as Published
+
+note right of Engine : Error handling\nand logging are\nintegrated throughout\nthe process
+
+@enduml

@@ -1,42 +1,62 @@
 @startuml
-
 !theme plain
 
-package "MeshHook System" {
-    [Webhook Intake] <<SvelteKit>>
-    [Workflow CRUD API] <<SvelteKit>>
-    [Publish Versions] <<SvelteKit>>
-    [Run Console] <<SvelteKit>>
-    database "Supabase" {
-        [Postgres]
-        [Realtime]
-        [Storage]
-        [Edge]
-    }
-    [Orchestrator Worker] <<Worker>>
-    [HTTP Executor Worker] <<Worker>>
-}
+title Worker Logic Tests - MeshHook Project
 
-package "Unit Testing" {
-    [Worker Logic Tests] <<Test>>
-}
+actor Tester
+participant "Test Framework\n(Jest/Mocha)" as Framework
+participant "Mocking Library\n(Sinon/jest-mock)" as Mocking
+participant "Worker Logic" as Worker
+database "Supabase Backend" as Backend
+participant "CI/CD Pipeline" as CICD
 
-[Worker Logic Tests] .down.> [Orchestrator Worker] : tests
-[Worker Logic Tests] .down.> [HTTP Executor Worker] : tests
+group Test Execution
+    Tester -> Framework: Initiate Test Suite
+    Framework -> Mocking: Setup Mocks
+    Mocking -> Worker: Simulate External\nDependencies
+    loop Test Scenarios
+        Framework -> Worker: Execute Test Case
+        alt Successful Test
+            Worker -> Worker: Process Event
+            Worker -> Backend: Update Workflow Step
+            Backend --> Worker: Confirm Update
+            Worker --> Framework: Test Passed
+        else Error Handling
+            Worker -> Worker: Retry Logic
+            alt Retry Success
+                Worker -> Backend: Update Workflow Step
+                Backend --> Worker: Confirm Update
+                Worker --> Framework: Test Passed (with retries)
+            else Retry Fail
+                Worker -> Worker: Log Error
+                Worker --> Framework: Test Failed
+            end
+        else Security Check
+            Worker -> Worker: Validate Signature
+            alt Signature Valid
+                Worker --> Framework: Test Passed
+            else Signature Invalid
+                Worker -> Worker: Reject Event
+                Worker --> Framework: Test Failed
+            end
+        end
+    end
+    Framework -> CICD: Report Test Results
+    CICD --> Tester: Display Results
+end
 
-[Webhook Intake] -right-> [Postgres] : writes to\nqueues
-[Workflow CRUD API] -right-> [Postgres] : CRUD operations
-[Publish Versions] -right-> [Postgres] : version management
-[Run Console] -right-> [Realtime] : subscribes to\nlog streams
-[Orchestrator Worker] -right-> [Postgres] : reads from\nqueues
-[Orchestrator Worker] -down-> [HTTP Executor Worker] : dispatches HTTP tasks
-[HTTP Executor Worker] -down-> [Edge] : executes cron/timers
+note right of CICD
+  Integration with CI/CD ensures
+  automated execution of tests
+  on code changes.
+end note
 
-note right of [Worker Logic Tests]
-  - Write tests first (TDD)
-  - Test individual functions and modules (Unit Tests)
-  - Test component interactions (Integration Tests)
-  - Ensure all tests pass before merging
+note left of Worker
+  Worker Logic includes:
+  - Event Processing
+  - Error Handling
+  - Retry Logic
+  - Security Checks
 end note
 
 @enduml

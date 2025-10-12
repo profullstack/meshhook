@@ -1,5 +1,13 @@
 # PRD: Version management (Draft → Publish)
 
+**Issue:** [#128](https://github.com/profullstack/meshhook/issues/128)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** workflow-management, hacktoberfest
+
+---
+
+# PRD: Version Management (Draft → Publish)
+
 **Issue:** [#128](https://github.com/profullstack/meshhook/issues/128)  
 **Milestone:** Phase 3: Frontend (SvelteKit)  
 **Labels:** workflow-management  
@@ -8,166 +16,116 @@
 
 ---
 
-## Overview
+## 1. Overview
 
-This task is part of Phase 3 in the Workflow Management section of the MeshHook project. 
+### Purpose
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+The Version Management feature is a critical component of the MeshHook project, enabling users to transition workflow definitions from a draft state to a published version. This feature is aligned with MeshHook's goal to provide a robust, user-friendly workflow engine that supports deterministic, replayable runs with version control capabilities. It ensures that users can develop and test workflows thoroughly before committing them as immutable published versions for execution.
 
-**Task Objective:** Version management (Draft → Publish)
+### Alignment with Project Goals
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+- **Visual Simplicity and Durability:** By integrating version management seamlessly with the SvelteKit-based frontend, we maintain the visual simplicity of workflow editing while ensuring the durability of published workflows.
+- **Deterministic, Replayable Runs:** Version management supports the deterministic nature of MeshHook by allowing users to publish tested versions, ensuring consistent, replayable runs.
 
-## Requirements
+## 2. Requirements
 
 ### Functional Requirements
 
-1. Implement the core functionality described in the task: "Version management (Draft → Publish)"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
+1. **Version Drafting:** Users must be able to create and edit draft versions of workflows.
+2. **Publishing Workflow:** Users must be able to publish a draft, transitioning it to an immutable published version.
+3. **Version History:** The system must track and display a history of published versions for each workflow.
+4. **Version Reversion:** Users should be able to revert a draft to a previously published version.
+5. **API Documentation:** Document all public APIs involved in version management.
+6. **Conventions and Standards:** Adhere to MeshHook coding standards and best practices.
 
 ### Non-Functional Requirements
 
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Version management operations should complete within 500ms to ensure a responsive UI.
+- **Reliability:** Achieve 99.9% uptime for the version management feature.
+- **Security:** Implement RLS and other security measures to protect version data.
+- **Maintainability:** Code should be clean, well-documented, and easy to maintain.
 
-## Technical Specifications
+## 3. Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+- **Integration Points:** Version management will integrate with the existing SvelteKit frontend for workflow editing and the Supabase-backed Postgres database for persisting version data.
+- **Components:** This feature interacts primarily with the workflow definition storage and the UI components for workflow editing and publishing.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Analysis:** Examine the current workflow editing and storage mechanisms.
+2. **Design:**
+   - Define data schema changes for storing version information.
+   - Design UI changes for handling draft and publish operations.
+   - Outline API modifications or additions needed.
+3. **Implementation:**
+   - Extend the workflow schema in Postgres to include versioning attributes.
+   - Implement frontend changes in SvelteKit for version management.
+   - Update or create API endpoints for version operations.
+4. **Testing:** Write unit and integration tests covering new functionality.
+5. **Documentation:** Update API and feature documentation.
+6. **Review and Feedback:** Iterate based on team feedback.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+- Add `workflow_versions` table with fields: `id`, `workflow_id`, `version_number`, `state`, `created_at`, and `published_at`.
+- Update `workflows` table to include a `current_version_id` field.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+- `POST /workflows/{id}/versions`: Create a new draft version.
+- `POST /workflows/{id}/versions/publish`: Publish the current draft version.
+- `GET /workflows/{id}/versions`: List versions of a workflow.
 
-### API Endpoints (if applicable)
+## 4. Acceptance Criteria
 
-No new API endpoints required for this task.
+- [ ] Users can create and edit draft versions of workflows.
+- [ ] Users can publish drafts as immutable versions.
+- [ ] A history of published versions is accessible.
+- [ ] Drafts can be reverted to previous versions.
+- [ ] API endpoints for version management are documented.
+- [ ] All new code is covered by unit and integration tests.
+- [ ] Performance, security, and maintainability standards are met.
 
-## Acceptance Criteria
+## 5. Dependencies and Prerequisites
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- Access to the existing MeshHook codebase and development environment.
+- Supabase project access for database schema modifications.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
-
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 6. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the existing module system and JavaScript feature usage.
+- Prioritize comprehensive error handling.
+- Employ TDD for reliability.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** For backend logic and utility functions.
+- **Integration Tests:** For API endpoints and interaction with the database.
+- **UI Tests:** To ensure version management workflows perform as expected in the frontend.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Implement RLS for the `workflow_versions` table.
+- Ensure all version management operations are authorized.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Log key actions in the version management process.
+- Monitor performance metrics for version management operations.
 
-## Related Documentation
+## 7. Related Documentation
 
 - [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
+- [Architecture Diagrams](../diagrams/)
 - [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
 
-## Task Details
-
-**Original Task Description:**
-Version management (Draft → Publish)
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Workflow Management
-
-**Task:** Version management (Draft → Publish)
-
----
-_Auto-generated from TODO.md_
+*This document is a detailed expansion on the requirements and approach for implementing the Version Management feature (Draft → Publish) for the MeshHook project. It is designed to guide the development team through the planning, implementation, and release phases.*
 
 ---
 
-*This PRD was auto-generated from GitHub issue #128*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #128*
+*Generated: 2025-10-10*

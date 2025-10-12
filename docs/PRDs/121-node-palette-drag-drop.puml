@@ -1,0 +1,46 @@
+@startuml
+!theme plain
+
+title Node Palette (Drag & Drop) Implementation Overview
+
+package "Workflow Builder" {
+    [Node Palette UI] as UI
+    [Workflow Editor] as Editor
+    [Workflow Storage] as Storage
+}
+
+package "Supabase" {
+    [Postgres] as Postgres
+    [Realtime] as Realtime
+}
+
+package "SvelteKit SSR/API" {
+    [Webhook Intake] as Webhook
+    [Workflow CRUD API] as CRUD
+}
+
+UI -down-> Editor : Drag & Drop Nodes
+Editor -right-> Storage : Update Workflow
+Storage -left-> Postgres : Persist Changes
+Realtime <-up- Storage : Notify Changes
+CRUD -up-> Editor : Fetch / Save Workflow
+Webhook -left-> CRUD : Trigger Workflows
+
+note right of UI
+  User interacts with
+  the Node Palette via
+  drag & drop operations
+end note
+
+note left of Storage
+  Workflow changes are
+  persisted and versioned
+end note
+
+note right of Realtime
+  Clients receive updates
+  in real-time for collaborative
+  editing
+end note
+
+@enduml

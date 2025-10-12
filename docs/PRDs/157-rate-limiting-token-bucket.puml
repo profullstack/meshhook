@@ -1,33 +1,21 @@
 @startuml
+!theme plain
 
-title Rate Limiting Implementation (Token Bucket)
+package "MeshHook Webhook System" {
+    [Webhook Intake] as WI
+    [Rate Limiter] as RL
+    database "Postgres\n(tenant_settings)" as DB
+    [API Endpoint\n(/api/v1/tenants/{tenantId}/rate_limit)] as API
+}
 
-actor Client
-boundary WebhookAPI
-control TokenBucketRateLimiter
-database PostgresDB
+WI --> RL : checks rate limit
+RL --> DB : fetches tenant rate limit settings
+RL --> RL : applies token bucket algorithm
+RL -[#red]-> WI : returns 429 Too Many Requests\nif limit is exceeded
+RL --> WI : proceeds if within limit
+DB <-- API : updates rate limit settings
 
-Client -> WebhookAPI : Request Webhook Trigger
-WebhookAPI -> TokenBucketRateLimiter : Check Rate Limit
-TokenBucketRateLimiter -> PostgresDB : Fetch Bucket State
-PostgresDB --> TokenBucketRateLimiter : Return Bucket State
-TokenBucketRateLimiter -> TokenBucketRateLimiter : Calculate Tokens
-alt Tokens Available
-    TokenBucketRateLimiter --> WebhookAPI : Allow Request
-    WebhookAPI -> PostgresDB : Log Request
-    PostgresDB --> WebhookAPI : Acknowledge Log
-    WebhookAPI --> Client : Deliver Webhook Response
-else Tokens Exhausted
-    TokenBucketRateLimiter --> WebhookAPI : Deny Request
-    WebhookAPI --> Client : Error 429 (Too Many Requests)
-end
-
-note right of TokenBucketRateLimiter : Token calculation\nbased on time and\nprevious requests
-
-legend left
-  |<#FFAAAA>| External System
-  |<#AAFFAA>| MeshHook Component
-  |<#AAAAFF>| Database
-endlegend
+note right of RL : Token Bucket Algorithm\nfor rate limiting
+note right of DB : rate_limit_rps INTEGER
 
 @enduml

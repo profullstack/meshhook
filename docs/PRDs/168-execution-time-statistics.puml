@@ -1,44 +1,58 @@
 @startuml
 !theme plain
 
-title Execution Time Statistics
-
 package "MeshHook System" {
-    [Webhook Intake] 
-    [Workflow CRUD API] 
-    [Publish Versions] 
-    [Run Console] 
-    database "Supabase" {
-        [Postgres]
-        [Realtime]
-        [Storage]
-        [Edge]
+    [Workers] - [Orchestrator]
+    [Orchestrator] - [Supabase DB]
+    [Supabase DB] - [API Server]
+    [API Server] - [SvelteKit UI]
+    database "Supabase DB" {
+        [execution_time_statistics]
     }
-    [Orchestrator Worker]
-    [HTTP Executor Worker]
+    node "API Server" {
+        [GET /api/v1/statistics/execution-times]
+    }
+    node "SvelteKit UI" {
+        [Execution Time Display]
+    }
 }
 
-package "Execution Time Statistics Feature" {
-    [Execution Time Collector] <<Component>>
-    [Statistics Aggregator] <<Component>>
-    [Statistics API] <<Component>>
-    [Statistics Dashboard] <<Component>>
-}
+[Orchestrator] --> [execution_time_statistics] : records execution times
+[execution_time_statistics] --> [GET /api/v1/statistics/execution-times] : aggregates and filters data
+[GET /api/v1/statistics/execution-times] --> [Execution Time Display] : provides data for UI
 
-[Webhook Intake] --> [Execution Time Collector] : triggers & collects execution times
-[Orchestrator Worker] --> [Execution Time Collector] : sends execution times
-[HTTP Executor Worker] --> [Execution Time Collector] : sends execution times
-[Execution Time Collector] --> [Statistics Aggregator] : sends raw execution times
-[Statistics Aggregator] --> [Postgres] : stores aggregated statistics
-[Statistics API] --> [Postgres] : queries aggregated statistics
-[Statistics Dashboard] --> [Statistics API] : fetches displayed statistics
-
-note right of [Statistics API]
-  Provides endpoints for\nfetching execution time statistics\nfor different workflows.
+note right of [execution_time_statistics]
+  Data Model:
+  - id (PK)
+  - workflow_id (FK)
+  - run_id (FK)
+  - execution_time_ms (INTEGER)
+  - created_at (TIMESTAMP)
 end note
 
-note right of [Statistics Dashboard]
-  Visualizes execution time statistics\nwith charts and graphs for analysis.
+note right of [GET /api/v1/statistics/execution-times]
+  Supports query parameters:
+  - workflow_id
+  - start_date
+  - end_date
 end note
+
+note right of [Execution Time Display]
+  Displays:
+  - Average
+  - Median
+  - Min/Max
+  - Percentiles (95th, 99th)
+end note
+
+note "Integration Points" as N1
+  - Capture and record execution time in Workers
+  - Update database schema for execution time statistics
+  - Enhance UI to display statistics
+end note
+
+[Workers] .. N1
+[Supabase DB] .. N1
+[SvelteKit UI] .. N1
 
 @enduml

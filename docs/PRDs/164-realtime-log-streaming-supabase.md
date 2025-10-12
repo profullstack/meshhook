@@ -1,173 +1,97 @@
 # PRD: Realtime log streaming (Supabase)
 
-**Issue:** [#164](https://github.com/profullstack/meshhook/issues/164)  
-**Milestone:** Phase 6: Observability  
-**Labels:** logging  
-**Phase:** Phase 6  
-**Section:** Logging
+**Issue:** [#164](https://github.com/profullstack/meshhook/issues/164)
+**Milestone:** Phase 6: Observability
+**Labels:** logging, hacktoberfest
 
 ---
 
-## Overview
+# PRD: Realtime Log Streaming (Supabase) for MeshHook
 
-This task is part of Phase 6 in the Logging section of the MeshHook project. 
+## 1. Overview
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Purpose
+The implementation of realtime log streaming using Supabase Realtime represents an essential enhancement to the MeshHook workflow engine's observability features. By providing users with live feedback on their workflow executions, this functionality is pivotal in improving the debugging experience, optimizing workflow performance, and maintaining the system's reliability and user trust.
 
-**Task Objective:** Realtime log streaming (Supabase)
+### Alignment with Project Goals
+This feature directly supports MeshHook's core goals by leveraging Postgres-native capabilities through Supabase for real-time data streaming. It ensures the platform remains webhook-first, deterministic, and secure while enhancing its observability and user experience without compromising on performance or simplicity.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## 2. Functional Requirements
 
-## Requirements
+1. **Real-time Streaming**: Implement a mechanism to stream workflow execution logs to the user interface in real-time, ensuring minimal latency.
+2. **User Interface Integration**: Develop a user-friendly interface for viewing, filtering, and searching through the log stream in real-time.
+3. **Multi-tenancy and Security Compliance**: The streaming mechanism must comply with MeshHook's existing multi-tenant RLS security model, ensuring users only access logs they are authorized to view.
+4. **Error and Warning Highlighting**: Implement logic to automatically identify and highlight errors and warnings within the log stream, aiding users in quickly spotting and addressing issues.
 
-### Functional Requirements
+## 3. Non-Functional Requirements
 
-1. Implement the core functionality described in the task: "Realtime log streaming (Supabase)"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
+- **Performance**: The feature must be optimized to handle high volumes of log data with minimal impact on the database and application performance.
+- **Scalability**: Designed to efficiently scale with the increased workload and number of concurrent users without degradation in performance.
+- **Reliability**: Aim for 99.9% uptime for the log streaming feature, ensuring robustness and fault tolerance.
+- **Security**: Adhere to strict security protocols for data transmission and access, ensuring compliance with MeshHook's security guidelines.
 
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
-
-## Technical Specifications
+## 4. Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+The MeshHook system utilizes SvelteKit for the frontend and Supabase for backend services, including database management, real-time data streaming, and multi-tenant security. This feature's integration will extend the existing Supabase Realtime setup to include the streaming of log data to authenticated users.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+1. **Review Existing Systems**: Analyze the current logging and Supabase Realtime configurations to identify any required adjustments or optimizations.
+2. **Configure Supabase Realtime for Logs**: Enable and configure Realtime subscriptions for the logs table in Supabase, ensuring data changes are published and accessible in real-time.
+3. **Develop Client-side Subscription Logic**: Implement subscription logic in the SvelteKit frontend to receive real-time log updates, utilizing Supabase Realtime's capabilities.
+4. **UI Development**: Design and implement the user interface for log streaming, incorporating features for real-time data display, filtering, searching, and error/warning visualization.
+5. **Performance Optimization and Testing**: Conduct thorough testing to ensure feature reliability and performance, making necessary adjustments for optimization.
+6. **Documentation**: Update the project documentation to include details on the new feature's configuration, usage, and integration points.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+### Data Model Changes
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+No significant changes to the existing data model are required. However, ensure the logs table is optimized for real-time streaming, considering indexing and partitioning strategies for efficient data access and updates.
 
-### Data Model
+### API Endpoints
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No new API endpoints are required for this feature. It leverages existing Supabase Realtime subscriptions for data streaming.
 
-### API Endpoints (if applicable)
+## 5. Acceptance Criteria
 
-No new API endpoints required for this task.
+- Real-time streaming of workflow logs is operational, with updates reflected in the user interface immediately.
+- Logs are streamed securely, adhering to MeshHook's multi-tenant RLS security model.
+- The user interface supports effective real-time filtering, searching, and error/warning highlighting within the log stream.
+- Performance benchmarks are achieved, confirming the feature does not negatively impact the system's performance.
+- Comprehensive testing verifies the feature's reliability, scalability, and security compliance.
 
-## Acceptance Criteria
+## 6. Dependencies
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
+- **Supabase Realtime**: Existing configuration must support additional subscriptions for the logs table.
+- **Existing Logging Infrastructure**: Must be compatible with real-time streaming requirements and optimized for performance and security.
 
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
-
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
-
-## Implementation Notes
+## 7. Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the project's existing coding standards, leveraging modern JavaScript and Svelte features for clean and efficient code.
+- Adhere to TDD principles, prioritizing the creation of unit and integration tests early in the development process.
+- Ensure code quality and consistency by adhering to the project's ESLint and Prettier configurations.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests**: Cover new functionality related to real-time log streaming and UI updates.
+- **Integration Tests**: Focus on the integration with Supabase Realtime and the existing logging system, ensuring seamless operation and security compliance.
+- **E2E Tests**: Simulate user interactions with the log streaming feature to validate its functionality in real-world scenarios.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure encrypted data transmission and comply with MeshHook's security guidelines and RLS policies.
+- Regularly review and update security measures to safeguard against new vulnerabilities.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Incorporate monitoring tools to track the feature's performance and reliability, setting up alerts for any anomalies or downtime affecting log streaming.
 
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Realtime log streaming (Supabase)
-
-**Full Issue Body:**
-**Phase:** Phase 6
-**Section:** Logging
-
-**Task:** Realtime log streaming (Supabase)
-
----
-_Auto-generated from TODO.md_
+This PRD outlines the framework for implementing real-time log streaming in MeshHook, ensuring the feature enhances the platform's observability, user experience, and overall value proposition.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #164*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #164*
+*Generated: 2025-10-10*

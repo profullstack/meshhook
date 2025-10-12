@@ -1,173 +1,102 @@
 # PRD: Signature verification (HMAC)
 
-**Issue:** [#154](https://github.com/profullstack/meshhook/issues/154)  
-**Milestone:** Phase 5: Webhook System  
-**Labels:** webhook-triggers  
-**Phase:** Phase 5  
-**Section:** Webhook Triggers
+**Issue:** [#154](https://github.com/profullstack/meshhook/issues/154)
+**Milestone:** Phase 5: Webhook System
+**Labels:** webhook-triggers, hacktoberfest
 
 ---
 
+# PRD: Signature Verification (HMAC) for Webhook Triggers
+
 ## Overview
 
-This task is part of Phase 5 in the Webhook Triggers section of the MeshHook project. 
+The implementation of HMAC (Hash-based Message Authentication Code) signature verification for MeshHook's webhook triggers is a critical enhancement aimed at bolstering the security framework of our webhook-first, deterministic, Postgres-native workflow engine. This feature is designed to validate the authenticity and integrity of incoming webhook requests, ensuring that only requests with verified signatures trigger workflows. This aligns with MeshHook's objectives of providing a secure, reliable, and easy-to-use automation platform, addressing the need for stringent security measures in automated workflow execution.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+### Objective
 
-**Task Objective:** Signature verification (HMAC)
+The goal of this enhancement is to integrate HMAC signature verification for all incoming webhook requests to MeshHook. By doing so, we aim to ensure that workflows are only triggered by authenticated sources, thereby safeguarding against unauthorized access and preserving the integrity of the data processed by MeshHook.
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+## Functional Requirements
 
-## Requirements
+1. **HMAC-SHA256 Verification:** Implement a mechanism to verify HMAC-SHA256 signatures for incoming webhook requests, ensuring that each request is authenticated before proceeding to trigger a workflow.
+2. **Secret Key Configuration:** Develop both a user interface and an API endpoint that allow users to set and manage secret keys used for generating HMAC signatures, specific to each project within MeshHook.
+3. **Invalid Signature Handling:** Clearly define the behavior of the system when encountering invalid or missing signatures in webhook requests, including rejecting the request and returning an HTTP 401 Unauthorized status code.
+4. **Audit Trail:** Maintain a detailed log of all webhook requests, including those that fail signature verification, to support monitoring, auditing, and troubleshooting.
 
-### Functional Requirements
+## Non-Functional Requirements
 
-1. Implement the core functionality described in the task: "Signature verification (HMAC)"
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** The HMAC signature verification process must be optimized to minimize impact on webhook processing latency, ensuring that the system remains responsive under high load.
+- **Security:** Implement robust security measures for the storage and handling of HMAC secret keys, ensuring that they are securely stored and accessed.
+- **Reliability:** Ensure that the signature verification process is reliable, even under peak loads, to maintain the integrity of the workflow execution process.
+- **Maintainability:** Design the HMAC signature verification feature with maintainability in mind, ensuring that future updates and modifications can be easily implemented.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook's architecture comprises SvelteKit for serving dynamic content and handling API requests, Supabase for backend services including Postgres for data persistence, and dedicated workers for orchestration and execution of HTTP requests. The HMAC signature verification will be integrated within the SvelteKit component, where webhook requests are received and initially processed.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
+#### 1. Analysis
+- Review the current webhook processing logic within SvelteKit to identify the optimal point for integrating signature verification.
 
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
+#### 2. Secret Key Management
+- Modify the `projects` table in Postgres to include a `hmac_secret` field for storing secret keys.
+- Implement a UI in SvelteKit for users to input and manage HMAC secrets for their projects.
+- Develop API endpoints for setting and retrieving HMAC secret configurations, ensuring sensitive information is securely handled.
 
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+#### 3. Verification Logic
+- Introduce a middleware function in SvelteKit that extracts the signature from incoming webhook request headers, computes the expected HMAC signature using the project-specific secret, and validates the request signature against this computed signature.
+- Implement logic to allow or reject the webhook request based on the outcome of the signature comparison.
 
-### Data Model
+#### 4. Testing & Documentation
+- Create comprehensive unit and integration tests to validate the functionality of the HMAC signature verification process.
+- Update the project documentation to include detailed instructions on configuring and using the HMAC signature verification feature.
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+### Data Model Changes
 
-### API Endpoints (if applicable)
+- `projects` table schema will be extended to include:
+  - `hmac_secret VARCHAR(255)`: Field to store the HMAC secret key for each project.
 
-No new API endpoints required for this task.
+### API Endpoints
+
+- `POST /api/projects/:id/hmac_secret`: Configures the HMAC secret for a given project.
+- `GET /api/projects/:id/hmac_secret`: Retrieves the HMAC secret configuration for a given project (excluding the secret itself for security reasons).
 
 ## Acceptance Criteria
+- [ ] HMAC signature verification correctly validates the authenticity of incoming webhook requests.
+- [ ] UI and API for managing HMAC secret keys are fully functional and user-friendly.
+- [ ] Performance benchmarks confirm that signature verification introduces negligible latency.
+- [ ] Comprehensive test coverage ensures reliability and functionality of the feature.
+- [ ] Documentation provides clear guidance on configuring and utilizing HMAC signature verification.
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
-
-## Dependencies
-
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+## Dependencies and Prerequisites
+- Existing MeshHook development environment and codebase access.
+- Understanding of the current webhook processing logic within MeshHook.
+- Familiarity with HMAC-SHA256 and cryptographic best practices.
 
 ## Implementation Notes
 
 ### Development Guidelines
-
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Adhere to MeshHook's coding standards and best practices, focusing on clean, maintainable code and robust error handling.
+- Use environment variables for managing sensitive information during development and testing.
 
 ### Testing Strategy
-
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Implement tests to cover the new logic for HMAC signature generation and verification.
+- **Integration Tests:** Perform end-to-end testing of the signature verification process, including secret configuration and webhook request handling.
 
 ### Security Considerations
-
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Implement encryption at rest for the `hmac_secret` field in the database.
+- Ensure secure access patterns to HMAC secrets within the application, following the principle of least privilege.
+- Prevent logging of sensitive information to avoid potential exposure of HMAC secrets.
 
 ### Monitoring & Observability
+- Monitor the rate of webhook requests rejected due to signature verification failures, alerting on unusual patterns that might indicate configuration issues or malicious activity.
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
-
-## Related Documentation
-
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Signature verification (HMAC)
-
-**Full Issue Body:**
-**Phase:** Phase 5
-**Section:** Webhook Triggers
-
-**Task:** Signature verification (HMAC)
-
----
-_Auto-generated from TODO.md_
+By following this PRD, MeshHook will establish a robust security measure to authenticate and verify webhook requests, enhancing the overall security posture and reliability of the system.
 
 ---
 
-*This PRD was auto-generated from GitHub issue #154*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #154*
+*Generated: 2025-10-10*

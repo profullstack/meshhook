@@ -1,25 +1,38 @@
 @startuml
 !theme plain
 
-title JWT Token Support - Sequence Diagram
+package "Webhook System" {
+    [Webhook Trigger] -right-> [JWT Verification]
+    [JWT Verification] -down-> [Secrets Vault] : fetches JWT secrets
+    [JWT Verification] -left-> [Logging & Metrics]
+    database "Supabase Postgres" {
+        [jwt_config] - [webhook_triggers]
+    }
+    [Webhook Trigger] -down-> [Supabase Postgres]
+}
 
-actor User as user
-participant "Webhook Trigger" as webhook
-database "Supabase Postgres" as db
-participant "JWT Service" as jwt
-participant "Workflow Engine" as engine
+package "Configuration Interface" {
+    [UI] -right-> [API Endpoint]
+    [API Endpoint] --> [Supabase Postgres] : updates jwt_config
+}
 
-user -> webhook: Sends request\nwith JWT
-webhook -> jwt: Validates JWT
-alt JWT Valid
-    jwt -> db: Fetches user/project data
-    db --> jwt: User/Project data
-    jwt --> webhook: JWT Valid
-    webhook -> engine: Triggers workflow
-    engine --> user: Workflow executed
-else JWT Invalid
-    jwt --> webhook: JWT Invalid/Error
-    webhook --> user: Returns error response
-end
+[JWT Library] - [JWT Verification]
+
+note right of [JWT Verification]
+  1. Extract JWT from request
+  2. Fetch secret from Secrets Vault
+  3. Verify JWT signature and claims
+  4. Log attempt and outcome
+end note
+
+note right of [API Endpoint]
+  Method: PUT
+  Path: /api/v1/projects/{projectId}/webhooks/{webhookId}/jwt-config
+  Body: { "secret": "string", "claims": {"iss": "example.com", "aud": "meshhook"} }
+end note
+
+[UI] ..> [SvelteKit] : uses
+[SvelteKit] ..> [Webhook Trigger] : integrates
+[Logging & Metrics] ..> [Supabase] : utilizes for real-time logging and metrics
 
 @enduml

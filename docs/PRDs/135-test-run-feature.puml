@@ -1,0 +1,40 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Run Console] as RC
+    [Webhook Intake] as WI
+    [Workflow CRUD] as WCRUD
+    [Publish Versions] as PV
+    [Supabase Realtime] as SR
+    [Postgres] as PG
+    [Workers] as WKS {
+        [Orchestrator] as ORC
+        [HTTP Executor] as HTE
+    }
+}
+
+database "Supabase" as SB {
+    [Data + Queues] as DQ
+    [Log Streaming] as LS
+    [Storage] as ST
+    [Edge (cron/timers)] as ECT
+}
+
+[Run Console] --> [Webhook Intake] : Triggers
+[Run Console] --> [Workflow CRUD]
+[Run Console] --> [Publish Versions]
+[Run Console] --> [Supabase Realtime] : Live logs
+[Webhook Intake] --> [Postgres] : Stores triggers
+[Workflow CRUD] --> [Postgres] : Manages workflows
+[Publish Versions] --> [Postgres] : Version control
+[Supabase Realtime] --> [Log Streaming] : Streams logs
+[Postgres] --> [Data + Queues]
+[Workers] --> [Postgres] : Updates state
+[Orchestrator] --> [HTTP Executor] : Delegates tasks
+[HTTP Executor] --> [Edge (cron/timers)] : Schedules retries
+
+note right of RC : Test run feature\nPhase 3: Frontend (SvelteKit)
+note right of WKS : Orchestrator & HTTP Executor\nHandle task execution
+
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+title Authentication Flow
+
+actor User
+participant "UI (SvelteKit)" as UI
+participant "Auth Service" as AuthService
+database "Supabase (Postgres)" as DB
+participant "Session Manager" as SessionManager
+participant "Logger" as Logger
+
+User -> UI : Enter credentials
+UI -> AuthService : Validate credentials
+AuthService -> DB : Query user data
+DB --> AuthService : Return user data
+AuthService -> SessionManager : Create session
+SessionManager --> AuthService : Session ID
+AuthService --> UI : Authentication result
+UI -> Logger : Log attempt
+Logger --> UI : Log ID
+UI --> User : Display result
+
+note over AuthService, DB : Integration Point\nfor user data verification
+note right of SessionManager : Generates secure\nsession tokens
+note right of Logger : Tracks login attempts\nfor security audits
+
+@enduml

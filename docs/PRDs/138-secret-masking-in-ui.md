@@ -1,176 +1,103 @@
 # PRD: Secret masking in UI
 
-**Issue:** [#138](https://github.com/profullstack/meshhook/issues/138)  
-**Milestone:** Phase 3: Frontend (SvelteKit)  
-**Labels:** secrets-management  
-**Phase:** Phase 3  
-**Section:** Secrets Management
+**Issue:** [#138](https://github.com/profullstack/meshhook/issues/138)
+**Milestone:** Phase 3: Frontend (SvelteKit)
+**Labels:** secrets-management, hacktoberfest
 
 ---
 
+# PRD: Secret Masking in UI
+
 ## Overview
 
-This task is part of Phase 3 in the Secrets Management section of the MeshHook project. 
+**Task Objective:** Implement secret masking within the MeshHook UI to enhance security and privacy by preventing the exposure of sensitive information.
 
-**MeshHook** is a webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual simplicity and Temporal's durability without restrictive licensing.
+This task supports MeshHook's goal of providing a secure, multi-tenant webhook-first workflow engine by ensuring that secrets, such as API keys and tokens, are not visible in the UI. It aligns with our security principles, particularly around secret management and PII redaction, contributing to a trustworthy user experience.
 
-**Task Objective:** Secret masking in UI
+## Functional Requirements
 
-This implementation should align with the project's core goals of providing:
-- Webhook triggers with signature verification
-- Visual DAG builder using SvelteKit/Svelte 5
-- Durable, replayable runs via event sourcing
-- Live logs via Supabase Realtime
-- Multi-tenant RLS security
+1. **Secret Masking:** Implement a UI mechanism to mask secrets (e.g., API keys, tokens) in the MeshHook dashboard, making them visible only when explicitly requested by the user.
+2. **Toggle Visibility:** Users should be able to toggle the visibility of secrets, with secrets masked by default.
+3. **Clipboard Copy:** Provide an option to copy the secret to the clipboard without making it visible, to facilitate usability without compromising security.
+4. **Integration with Existing Secret Management:** The secret masking feature must integrate seamlessly with MeshHook's existing secret management workflows, including creation, editing, and deletion of secrets.
+5. **User Permission Checks:** Ensure that only users with appropriate permissions can toggle the visibility of secrets or copy them to the clipboard.
+6. **Logging and Auditing:** Any action taken on secrets (e.g., visibility toggle, copying to clipboard) should be logged for auditing purposes.
 
-## Requirements
+## Non-Functional Requirements
 
-### Functional Requirements
-
-1. Implement the core functionality described in the task: "Secret masking in UI"
-2. Create reusable Svelte 5 components
-3. Implement responsive design for mobile and desktop
-4. Follow project UI/UX patterns and styling
-5. Document all public APIs and interfaces
-6. Follow project coding standards and best practices
-
-
-### Non-Functional Requirements
-
-- **Performance:** Maintain sub-second response times for user-facing operations
-- **Reliability:** Ensure 99.9% uptime with proper error handling and recovery
-- **Security:** Follow project security guidelines (RLS, secrets management, audit logging)
-- **Maintainability:** Write clean, well-documented code following project conventions
+- **Performance:** Secret masking and unmasking actions must not introduce significant latency in the UI response times.
+- **Security:** The implementation must adhere to the project's security guidelines, ensuring that secrets are handled securely throughout their lifecycle.
+- **Usability:** The UI components for secret masking should be intuitive and consistent with the overall design language of MeshHook.
+- **Accessibility:** Implement accessibility best practices to ensure that the secret masking feature is usable by all users, including those using assistive technologies.
 
 ## Technical Specifications
 
 ### Architecture Context
 
-- **SvelteKit (SSR/API)**: webhook intake, workflow CRUD, publish versions, run console.
-- **Supabase**: Postgres (data + queues), Realtime (log streaming), Storage (artifacts), Edge (cron/timers).
-- **Workers**: Orchestrator (state machine + scheduling) and HTTP Executor (robust HTTP with retries/backoff).
+MeshHook leverages a SvelteKit-based frontend, with Supabase for backend services including database, realtime updates, and storage. This task requires close integration with the frontend components handling secrets within the dashboard.
 
 ### Implementation Approach
 
-The implementation should follow these steps:
-
-1. **Analysis:** Review existing codebase and identify integration points
-2. **Design:** Create detailed technical design considering:
-   - Data structures and schemas
-   - API contracts and interfaces
-   - Component architecture
-   - Error handling strategies
-3. **Implementation:** Write code following TDD approach:
-   - Write tests first
-   - Implement minimal code to pass tests
-   - Refactor for clarity and performance
-4. **Integration:** Ensure seamless integration with existing components
-5. **Testing:** Comprehensive testing at all levels
-6. **Documentation:** Update relevant documentation
-7. **Review:** Code review and feedback incorporation
-
-**Key Considerations:**
-- Maintain backward compatibility where applicable
-- Follow event sourcing patterns for state changes
-- Use Postgres for durable storage
-- Implement proper error handling and logging
-- Consider rate limiting and resource constraints
+1. **Design UI Components:** Develop Svelte components for displaying secrets with masking functionality. Include a toggle button for visibility and an icon for clipboard copying.
+2. **Integrate with Supabase:** Utilize Supabase client libraries to fetch and update secrets, ensuring that all operations are performed securely and in accordance with our RLS policies.
+3. **Clipboard API:** Implement secure usage of the Clipboard API for the copy-to-clipboard feature, ensuring that it works across all supported browsers.
+4. **Logging**: Integrate with the existing logging infrastructure to capture actions performed on secrets for auditing purposes.
+5. **Testing:** Write comprehensive unit and integration tests covering all new functionality and potential edge cases related to secret management.
+6. **Documentation:** Update the project documentation, including the user guide and API documentation as necessary, to cover the new secret masking features.
 
 ### Data Model
 
-No new data model changes required for this task. If data model changes are needed during implementation, update `schema.sql` and document changes here.
+No changes to the existing data model are required for this task. However, the implementation may necessitate additional logging tables or fields to capture audit logs related to secret access and visibility toggling.
 
-### API Endpoints (if applicable)
+### API Endpoints
 
-No new API endpoints required for this task.
+No new API endpoints are required. Existing endpoints for secret management will be utilized, but may require updates to support logging of visibility and copy actions.
 
 ## Acceptance Criteria
 
-- [ ] Core functionality implemented and working as described
-- [ ] All tests passing (unit, integration, e2e where applicable)
-- [ ] Code follows project conventions and passes linting
-- [ ] Documentation updated (code comments, README, API docs)
-- [ ] Security considerations addressed (RLS, input validation, etc.)
-- [ ] Performance requirements met (response times, resource usage)
-- [ ] Error handling implemented with clear error messages
-- [ ] Changes reviewed and approved by team
-- [ ] No breaking changes to existing functionality
-- [ ] Database migrations created if schema changes made
-- [ ] Manual testing completed in development environment
-
-**Definition of Done:**
-- Code merged to main branch
-- All CI/CD checks passing
-- Documentation complete and accurate
-- Ready for deployment to production
+- [ ] Secret masking UI component implemented and integrated with the dashboard.
+- [ ] Users can toggle the visibility of secrets and copy secrets to the clipboard without exposing them.
+- [ ] Actions on secrets are logged for auditing purposes.
+- [ ] All unit and integration tests pass.
+- [ ] The feature adheres to MeshHook's performance, security, and usability standards.
+- [ ] Documentation is updated to reflect the new feature.
 
 ## Dependencies
 
-### Technical Dependencies
-
-- Existing codebase components
-- Database schema (see schema.sql)
-- External services: Supabase (Postgres, Realtime, Storage)
-
-### Prerequisite Tasks
-
-- Previous phase tasks completed
-- Dependencies installed and configured
-- Development environment ready
-- Access to required services (Supabase, etc.)
+- Access to the MeshHook codebase and development environment.
+- Supabase client libraries for SvelteKit.
 
 ## Implementation Notes
 
 ### Development Guidelines
 
-1. Follow ESM module system (Node.js 20+)
-2. Use modern JavaScript (ES2024+) features
-3. Implement comprehensive error handling
-4. Write tests before implementation (TDD)
-5. Ensure code passes ESLint and Prettier checks
+- Follow the SvelteKit and JavaScript best practices as documented in the project's contribution guidelines.
+- Ensure that all new code is fully tested and documented.
+- Adhere to accessibility guidelines to ensure the feature is accessible to all users.
 
 ### Testing Strategy
 
-- **Unit Tests:** Test individual functions and modules
-- **Integration Tests:** Test component interactions
-- **E2E Tests:** Test complete user workflows (where applicable)
+- **Unit Tests:** Focus on individual components and utility functions.
+- **Integration Tests:** Test the interaction between the UI components and the Supabase backend, including permission checks and logging.
+- **Manual Testing:** Perform manual testing in various browsers and devices to ensure compatibility and usability.
 
 ### Security Considerations
 
-- RLS by `project_id`.
-- Secrets AES-GCM with KEK rotation.
-- Audit log for admin actions & secret access.
-- PII redaction rules.
+- Ensure that secrets are never exposed in the UI unless explicitly requested by the user.
+- Utilize Supabase's RLS policies to enforce permission checks on secret operations.
+- Securely implement the Clipboard API to prevent clipboard poisoning and other clipboard-related attacks.
 
 ### Monitoring & Observability
 
-- Add appropriate logging for debugging
-- Track key metrics (response times, error rates)
-- Set up alerts for critical failures
-- Use Supabase Realtime for live updates where needed
+- Extend the existing monitoring setup to include metrics and logs related to secret masking and access, enabling quick identification and resolution of any issues.
 
 ## Related Documentation
 
-- [Main PRD](../PRD.md)
-- [Architecture](../Architecture.md)
-- [Security Guidelines](../Security.md)
-- [Operations Guide](../Operations.md)
-
-## Task Details
-
-**Original Task Description:**
-Secret masking in UI
-
-**Full Issue Body:**
-**Phase:** Phase 3
-**Section:** Secrets Management
-
-**Task:** Secret masking in UI
-
----
-_Auto-generated from TODO.md_
+- MeshHook User Guide (update required)
+- MeshHook API Documentation (review for updates)
+- Project Contribution Guidelines
 
 ---
 
-*This PRD was auto-generated from GitHub issue #138*  
-*Last updated: 2025-10-10*
+*This PRD was AI-generated using gpt-4-turbo-preview from GitHub issue #138*
+*Generated: 2025-10-10*

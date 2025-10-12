@@ -2,40 +2,51 @@
 !theme plain
 
 package "MeshHook System" {
-    [Webhook Intake] as WI
-    [Workflow CRUD API] as WCAPI
-    [Publish Versions] as PV
-    [Run Console] as RC
-    [Log Streaming] as LS
+    [Logging Interface] - [Supabase Realtime]
+    [Logging Interface] --> [Project Settings]
+    [Background Worker] --> [Supabase Realtime]
+    [Background Worker] --> [Notification System]
+
+    package "Log Retention Feature" {
+        [Project Settings] - [Log Retention Policy Config]
+        [Log Retention Policy Config] --> [Automated Log Management]
+        [Automated Log Management] --> [Manual Log Management]
+        [Automated Log Management] --> [User Notification]
+        [Manual Log Management] --> [User Notification]
+
+        [Log Retention Policy Config] --> [Supabase Realtime]
+        [User Notification] --> [Notification System]
+    }
 }
 
-database "Supabase" {
-    [Postgres] as DB
-    [Realtime] as RT
-    [Storage] as ST
-    [Edge] as ED
-}
+[Supabase Realtime] --> [Distributed Worker System]
+[Notification System] --> [User Devices]
 
-node "Workers" {
-    [Orchestrator] as O
-    [HTTP Executor] as HE
-}
+note right of [Log Retention Policy Config]
+  Update `project` table to include:
+  - `log_retention_period`
+  - `log_retention_last_enforced`
+end note
 
-[Log Retention Policy Manager] as LRPM
+note right of [Automated Log Management]
+  Scheduled task checks and enforces
+  log retention policies
+end note
 
-WI --> DB : triggers & logs
-WCAPI --> DB : CRUD operations
-PV --> DB : versioning
-RC --> RT : fetch logs
-LS --> RT : stream logs
-DB --> LRPM : log data
-LRPM --> DB : delete based on policy
-O --> DB : state changes
-HE --> DB : HTTP requests & retries
+note right of [Manual Log Management]
+  Provides UI for manual log actions
+end note
 
-LRPM .> [Supabase] : uses
-LRPM .> [Workers] : interacts
+note right of [User Notification]
+  Notify users upon log actions
+end note
 
-note right of LRPM : Implements log retention\npolicies across the system
+note right of [Project Settings]
+  Extend to include log retention settings
+end note
+
+note right of [Notification System]
+  Supports email and in-app notifications
+end note
 
 @enduml

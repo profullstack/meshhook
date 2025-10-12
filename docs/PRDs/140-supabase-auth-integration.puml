@@ -1,0 +1,47 @@
+@startuml
+!theme plain
+
+package "MeshHook System" {
+    [Webhook Service] - [Supabase Auth]
+    [Workflow Engine] - [Supabase Auth]
+    [SvelteKit SSR/API] - [Supabase Auth]
+    [Realtime Log Service] - [Supabase Realtime]
+    database "Postgres (Data + Queues)" as Postgres
+    [Supabase Auth] .> Postgres : Uses
+    [Supabase Realtime] .> Postgres : Streams from
+}
+
+cloud {
+    [Supabase Services] #LightBlue
+}
+
+[Supabase Auth] - [Supabase Services] : Part of
+[Supabase Realtime] - [Supabase Services] : Part of
+
+actor User
+
+User --> [Webhook Service] : Sends webhook
+User --> [Supabase Auth] : Authenticates
+User --> [SvelteKit SSR/API] : Accesses dashboard
+
+note right of [Webhook Service]
+  Webhook triggers with signature verification
+end note
+
+note right of [Workflow Engine]
+  Durable, replayable runs via event sourcing
+end note
+
+note right of [SvelteKit SSR/API]
+  Visual DAG builder using SvelteKit/Svelte 5
+end note
+
+note right of [Realtime Log Service]
+  Live logs via Supabase Realtime
+end note
+
+note right of Postgres
+  Multi-tenant RLS security
+end note
+
+@enduml
