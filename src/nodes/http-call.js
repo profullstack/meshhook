@@ -90,15 +90,20 @@ export class HttpCallNode {
 
   /**
    * Execute the HTTP request
-   * 
+   *
+   * @param {any} input - Optional input data from previous node to use as request body
    * @returns {Promise<Object>} Response object with status, data, and headers
    * @throws {HttpCallError} If request fails after all retries
-   * 
-   * @example
+   *
+   * @example Without input (uses configured body)
    * const result = await node.execute();
    * console.log(result.status, result.data);
+   *
+   * @example With input from previous node
+   * const result = await node.execute({ userId: 123, action: 'update' });
+   * console.log(result.status, result.data);
    */
-  async execute() {
+  async execute(input) {
     let lastError;
     let attempt = 0;
 
@@ -106,7 +111,7 @@ export class HttpCallNode {
       attempt++;
 
       try {
-        const response = await this._makeRequest();
+        const response = await this._makeRequest(input);
         return response;
       } catch (error) {
         lastError = error;
@@ -144,13 +149,14 @@ export class HttpCallNode {
   /**
    * Make the actual HTTP request
    * @private
+   * @param {any} input - Optional input data from previous node
    */
-  async _makeRequest() {
+  async _makeRequest(input) {
     // Build URL with query parameters
     const url = this._buildUrl();
 
-    // Build request options
-    const options = this._buildRequestOptions();
+    // Build request options, passing input data
+    const options = this._buildRequestOptions(input);
 
     // Create abort controller for timeout
     const controller = new AbortController();
@@ -200,22 +206,27 @@ export class HttpCallNode {
   /**
    * Build request options
    * @private
+   * @param {any} input - Optional input data from previous node
    */
-  _buildRequestOptions() {
+  _buildRequestOptions(input) {
     const options = {
       method: this.method,
       headers: { ...this.headers },
     };
 
+    // Determine which body to use: input from previous node or configured body
+    // Input takes precedence if provided (but not if it's null or undefined)
+    const bodyToUse = (input !== undefined && input !== null) ? input : this.body;
+
     // Add body for methods that support it
-    if (this.body && ['POST', 'PUT', 'PATCH'].includes(this.method)) {
-      if (typeof this.body === 'object') {
-        options.body = JSON.stringify(this.body);
+    if (bodyToUse && ['POST', 'PUT', 'PATCH'].includes(this.method)) {
+      if (typeof bodyToUse === 'object') {
+        options.body = JSON.stringify(bodyToUse);
         if (!options.headers['Content-Type']) {
           options.headers['Content-Type'] = 'application/json';
         }
       } else {
-        options.body = this.body;
+        options.body = bodyToUse;
       }
     }
 

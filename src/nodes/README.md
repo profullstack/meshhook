@@ -57,12 +57,13 @@ Executes HTTP requests with comprehensive configuration, retry policies, and res
 - Full HTTP method support (GET, POST, PUT, DELETE, etc.)
 - Custom headers and query parameters
 - Request body serialization
+- **Input from previous nodes** - Use output from previous workflow nodes as request payload
 - Configurable timeout
 - Exponential backoff retry with jitter
 - Multiple response types (JSON, text, blob)
 - Request/response validation
 
-**Usage:**
+**Usage with configured body:**
 ```javascript
 import { HttpCallNode } from './http-call.js';
 
@@ -91,6 +92,32 @@ const result = await node.execute();
 console.log(result.status, result.data);
 ```
 
+**Usage with input from previous node:**
+```javascript
+// Node receives data from previous workflow step
+const node = new HttpCallNode({
+  url: 'https://api.example.com/process',
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer token123'
+  }
+  // No body configured - will use input data
+});
+
+// Input data from previous node (e.g., transform node output)
+const inputData = {
+  userId: 123,
+  action: 'update',
+  metadata: { source: 'workflow' }
+};
+
+// Input data is used as request body
+const result = await node.execute(inputData);
+console.log(result.status, result.data);
+```
+
+**Priority:** When both configured body and input data are provided, input data takes precedence. This allows workflows to dynamically pass data between nodes while maintaining the option for static configuration.
+
 **Configuration Options:**
 
 | Option | Type | Default | Description |
@@ -98,11 +125,17 @@ console.log(result.status, result.data);
 | `url` | string | required | Request URL |
 | `method` | string | 'GET' | HTTP method |
 | `headers` | object | {} | Request headers |
-| `body` | any | undefined | Request body |
+| `body` | any | undefined | Request body (optional if using input) |
 | `queryParams` | object | undefined | URL query parameters |
 | `timeout` | number | 30000 | Timeout in milliseconds |
 | `responseType` | string | 'json' | Response type (json/text/blob) |
 | `retryPolicy` | object | see below | Retry configuration |
+
+**Execute Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `input` | any | undefined | Optional input data from previous node to use as request body. Takes precedence over configured body. |
 
 **Retry Policy:**
 
@@ -130,27 +163,43 @@ node --test src/nodes/http-call.test.js
 
 ## Integration with Workers
 
-These nodes are designed to be executed by the HTTP executor worker:
+These nodes are designed to be executed by the HTTP executor worker with data flowing between nodes:
 
 ```javascript
 import { TransformNode } from './nodes/transform.js';
 import { HttpCallNode } from './nodes/http-call.js';
 
-// In worker execution
-async function executeNode(nodeConfig) {
+// In worker execution with data flow
+async function executeNode(nodeConfig, inputFromPreviousNode) {
   switch (nodeConfig.type) {
     case 'transform':
       const transformNode = new TransformNode(nodeConfig);
-      return transformNode.transform(input);
+      return transformNode.transform(inputFromPreviousNode);
       
     case 'http_call':
       const httpNode = new HttpCallNode(nodeConfig);
-      return await httpNode.execute();
+      // Pass input from previous node (if any)
+      return await httpNode.execute(inputFromPreviousNode);
       
     default:
       throw new Error(`Unknown node type: ${nodeConfig.type}`);
   }
 }
+
+// Example workflow: Transform → HTTP Call
+const transformNode = new TransformNode({
+  expression: 'users[*].{id: id, name: name}'
+});
+
+const httpNode = new HttpCallNode({
+  url: 'https://api.example.com/batch-update',
+  method: 'POST'
+});
+
+// Execute workflow
+const webhookData = { users: [/* ... */] };
+const transformedData = transformNode.transform(webhookData);
+const result = await httpNode.execute(transformedData);
 ```
 
 ## Node Interface

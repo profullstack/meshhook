@@ -25,9 +25,11 @@
 				{ name: 'url', label: 'URL', type: 'text', required: true, placeholder: 'https://api.example.com/endpoint' },
 				{ name: 'method', label: 'Method', type: 'select', required: true, options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] },
 				{ name: 'headers', label: 'Headers (JSON)', type: 'textarea', placeholder: '{"Content-Type": "application/json"}' },
-				{ name: 'body', label: 'Body (JSON)', type: 'textarea', placeholder: '{"key": "value"}' },
+				{ name: 'body', label: 'Body (JSON)', type: 'textarea', placeholder: '{"key": "value"}', helpText: 'Optional: Leave empty to use input from previous node as request body' },
 				{ name: 'timeout', label: 'Timeout (ms)', type: 'number', placeholder: '30000' }
-			]
+			],
+			supportsInput: true,
+			inputDescription: 'This node can receive data from the previous node and use it as the request body. If both configured body and input data are provided, input data takes precedence.'
 		},
 		transform: {
 			fields: [
@@ -235,6 +237,21 @@
 			</div>
 			
 			<div class="modal-body">
+				{#if currentConfig.supportsInput && previousNode}
+					<div class="info-banner">
+						<div class="info-icon">ℹ️</div>
+						<div class="info-content">
+							<strong>Input from Previous Node:</strong>
+							<p>{currentConfig.inputDescription}</p>
+							{#if previousNode.data?.label}
+								<p class="previous-node-info">
+									Connected to: <strong>{previousNode.data.label}</strong>
+								</p>
+							{/if}
+						</div>
+					</div>
+				{/if}
+				
 				<div class="form-group">
 					<label for="node-label">Node Label</label>
 					<input
@@ -277,6 +294,9 @@
 								{field.label}
 								{#if field.required}<span class="required">*</span>{/if}
 							</label>
+							{#if field.helpText}
+								<div class="help-text">{field.helpText}</div>
+							{/if}
 							
 							{#if field.type === 'text' || field.type === 'number'}
 								<input
@@ -460,6 +480,54 @@
 	.btn-refresh-previous:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
+	}
+	
+	.info-banner {
+		display: flex;
+		gap: 1rem;
+		padding: 1rem;
+		background: #eff6ff;
+		border: 1px solid #bfdbfe;
+		border-radius: 6px;
+		margin-bottom: 1.5rem;
+	}
+	
+	.info-icon {
+		font-size: 1.5rem;
+		flex-shrink: 0;
+	}
+	
+	.info-content {
+		flex: 1;
+	}
+	
+	.info-content strong {
+		color: #1e40af;
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+	
+	.info-content p {
+		margin: 0;
+		font-size: 0.875rem;
+		color: #1e3a8a;
+		line-height: 1.5;
+	}
+	
+	.info-content p + p {
+		margin-top: 0.5rem;
+	}
+	
+	.previous-node-info {
+		font-style: italic;
+	}
+	
+	.help-text {
+		font-size: 0.75rem;
+		color: #666;
+		margin-top: -0.25rem;
+		margin-bottom: 0.5rem;
+		font-style: italic;
 	}
 	
 	label {

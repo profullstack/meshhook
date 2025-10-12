@@ -282,6 +282,141 @@ describe('HttpCallNode', () => {
       result = await node.execute();
       assert.equal(result.data, 'plain text response');
     });
+
+    it('should use input data from previous node as request body', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+      });
+
+      const inputData = {
+        userId: 123,
+        action: 'update',
+        metadata: { source: 'workflow' },
+      };
+
+      await node.execute(inputData);
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[1].method, 'POST');
+      assert.equal(
+        call.arguments[1].body,
+        JSON.stringify(inputData)
+      );
+      assert.equal(
+        call.arguments[1].headers['Content-Type'],
+        'application/json'
+      );
+    });
+
+    it('should prioritize input data over configured body', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+        body: { configured: 'body' },
+      });
+
+      const inputData = { input: 'data', priority: 'high' };
+
+      await node.execute(inputData);
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(
+        call.arguments[1].body,
+        JSON.stringify(inputData)
+      );
+      // Should NOT contain configured body
+      assert.ok(!call.arguments[1].body.includes('configured'));
+    });
+
+    it('should use configured body when no input provided', async () => {
+      const configuredBody = { configured: 'body', value: 42 };
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+        body: configuredBody,
+      });
+
+      await node.execute();
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(
+        call.arguments[1].body,
+        JSON.stringify(configuredBody)
+      );
+    });
+
+    it('should handle string input data', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+      });
+
+      const inputData = 'plain text payload';
+
+      await node.execute(inputData);
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[1].body, inputData);
+    });
+
+    it('should handle null input (use configured body)', async () => {
+      const configuredBody = { key: 'value' };
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+        body: configuredBody,
+      });
+
+      await node.execute(null);
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(
+        call.arguments[1].body,
+        JSON.stringify(configuredBody)
+      );
+    });
+
+    it('should work with GET requests ignoring input data', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'GET',
+      });
+
+      const inputData = { should: 'be ignored' };
+
+      await node.execute(inputData);
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[1].method, 'GET');
+      // GET requests should not have a body
+      assert.equal(call.arguments[1].body, undefined);
+    });
+
+    it('should handle complex nested input data', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+      });
+
+      const inputData = {
+        user: {
+          id: 123,
+          profile: {
+            name: 'Alice',
+            settings: { theme: 'dark' },
+          },
+        },
+        items: [1, 2, 3],
+        timestamp: new Date().toISOString(),
+      };
+
+      await node.execute(inputData);
+
+      const call = mockFetch.mock.calls[0];
+      const sentBody = JSON.parse(call.arguments[1].body);
+      assert.deepEqual(sentBody, inputData);
+    });
   });
 
   describe('validate', () => {
