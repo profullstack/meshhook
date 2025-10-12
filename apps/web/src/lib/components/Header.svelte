@@ -23,7 +23,6 @@
 		<div class="logo">
 			<a href="/">
 				<img src="/logo.black.svg" alt="MeshHook Logo" class="logo-image" />
-				<span class="logo-text">MeshHook</span>
 			</a>
 		</div>
 
@@ -84,7 +83,7 @@
 	}
 
 	.logo-image {
-		height: 32px;
+		height: 64px;
 		width: auto;
 	}
 
@@ -168,7 +167,7 @@
 		}
 
 		.logo-image {
-			height: 28px;
+			height: 56px;
 		}
 		
 		.logo-text {
