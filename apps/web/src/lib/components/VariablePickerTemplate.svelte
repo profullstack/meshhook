@@ -15,7 +15,11 @@
 	} = $props();
 	
 	// Convert previousNodeOutput to a plain object to avoid immutability issues
-	const nodeOutput = $derived(previousNodeOutput ? JSON.parse(JSON.stringify(previousNodeOutput)) : {});
+	let nodeOutput = $state({});
+	
+	$effect(() => {
+		nodeOutput = previousNodeOutput ? JSON.parse(JSON.stringify(previousNodeOutput)) : {};
+	});
 	
 	// State
 	let sampleOutput = $state('');
