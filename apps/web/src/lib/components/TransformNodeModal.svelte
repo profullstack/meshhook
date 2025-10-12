@@ -26,6 +26,10 @@
 	let refreshedOutput = $state(null);
 	let hasExecutedPreviousNode = $state(false);
 	
+	// Input panel tab state
+	let activeInputTab = $state('schema'); // 'schema', 'table', 'json'
+	let draggedVariable = $state(null);
+	
 	// Current previous output
 	let currentPreviousOutput = $state({});
 	
@@ -119,6 +123,151 @@
 		return current;
 	}
 	
+	/**
+	 * Extract schema from data (variable paths with types)
+	 */
+	function extractSchema(obj, prefix = '') {
+		const schema = [];
+		
+		if (obj === null || obj === undefined) {
+			return schema;
+		}
+		
+		if (typeof obj !== 'object') {
+			return schema;
+		}
+		
+		if (Array.isArray(obj)) {
+			schema.push({
+				path: prefix,
+				type: 'array',
+				value: obj,
+				isExpandable: true
+			});
+			if (obj.length > 0) {
+				obj.forEach((item, index) => {
+					const itemPath = `${prefix}[${index}]`;
+					schema.push(...extractSchema(item, itemPath));
+				});
+			}
+		} else {
+			Object.entries(obj).forEach(([key, value]) => {
+				const newPath = prefix ? `${prefix}.${key}` : key;
+				const type = Array.isArray(value) ? 'array' : typeof value;
+				const isExpandable = typeof value === 'object' && value !== null;
+				
+				schema.push({
+					path: newPath,
+					type,
+					value,
+					isExpandable
+				});
+				
+				if (isExpandable) {
+					schema.push(...extractSchema(value, newPath));
+				}
+			});
+		}
+		
+		return schema;
+	}
+	
+	/**
+	 * Convert data to table format
+	 */
+	function dataToTable(obj) {
+		const rows = [];
+		
+		function flatten(data, prefix = '') {
+			if (data === null || data === undefined) {
+				rows.push({ key: prefix || 'value', value: String(data), type: typeof data });
+				return;
+			}
+			
+			if (typeof data !== 'object') {
+				rows.push({ key: prefix || 'value', value: String(data), type: typeof data });
+				return;
+			}
+			
+			if (Array.isArray(data)) {
+				data.forEach((item, index) => {
+					flatten(item, prefix ? `${prefix}[${index}]` : `[${index}]`);
+				});
+			} else {
+				Object.entries(data).forEach(([key, value]) => {
+					const newKey = prefix ? `${prefix}.${key}` : key;
+					if (typeof value === 'object' && value !== null) {
+						flatten(value, newKey);
+					} else {
+						rows.push({ key: newKey, value: String(value), type: typeof value });
+					}
+				});
+			}
+		}
+		
+		flatten(obj);
+		return rows;
+	}
+	
+	/**
+	 * Handle drag start for variables
+	 */
+	function handleDragStart(event, path) {
+		draggedVariable = path;
+		event.dataTransfer.effectAllowed = 'copy';
+		event.dataTransfer.setData('text/plain', `{{${path}}}`);
+	}
+	
+	/**
+	 * Handle drag end
+	 */
+	function handleDragEnd() {
+		draggedVariable = null;
+	}
+	
+	/**
+	 * Insert variable into template (for click action)
+	 */
+	function insertVariable(path) {
+		const variable = `{{${path}}}`;
+		const textarea = document.getElementById('template');
+		
+		if (textarea && textarea instanceof HTMLTextAreaElement) {
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const text = config.template || '';
+			
+			config.template = text.substring(0, start) + variable + text.substring(end);
+			
+			// Set cursor position after inserted variable
+			setTimeout(() => {
+				textarea.focus();
+				const newPos = start + variable.length;
+				textarea.setSelectionRange(newPos, newPos);
+			}, 0);
+		} else {
+			config.template = (config.template || '') + variable;
+		}
+	}
+	
+	/**
+	 * Get type icon
+	 */
+	function getTypeIcon(type) {
+		switch (type) {
+			case 'string': return '📝';
+			case 'number': return '🔢';
+			case 'boolean': return '✓';
+			case 'array': return '📋';
+			case 'object': return '📦';
+			default: return '•';
+		}
+	}
+	
+	// Derived state
+	const schemaData = $derived(extractSchema(currentPreviousOutput));
+	const tableData = $derived(dataToTable(currentPreviousOutput));
+	
 	function handleSave() {
 		const updatedNode = {
 			...editedNode,
@@ -146,7 +295,48 @@
 		<!-- Left Panel: Input -->
 		<div class="side-panel input-panel">
 			<div class="panel-header">
-				<h3>Input</h3>
+				<div class="header-content">
+					<h3>Input</h3>
+					{#if previousNode && previousNode.data?.type === 'httpCall' && (hasExecutedPreviousNode || Object.keys(currentPreviousOutput).length > 0)}
+						<button
+							class="btn-refresh-small"
+							onclick={handleTestPreviousNode}
+							disabled={testingPreviousNode}
+							title="Re-execute previous node"
+						>
+							{#if testingPreviousNode}
+								<span class="spinner-small"></span>
+							{:else}
+								🔄
+							{/if}
+						</button>
+					{/if}
+				</div>
+				{#if hasExecutedPreviousNode || Object.keys(currentPreviousOutput).length > 0}
+					<div class="tabs">
+						<button
+							class="tab"
+							class:active={activeInputTab === 'schema'}
+							onclick={() => activeInputTab = 'schema'}
+						>
+							Schema
+						</button>
+						<button
+							class="tab"
+							class:active={activeInputTab === 'table'}
+							onclick={() => activeInputTab = 'table'}
+						>
+							Table
+						</button>
+						<button
+							class="tab"
+							class:active={activeInputTab === 'json'}
+							onclick={() => activeInputTab = 'json'}
+						>
+							JSON
+						</button>
+					</div>
+				{/if}
 			</div>
 			<div class="panel-content">
 				{#if !hasExecutedPreviousNode && previousNode && previousNode.data?.type === 'httpCall'}
@@ -166,26 +356,66 @@
 						</button>
 					</div>
 				{:else if hasExecutedPreviousNode || Object.keys(currentPreviousOutput).length > 0}
-					<div class="input-data">
-						<div class="data-header">
-							<span class="data-label">Previous Node Output</span>
-							{#if previousNode && previousNode.data?.type === 'httpCall'}
-								<button
-									class="btn-refresh-small"
-									onclick={handleTestPreviousNode}
-									disabled={testingPreviousNode}
-									title="Re-execute previous node"
-								>
-									{#if testingPreviousNode}
-										<span class="spinner-small"></span>
-									{:else}
-										🔄
-									{/if}
-								</button>
+					{#if activeInputTab === 'schema'}
+						<div class="schema-view">
+							{#if schemaData.length === 0}
+								<div class="empty-state">
+									<p>No data available</p>
+								</div>
+							{:else}
+								<div class="schema-list">
+									{#each schemaData as item}
+										<div
+											class="schema-item"
+											class:dragging={draggedVariable === item.path}
+											draggable="true"
+											ondragstart={(e) => handleDragStart(e, item.path)}
+											ondragend={handleDragEnd}
+											onclick={() => !item.isExpandable && insertVariable(item.path)}
+											title={item.isExpandable ? 'Object/Array - expand to see properties' : `Click or drag to insert {{${item.path}}}`}
+										>
+											<span class="type-icon">{getTypeIcon(item.type)}</span>
+											<span class="variable-path">{item.path}</span>
+											{#if !item.isExpandable}
+												<span class="variable-value">{String(item.value).substring(0, 50)}{String(item.value).length > 50 ? '...' : ''}</span>
+											{/if}
+										</div>
+									{/each}
+								</div>
 							{/if}
 						</div>
-						<pre class="json-display">{JSON.stringify(currentPreviousOutput, null, 2)}</pre>
-					</div>
+					{:else if activeInputTab === 'table'}
+						<div class="table-view">
+							{#if tableData.length === 0}
+								<div class="empty-state">
+									<p>No data available</p>
+								</div>
+							{:else}
+								<table class="data-table">
+									<thead>
+										<tr>
+											<th>Key</th>
+											<th>Value</th>
+											<th>Type</th>
+										</tr>
+									</thead>
+									<tbody>
+										{#each tableData as row}
+											<tr>
+												<td class="key-cell">{row.key}</td>
+												<td class="value-cell">{row.value}</td>
+												<td class="type-cell">{row.type}</td>
+											</tr>
+										{/each}
+									</tbody>
+								</table>
+							{/if}
+						</div>
+					{:else}
+						<div class="json-view">
+							<pre class="json-display">{JSON.stringify(currentPreviousOutput, null, 2)}</pre>
+						</div>
+					{/if}
 				{:else}
 					<div class="empty-state">
 						<p>No input data available</p>
