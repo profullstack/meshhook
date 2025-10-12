@@ -2,7 +2,7 @@
 	import HttpResponseViewer from './HttpResponseViewer.svelte';
 	import VariablePickerTemplate from './VariablePickerTemplate.svelte';
 	
-	let { node, onSave, onCancel, previousNodeOutput = {} } = $props();
+	let { node, onSave, onCancel, previousNodeOutput = {}, previousNode = null, onRefreshPreviousNode = null } = $props();
 	
 	// Local state for editing
 	let editedNode = $state({ ...node });
@@ -12,6 +12,10 @@
 	let testing = $state(false);
 	let testResult = $state(null);
 	let showTestResult = $state(false);
+	
+	// Previous node test state
+	let testingPreviousNode = $state(false);
+	let refreshedOutput = $state(null);
 	
 	// Node type configurations
 	const nodeConfigs = {
@@ -158,6 +162,46 @@
 	function closeTestResult() {
 		showTestResult = false;
 	}
+	
+	/**
+	 * Test previous HTTP node to get fresh data
+	 */
+	async function handleTestPreviousNode() {
+		if (!previousNode || previousNode.data?.type !== 'httpCall') {
+			return;
+		}
+		
+		testingPreviousNode = true;
+		
+		try {
+			const response = await fetch('/api/test-http', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(previousNode.data?.config || {})
+			});
+			
+			const data = await response.json();
+			
+			if (data.success) {
+				refreshedOutput = data.response;
+				// Notify parent to update the previous node output
+				if (onRefreshPreviousNode) {
+					onRefreshPreviousNode(previousNode.id, data.response);
+				}
+			} else {
+				alert(`Failed to test previous node: ${data.error?.message || 'Unknown error'}`);
+			}
+		} catch (err) {
+			alert(`Error testing previous node: ${err.message}`);
+		} finally {
+			testingPreviousNode = false;
+		}
+	}
+	
+	// Use refreshed output if available, otherwise use the passed previousNodeOutput
+	const currentPreviousOutput = $derived(refreshedOutput || previousNodeOutput);
 </script>
 
 <div class="modal-overlay" onclick={handleOverlayClick} onkeydown={(e) => e.key === 'Escape' && handleCancel()} role="dialog" aria-modal="true" tabindex="-1">
@@ -181,8 +225,25 @@
 			{#each currentConfig.fields as field}
 				<div class="form-group" class:full-width={field.type === 'template-picker'}>
 					{#if field.type === 'template-picker'}
+						{#if previousNode && previousNode.data?.type === 'httpCall'}
+							<div class="previous-node-actions">
+								<button
+									class="btn-refresh-previous"
+									onclick={handleTestPreviousNode}
+									disabled={testingPreviousNode}
+									title="Re-test the previous HTTP call to get fresh data"
+								>
+									{#if testingPreviousNode}
+										<span class="spinner"></span>
+										Testing Previous Node...
+									{:else}
+										🔄 Refresh Previous Node Data
+									{/if}
+								</button>
+							</div>
+						{/if}
 						<VariablePickerTemplate
-							previousNodeOutput={previousNodeOutput}
+							previousNodeOutput={currentPreviousOutput}
 							bind:template={config[field.name]}
 							onTemplateChange={(newTemplate) => {
 								config[field.name] = newTemplate;
@@ -345,6 +406,36 @@
 	
 	.form-group.full-width {
 		margin-bottom: 0;
+	}
+	
+	.previous-node-actions {
+		margin-bottom: 1rem;
+		display: flex;
+		justify-content: flex-end;
+	}
+	
+	.btn-refresh-previous {
+		background: #10b981;
+		color: white;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem 1rem;
+		border: none;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	
+	.btn-refresh-previous:hover:not(:disabled) {
+		background: #059669;
+	}
+	
+	.btn-refresh-previous:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 	
 	label {

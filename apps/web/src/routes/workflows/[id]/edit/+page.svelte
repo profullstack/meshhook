@@ -44,9 +44,11 @@
 		// Find edges that connect to this node
 		const incomingEdges = edges.filter(edge => edge.target === node.id);
 		
+		let sampleData;
+		
 		if (incomingEdges.length === 0) {
 			// No previous node - provide sample data
-			return {
+			sampleData = {
 				status: 'success',
 				data: {
 					user: { name: 'John Doe', email: 'john@example.com' },
@@ -58,46 +60,66 @@
 				},
 				timestamp: new Date().toISOString()
 			};
-		}
-		
-		// Get the first previous node (for now, we'll support single input)
-		const previousNodeId = incomingEdges[0].source;
-		const previousNode = nodes.find(n => n.id === previousNodeId);
-		
-		// If previous node has test result data, use it
-		if (previousNode?.data?.testResult) {
-			return previousNode.data.testResult;
-		}
-		
-		// Otherwise provide sample data based on node type
-		if (previousNode?.data?.type === 'httpCall') {
-			return {
-				status: 200,
-				statusText: 'OK',
-				ok: true,
-				headers: {
-					'content-type': 'application/json'
-				},
-				data: {
-					user: { name: 'Alice Smith', email: 'alice@example.com' },
-					order: { id: 67890, status: 'shipped', total: 149.99 },
-					items: [
-						{ id: 1, name: 'Widget', price: 49.99, quantity: 2 },
-						{ id: 2, name: 'Gadget', price: 99.99, quantity: 1 }
-					]
-				}
-			};
-		}
-		
-		// Default sample data
-		return {
-			message: 'Sample data from previous node',
-			data: {
-				value: 42,
-				text: 'Hello World',
-				nested: { property: 'value' }
+		} else {
+			// Get the first previous node (for now, we'll support single input)
+			const previousNodeId = incomingEdges[0].source;
+			const previousNode = nodes.find(n => n.id === previousNodeId);
+			
+			// If previous node has test result data, use it
+			if (previousNode?.data?.testResult) {
+				sampleData = previousNode.data.testResult;
+			} else if (previousNode?.data?.type === 'httpCall') {
+				// Otherwise provide sample data based on node type
+				sampleData = {
+					status: 200,
+					statusText: 'OK',
+					ok: true,
+					headers: {
+						'content-type': 'application/json'
+					},
+					data: {
+						user: { name: 'Alice Smith', email: 'alice@example.com' },
+						order: { id: 67890, status: 'shipped', total: 149.99 },
+						items: [
+							{ id: 1, name: 'Widget', price: 49.99, quantity: 2 },
+							{ id: 2, name: 'Gadget', price: 99.99, quantity: 1 }
+						]
+					}
+				};
+			} else {
+				// Default sample data
+				sampleData = {
+					message: 'Sample data from previous node',
+					data: {
+						value: 42,
+						text: 'Hello World',
+						nested: { property: 'value' }
+					}
+				};
 			}
-		};
+		}
+		
+		// Return a deep clone to ensure mutability
+		return JSON.parse(JSON.stringify(sampleData));
+	}
+	
+	// Get the previous node for a given node
+	function getPreviousNode(node) {
+		const incomingEdges = edges.filter(edge => edge.target === node.id);
+		if (incomingEdges.length === 0) return null;
+		
+		const previousNodeId = incomingEdges[0].source;
+		return nodes.find(n => n.id === previousNodeId) || null;
+	}
+	
+	// Handle refreshing previous node data
+	function handleRefreshPreviousNode(nodeId, freshData) {
+		// Update the node with the fresh test result
+		nodes = nodes.map(n =>
+			n.id === nodeId
+				? { ...n, data: { ...n.data, testResult: freshData } }
+				: n
+		);
 	}
 	
 	// Handle node click - open configuration modal
@@ -257,6 +279,8 @@
 		<NodeConfigModal
 			node={selectedNode}
 			previousNodeOutput={getPreviousNodeOutput(selectedNode)}
+			previousNode={getPreviousNode(selectedNode)}
+			onRefreshPreviousNode={handleRefreshPreviousNode}
 			onSave={handleNodeConfigSave}
 			onCancel={handleModalCancel}
 		/>
