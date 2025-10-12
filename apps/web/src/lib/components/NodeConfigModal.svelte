@@ -4,9 +4,9 @@
 	
 	let { node, onSave, onCancel, previousNodeOutput = {}, previousNode = null, onRefreshPreviousNode = null } = $props();
 	
-	// Local state for editing
-	let editedNode = $state({ ...node });
-	let config = $state(node.data?.config || {});
+	// Local state for editing - deep clone to avoid immutability
+	let editedNode = $state(JSON.parse(JSON.stringify(node)));
+	let config = $state(JSON.parse(JSON.stringify(node.data?.config || {})));
 	
 	// HTTP test state
 	let testing = $state(false);
