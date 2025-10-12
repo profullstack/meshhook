@@ -2,15 +2,14 @@
 	import '../app.css';
 	import Header from '$lib/components/Header.svelte';
 	import { theme } from '$lib/stores/themes';
-	import { createClient } from '$lib/supabase';
 	import { onMount } from 'svelte';
 
 	let { children, data } = $props();
 
 	onMount(async () => {
+		// Load theme from server if user is logged in
 		if (data?.session) {
-			const supabase = createClient();
-			await theme.loadFromSupabase(supabase);
+			await theme.loadFromServer();
 		}
 	});
 </script>

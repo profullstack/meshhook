@@ -1,16 +1,14 @@
 <script>
   import { theme } from '$lib/stores/themes';
-  import { createClient } from '$lib/supabase';
   
   let currentTheme = 'light';
-  const supabase = createClient();
   
   theme.subscribe(value => {
     currentTheme = value;
   });
   
   async function toggleTheme() {
-    await theme.toggle(supabase);
+    await theme.toggle();
   }
 </script>
 

@@ -24,7 +24,7 @@ function createThemeStore() {
 
   return {
     subscribe,
-    toggle: async (supabase) => {
+    toggle: async () => {
       let newTheme;
       update(current => {
         newTheme = current === 'light' ? 'dark' : 'light';
@@ -32,65 +32,46 @@ function createThemeStore() {
         return newTheme;
       });
 
-      // Sync with Supabase if provided
-      if (supabase) {
+      // Sync with server via API
+      if (browser) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await supabase
-              .from('user_settings')
-              .upsert({ 
-                user_id: user.id, 
-                theme_preference: newTheme,
-                updated_at: new Date().toISOString()
-              }, { 
-                onConflict: 'user_id' 
-              });
-          }
+          await fetch('/api/user/theme', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ theme: newTheme })
+          });
         } catch (error) {
           console.error('Failed to sync theme preference:', error);
         }
       }
     },
-    set: async (theme, supabase) => {
+    set: async (theme) => {
       set(theme);
       applyTheme(theme);
 
-      if (supabase) {
+      // Sync with server via API
+      if (browser) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await supabase
-              .from('user_settings')
-              .upsert({ 
-                user_id: user.id, 
-                theme_preference: theme,
-                updated_at: new Date().toISOString()
-              }, { 
-                onConflict: 'user_id' 
-              });
-          }
+          await fetch('/api/user/theme', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ theme })
+          });
         } catch (error) {
           console.error('Failed to sync theme preference:', error);
         }
       }
     },
-    loadFromSupabase: async (supabase) => {
-      if (!supabase || !browser) return;
+    loadFromServer: async () => {
+      if (!browser) return;
       
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data, error } = await supabase
-            .from('user_settings')
-            .select('theme_preference')
-            .eq('user_id', user.id)
-            .single();
-
-          if (!error && data?.theme_preference) {
-            set(data.theme_preference);
-            applyTheme(data.theme_preference);
-          }
+        const response = await fetch('/api/user/theme');
+        const data = await response.json();
+        
+        if (data.theme) {
+          set(data.theme);
+          applyTheme(data.theme);
         }
       } catch (error) {
         console.error('Failed to load theme preference:', error);
