@@ -4,10 +4,15 @@ import { browser } from '$app/environment';
 
 const THEME_KEY = 'meshhook-theme';
 
+function getSystemTheme() {
+  if (!browser) return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 function createThemeStore() {
-  const initialTheme = browser 
-    ? localStorage.getItem(THEME_KEY) || 'light'
-    : 'light';
+  // Get theme: localStorage > system preference > light
+  const storedTheme = browser ? localStorage.getItem(THEME_KEY) : null;
+  const initialTheme = storedTheme || getSystemTheme();
 
   const { subscribe, set, update } = writable(initialTheme);
 
@@ -20,62 +25,31 @@ function createThemeStore() {
 
   if (browser) {
     applyTheme(initialTheme);
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', (e) => {
+      // Only update if user hasn't manually set a preference
+      if (!localStorage.getItem(THEME_KEY)) {
+        const newTheme = e.matches ? 'dark' : 'light';
+        set(newTheme);
+        applyTheme(newTheme);
+      }
+    });
   }
 
   return {
     subscribe,
-    toggle: async () => {
-      let newTheme;
+    toggle: () => {
       update(current => {
-        newTheme = current === 'light' ? 'dark' : 'light';
+        const newTheme = current === 'light' ? 'dark' : 'light';
         applyTheme(newTheme);
         return newTheme;
       });
-
-      // Sync with server via API
-      if (browser) {
-        try {
-          await fetch('/api/user/theme', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ theme: newTheme })
-          });
-        } catch (error) {
-          console.error('Failed to sync theme preference:', error);
-        }
-      }
     },
-    set: async (theme) => {
+    set: (theme) => {
       set(theme);
       applyTheme(theme);
-
-      // Sync with server via API
-      if (browser) {
-        try {
-          await fetch('/api/user/theme', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ theme })
-          });
-        } catch (error) {
-          console.error('Failed to sync theme preference:', error);
-        }
-      }
-    },
-    loadFromServer: async () => {
-      if (!browser) return;
-      
-      try {
-        const response = await fetch('/api/user/theme');
-        const data = await response.json();
-        
-        if (data.theme) {
-          set(data.theme);
-          applyTheme(data.theme);
-        }
-      } catch (error) {
-        console.error('Failed to load theme preference:', error);
-      }
     }
   };
 }

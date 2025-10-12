@@ -7,8 +7,8 @@
     currentTheme = value;
   });
   
-  async function toggleTheme() {
-    await theme.toggle();
+  function toggleTheme() {
+    theme.toggle();
   }
 </script>
 
