@@ -1,6 +1,7 @@
 <script>
 	import HttpResponseViewer from './HttpResponseViewer.svelte';
 	import VariablePickerTemplate from './VariablePickerTemplate.svelte';
+	import TransformNodeModal from './TransformNodeModal.svelte';
 	
 	let { node, onSave, onCancel, previousNodeOutput = {}, previousNode = null, onRefreshPreviousNode = null } = $props();
 	
@@ -16,7 +17,6 @@
 	// Previous node test state
 	let testingPreviousNode = $state(false);
 	let refreshedOutput = $state(null);
-	let hasExecutedPreviousNode = $state(false);
 	
 	// Node type configurations
 	const nodeConfigs = {
@@ -187,7 +187,6 @@
 			
 			if (data.success) {
 				refreshedOutput = data.response;
-				hasExecutedPreviousNode = true;
 				// Notify parent to update the previous node output
 				if (onRefreshPreviousNode) {
 					onRefreshPreviousNode(previousNode.id, data.response);
@@ -214,187 +213,27 @@
 				? JSON.parse(JSON.stringify(previousNodeOutput))
 				: {};
 	});
-	
-	/**
-	 * Process template with variable substitution
-	 */
-	function processTemplate(templateStr, data) {
-		if (!templateStr) return '';
-		
-		try {
-			return templateStr.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-				const trimmedPath = path.trim();
-				const value = getValueByPath(data, trimmedPath);
-				
-				if (value === undefined || value === null) {
-					return match; // Keep original if not found
-				}
-				
-				if (typeof value === 'object') {
-					return JSON.stringify(value, null, 2);
-				}
-				
-				return String(value);
-			});
-		} catch (error) {
-			return `Error: ${error.message}`;
-		}
-	}
-	
-	/**
-	 * Get value from object by path string
-	 */
-	function getValueByPath(obj, path) {
-		const parts = path.split(/\.|\[|\]/).filter(Boolean);
-		let current = obj;
-		
-		for (const part of parts) {
-			if (current === null || current === undefined) {
-				return undefined;
-			}
-			current = current[part];
-		}
-		
-		return current;
-	}
 </script>
 
-<div class="modal-overlay" onclick={handleOverlayClick} onkeydown={(e) => e.key === 'Escape' && handleCancel()} role="dialog" aria-modal="true" tabindex="-1">
-	<div class="modal-content" class:transform-modal={editedNode.data?.type === 'transform'}>
-		<div class="modal-header">
-			<h2>Configure {editedNode.data?.label || 'Node'}</h2>
-			<button class="close-btn" onclick={handleCancel} aria-label="Close">&times;</button>
-		</div>
-		
-		{#if editedNode.data?.type === 'transform'}
-			<!-- Transform Node: Three-panel n8n-style layout -->
-			<div class="transform-layout">
-				<!-- Left Panel: Input -->
-				<div class="transform-panel input-panel">
-					<div class="panel-header">
-						<h3>Input</h3>
-					</div>
-					<div class="panel-content">
-						{#if !hasExecutedPreviousNode && previousNode && previousNode.data?.type === 'httpCall'}
-							<div class="execute-prompt">
-								<p>Execute the previous node to see input data</p>
-								<button
-									class="btn-execute-previous"
-									onclick={handleTestPreviousNode}
-									disabled={testingPreviousNode}
-								>
-									{#if testingPreviousNode}
-										<span class="spinner"></span>
-										Executing...
-									{:else}
-										▶ Execute Previous Node
-									{/if}
-								</button>
-							</div>
-						{:else if hasExecutedPreviousNode || Object.keys(currentPreviousOutput).length > 0}
-							<div class="input-data">
-								<div class="data-header">
-									<span class="data-label">Previous Node Output</span>
-									{#if previousNode && previousNode.data?.type === 'httpCall'}
-										<button
-											class="btn-refresh-small"
-											onclick={handleTestPreviousNode}
-											disabled={testingPreviousNode}
-											title="Re-execute previous node"
-										>
-											{#if testingPreviousNode}
-												<span class="spinner-small"></span>
-											{:else}
-												🔄
-											{/if}
-										</button>
-									{/if}
-								</div>
-								<pre class="json-display">{JSON.stringify(currentPreviousOutput, null, 2)}</pre>
-							</div>
-						{:else}
-							<div class="empty-input">
-								<p>No input data available</p>
-								<small>Connect a previous node to see input</small>
-							</div>
-						{/if}
-					</div>
-				</div>
-				
-				<!-- Middle Panel: Configuration -->
-				<div class="transform-panel config-panel">
-					<div class="panel-header">
-						<h3>Configuration</h3>
-					</div>
-					<div class="panel-content">
-						<div class="form-group">
-							<label for="node-label">Node Label</label>
-							<input
-								id="node-label"
-								type="text"
-								bind:value={editedNode.data.label}
-								placeholder="Enter node label"
-							/>
-						</div>
-						
-						<div class="form-group">
-							<label for="template">Template</label>
-							<textarea
-								id="template"
-								bind:value={config.template}
-								placeholder="Enter your template here...&#10;&#10;Example:&#10;Hello {'{{name}}'}!&#10;Your order #{'{{order.id}}'} is {'{{status}}'}."
-								rows="15"
-								spellcheck="false"
-							></textarea>
-							<div class="template-help">
-								<details>
-									<summary>Template Syntax Help</summary>
-									<ul>
-										<li><code>{'{{variable}}'}</code> - Insert simple variable</li>
-										<li><code>{'{{object.property}}'}</code> - Access nested property</li>
-										<li><code>{'{{array[0]}}'}</code> - Access array element</li>
-										<li><code>{'{{data.items[0].name}}'}</code> - Complex path</li>
-									</ul>
-								</details>
-							</div>
-						</div>
-						
-						<div class="form-group">
-							<label for="description">Description (optional)</label>
-							<input
-								id="description"
-								type="text"
-								bind:value={config.description}
-								placeholder="Transform description"
-							/>
-						</div>
-					</div>
-				</div>
-				
-				<!-- Right Panel: Output Preview -->
-				<div class="transform-panel output-panel">
-					<div class="panel-header">
-						<h3>Output</h3>
-					</div>
-					<div class="panel-content">
-						{#if !config.template}
-							<div class="empty-output">
-								<p>Output preview will appear here</p>
-								<small>Start typing in the template editor</small>
-							</div>
-						{:else if !hasExecutedPreviousNode && Object.keys(currentPreviousOutput).length === 0}
-							<div class="empty-output">
-								<p>Execute previous node to see output</p>
-								<small>Click "Execute Previous Node" in the input panel</small>
-							</div>
-						{:else}
-							<pre class="output-preview">{processTemplate(config.template, currentPreviousOutput)}</pre>
-						{/if}
-					</div>
-				</div>
+{#if editedNode.data?.type === 'transform'}
+	<!-- Use specialized Transform Node Modal -->
+	<TransformNodeModal
+		{node}
+		{onSave}
+		{onCancel}
+		{previousNodeOutput}
+		{previousNode}
+		{onRefreshPreviousNode}
+	/>
+{:else}
+	<!-- Standard Node Configuration Modal -->
+	<div class="modal-overlay" onclick={handleOverlayClick} onkeydown={(e) => e.key === 'Escape' && handleCancel()} role="dialog" aria-modal="true" tabindex="-1">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>Configure {editedNode.data?.label || 'Node'}</h2>
+				<button class="close-btn" onclick={handleCancel} aria-label="Close">&times;</button>
 			</div>
-		{:else}
-			<!-- Standard Node Configuration -->
+			
 			<div class="modal-body">
 				<div class="form-group">
 					<label for="node-label">Node Label</label>
@@ -469,33 +308,33 @@
 					</div>
 				{/each}
 			</div>
-		{/if}
-		
-		<div class="modal-footer">
-			<div class="footer-left">
-				{#if editedNode.data?.type === 'httpCall'}
-					<button
-						class="btn-test"
-						onclick={handleTestHttpCall}
-						disabled={testing || !config.url}
-						title="Test this HTTP call configuration"
-					>
-						{#if testing}
-							<span class="spinner"></span>
-							Testing...
-						{:else}
-							🧪 Test Request
-						{/if}
-					</button>
-				{/if}
-			</div>
-			<div class="footer-right">
-				<button class="btn-secondary" onclick={handleCancel}>Cancel</button>
-				<button class="btn-primary" onclick={handleSave}>Save Configuration</button>
+			
+			<div class="modal-footer">
+				<div class="footer-left">
+					{#if editedNode.data?.type === 'httpCall'}
+						<button
+							class="btn-test"
+							onclick={handleTestHttpCall}
+							disabled={testing || !config.url}
+							title="Test this HTTP call configuration"
+						>
+							{#if testing}
+								<span class="spinner"></span>
+								Testing...
+							{:else}
+								🧪 Test Request
+							{/if}
+						</button>
+					{/if}
+				</div>
+				<div class="footer-right">
+					<button class="btn-secondary" onclick={handleCancel}>Cancel</button>
+					<button class="btn-primary" onclick={handleSave}>Save Configuration</button>
+				</div>
 			</div>
 		</div>
 	</div>
-</div>
+{/if}
 
 {#if showTestResult && testResult}
 	<div class="test-result-overlay" onclick={closeTestResult} onkeydown={(e) => e.key === 'Escape' && closeTestResult()} role="dialog" aria-modal="true" tabindex="-1">
