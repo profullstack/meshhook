@@ -1,0 +1,175 @@
+/* static/styles/themes.css */
+/* MeshHook Theme System - CSS Custom Properties */
+
+/* ============================================
+   ROOT - Default Light Theme
+   ============================================ */
+:root {
+  /* Primary Colors */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-primary-light: #dbeafe;
+  --color-primary-dark: #1e40af;
+
+  /* Background Colors */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  --color-bg-hover: #f3f4f6;
+  --color-bg-active: #e5e7eb;
+
+  /* Text Colors */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-text-inverse: #ffffff;
+  --color-text-muted: #6b7280;
+
+  /* Border Colors */
+  --color-border-primary: #e5e7eb;
+  --color-border-secondary: #d1d5db;
+  --color-border-focus: #3b82f6;
+  --color-border-hover: #9ca3af;
+
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-success-bg: #d1fae5;
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fef3c7;
+  --color-error: #ef4444;
+  --color-error-bg: #fee2e2;
+  --color-info: #3b82f6;
+  --color-info-bg: #dbeafe;
+
+  /* Component Specific */
+  --color-card-bg: #ffffff;
+  --color-card-border: #e5e7eb;
+  --color-card-shadow: rgba(0, 0, 0, 0.1);
+  
+  --color-input-bg: #ffffff;
+  --color-input-border: #d1d5db;
+  --color-input-focus: #3b82f6;
+  --color-input-disabled: #f3f4f6;
+
+  --color-button-primary: #3b82f6;
+  --color-button-primary-hover: #2563eb;
+  --color-button-secondary: #6b7280;
+  --color-button-secondary-hover: #4b5563;
+
+  --color-nav-bg: #ffffff;
+  --color-nav-border: #e5e7eb;
+  --color-nav-text: #111827;
+  --color-nav-hover: #f3f4f6;
+
+  --color-sidebar-bg: #f9fafb;
+  --color-sidebar-border: #e5e7eb;
+  --color-sidebar-text: #374151;
+  --color-sidebar-hover: #e5e7eb;
+  --color-sidebar-active: #dbeafe;
+
+  --color-code-bg: #f3f4f6;
+  --color-code-text: #1f2937;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
+}
+
+/* ============================================
+   DARK THEME
+   ============================================ */
+[data-theme="dark"] {
+  /* Primary Colors */
+  --color-primary: #60a5fa;
+  --color-primary-hover: #3b82f6;
+  --color-primary-light: #1e3a8a;
+  --color-primary-dark: #93c5fd;
+
+  /* Background Colors */
+  --color-bg-primary: #111827;
+  --color-bg-secondary: #1f2937;
+  --color-bg-tertiary: #374151;
+  --color-bg-hover: #374151;
+  --color-bg-active: #4b5563;
+
+  /* Text Colors */
+  --color-text-primary: #f9fafb;
+  --color-text-secondary: #d1d5db;
+  --color-text-tertiary: #9ca3af;
+  --color-text-inverse: #111827;
+  --color-text-muted: #9ca3af;
+
+  /* Border Colors */
+  --color-border-primary: #374151;
+  --color-border-secondary: #4b5563;
+  --color-border-focus: #60a5fa;
+  --color-border-hover: #6b7280;
+
+  /* Status Colors */
+  --color-success: #34d399;
+  --color-success-bg: #064e3b;
+  --color-warning: #fbbf24;
+  --color-warning-bg: #78350f;
+  --color-error: #f87171;
+  --color-error-bg: #7f1d1d;
+  --color-info: #60a5fa;
+  --color-info-bg: #1e3a8a;
+
+  /* Component Specific */
+  --color-card-bg: #1f2937;
+  --color-card-border: #374151;
+  --color-card-shadow: rgba(0, 0, 0, 0.3);
+  
+  --color-input-bg: #1f2937;
+  --color-input-border: #4b5563;
+  --color-input-focus: #60a5fa;
+  --color-input-disabled: #374151;
+
+  --color-button-primary: #60a5fa;
+  --color-button-primary-hover: #3b82f6;
+  --color-button-secondary: #6b7280;
+  --color-button-secondary-hover: #9ca3af;
+
+  --color-nav-bg: #1f2937;
+  --color-nav-border: #374151;
+  --color-nav-text: #f9fafb;
+  --color-nav-hover: #374151;
+
+  --color-sidebar-bg: #111827;
+  --color-sidebar-border: #374151;
+  --color-sidebar-text: #d1d5db;
+  --color-sidebar-hover: #374151;
+  --color-sidebar-active: #1e3a8a;
+
+  --color-code-bg: #0f172a;
+  --color-code-text: #e2e8f0;
+
+  /* Shadows (darker in dark mode) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================
+   BASE STYLES - Apply theme colors
+   ============================================ */
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+/* Smooth theme transitions for all themed elements */
+* {
+  transition: background-color var(--transition-fast), 
+              border-color var(--transition-fast), 
+              color var(--transition-fast);
+}
