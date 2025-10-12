@@ -83,7 +83,7 @@
 		}
 	};
 	
-	const currentConfig = nodeConfigs[node.data?.type] || { fields: [] };
+	const currentConfig = nodeConfigs[editedNode.data?.type] || { fields: [] };
 	
 	function handleSave() {
 		// Update the node with new configuration
@@ -207,7 +207,7 @@
 <div class="modal-overlay" onclick={handleOverlayClick} onkeydown={(e) => e.key === 'Escape' && handleCancel()} role="dialog" aria-modal="true" tabindex="-1">
 	<div class="modal-content">
 		<div class="modal-header">
-			<h2>Configure {node.data?.label || 'Node'}</h2>
+			<h2>Configure {editedNode.data?.label || 'Node'}</h2>
 			<button class="close-btn" onclick={handleCancel} aria-label="Close">&times;</button>
 		</div>
 		
@@ -288,7 +288,7 @@
 		
 		<div class="modal-footer">
 			<div class="footer-left">
-				{#if node.data?.type === 'httpCall'}
+				{#if editedNode.data?.type === 'httpCall'}
 					<button
 						class="btn-test"
 						onclick={handleTestHttpCall}
