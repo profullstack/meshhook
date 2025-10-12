@@ -201,7 +201,14 @@
 	}
 	
 	// Use refreshed output if available, otherwise use the passed previousNodeOutput
-	const currentPreviousOutput = $derived(refreshedOutput || previousNodeOutput);
+	// Create a mutable copy to avoid Svelte 5 immutability errors with SES
+	const currentPreviousOutput = $derived(
+		refreshedOutput
+			? JSON.parse(JSON.stringify(refreshedOutput))
+			: previousNodeOutput
+				? JSON.parse(JSON.stringify(previousNodeOutput))
+				: {}
+	);
 </script>
 
 <div class="modal-overlay" onclick={handleOverlayClick} onkeydown={(e) => e.key === 'Escape' && handleCancel()} role="dialog" aria-modal="true" tabindex="-1">
