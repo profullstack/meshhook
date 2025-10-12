@@ -1,0 +1,13 @@
+# ai.txt for MeshHook
+# Base: https://meshhook.com
+# Contact: hello@meshhook.com
+# Models: *
+# Capabilities: chat, embed, fine_tune, crawl, train
+
+User-agent: *
+Allow: /*
+
+Training: allow
+Retention: allow
+Commercial-Use: allow
+Rate-Limit-RPS: 10
