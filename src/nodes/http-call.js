@@ -1,10 +1,13 @@
 /**
  * HTTP Call Node Implementation
- * 
+ *
  * Implements HTTP requests with comprehensive configuration,
- * retry policies, timeout handling, and response processing.
- * 
- * @example
+ * retry policies, response processing, and template variable substitution.
+ *
+ * Supports {{variable}} syntax in URL, headers, and body to reference
+ * data from previous nodes (similar to n8n).
+ *
+ * @example Basic usage
  * const node = new HttpCallNode({
  *   url: 'https://api.example.com/data',
  *   method: 'POST',
@@ -17,8 +20,18 @@
  *     backoffMultiplier: 2
  *   }
  * });
- * 
+ *
  * const result = await node.execute();
+ *
+ * @example With template variables
+ * const node = new HttpCallNode({
+ *   url: 'https://api.example.com/users/{{userId}}',
+ *   method: 'POST',
+ *   headers: { 'Authorization': 'Bearer {{token}}' },
+ *   body: { name: '{{name}}', email: '{{email}}' }
+ * });
+ *
+ * const result = await node.execute({ userId: 123, token: 'abc', name: 'John', email: 'john@example.com' });
  */
 
 /**
@@ -152,8 +165,8 @@ export class HttpCallNode {
    * @param {any} input - Optional input data from previous node
    */
   async _makeRequest(input) {
-    // Build URL with query parameters
-    const url = this._buildUrl();
+    // Build URL with query parameters and template substitution
+    const url = this._buildUrl(input);
 
     // Build request options, passing input data
     const options = this._buildRequestOptions(input);
@@ -188,18 +201,109 @@ export class HttpCallNode {
   }
 
   /**
-   * Build URL with query parameters
+   * Process template string with variable substitution
    * @private
+   * @param {string} template - Template string with {{variable}} syntax
+   * @param {any} data - Data object for variable substitution
+   * @returns {string} Processed template
    */
-  _buildUrl() {
+  _processTemplate(template, data) {
+    if (!template || typeof template !== 'string') {
+      return template;
+    }
+    
+    return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+      const trimmedPath = path.trim();
+      const value = this._getValueByPath(data, trimmedPath);
+      
+      if (value === undefined || value === null) {
+        return match; // Keep original if not found
+      }
+      
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
+      
+      return String(value);
+    });
+  }
+
+  /**
+   * Get value from object by path string
+   * @private
+   * @param {any} obj - Source object
+   * @param {string} path - Dot-notation path (e.g., 'user.name' or 'items[0].id')
+   * @returns {any} Value at path or undefined
+   */
+  _getValueByPath(obj, path) {
+    const parts = path.split(/\.|\[|\]/).filter(Boolean);
+    let current = obj;
+    
+    for (const part of parts) {
+      if (current === null || current === undefined) {
+        return undefined;
+      }
+      current = current[part];
+    }
+    
+    return current;
+  }
+
+  /**
+   * Process object recursively for template substitution
+   * @private
+   * @param {any} obj - Object to process
+   * @param {any} data - Data for substitution
+   * @returns {any} Processed object
+   */
+  _processObjectTemplates(obj, data) {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+    
+    if (typeof obj === 'string') {
+      return this._processTemplate(obj, data);
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this._processObjectTemplates(item, data));
+    }
+    
+    if (typeof obj === 'object') {
+      const processed = {};
+      for (const [key, value] of Object.entries(obj)) {
+        processed[key] = this._processObjectTemplates(value, data);
+      }
+      return processed;
+    }
+    
+    return obj;
+  }
+
+  /**
+   * Build URL with query parameters and template substitution
+   * @private
+   * @param {any} input - Optional input data for template substitution
+   */
+  _buildUrl(input) {
+    // Process URL template if input is provided
+    let processedUrl = input ? this._processTemplate(this.url, input) : this.url;
+    
     if (!this.queryParams || Object.keys(this.queryParams).length === 0) {
-      return this.url;
+      return processedUrl;
     }
 
-    const url = new URL(this.url);
-    Object.entries(this.queryParams).forEach(([key, value]) => {
+    const url = new URL(processedUrl);
+    
+    // Process query parameters with template substitution
+    const processedParams = input
+      ? this._processObjectTemplates(this.queryParams, input)
+      : this.queryParams;
+    
+    Object.entries(processedParams).forEach(([key, value]) => {
       url.searchParams.append(key, String(value));
     });
+    
     return url.toString();
   }
 
@@ -211,12 +315,31 @@ export class HttpCallNode {
   _buildRequestOptions(input) {
     const options = {
       method: this.method,
-      headers: { ...this.headers },
+      headers: {},
     };
 
-    // Determine which body to use: input from previous node or configured body
-    // Input takes precedence if provided (but not if it's null or undefined)
-    const bodyToUse = (input !== undefined && input !== null) ? input : this.body;
+    // Process headers with template substitution if input is provided
+    if (input) {
+      for (const [key, value] of Object.entries(this.headers)) {
+        options.headers[key] = this._processTemplate(String(value), input);
+      }
+    } else {
+      options.headers = { ...this.headers };
+    }
+
+    // Determine which body to use and process templates
+    let bodyToUse;
+    
+    if (this.body && input) {
+      // If we have both configured body and input, process body templates with input data
+      bodyToUse = this._processObjectTemplates(this.body, input);
+    } else if (input !== undefined && input !== null) {
+      // Use input as body if no configured body
+      bodyToUse = input;
+    } else {
+      // Use configured body
+      bodyToUse = this.body;
+    }
 
     // Add body for methods that support it
     if (bodyToUse && ['POST', 'PUT', 'PATCH'].includes(this.method)) {

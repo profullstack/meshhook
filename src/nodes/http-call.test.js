@@ -309,11 +309,15 @@ describe('HttpCallNode', () => {
       );
     });
 
-    it('should prioritize input data over configured body', async () => {
+    it('should process configured body as template with input data', async () => {
       node = new HttpCallNode({
         url: 'https://api.example.com/data',
         method: 'POST',
-        body: { configured: 'body' },
+        body: {
+          configured: 'body',
+          inputValue: '{{input}}',
+          priority: '{{priority}}'
+        },
       });
 
       const inputData = { input: 'data', priority: 'high' };
@@ -321,12 +325,12 @@ describe('HttpCallNode', () => {
       await node.execute(inputData);
 
       const call = mockFetch.mock.calls[0];
-      assert.equal(
-        call.arguments[1].body,
-        JSON.stringify(inputData)
-      );
-      // Should NOT contain configured body
-      assert.ok(!call.arguments[1].body.includes('configured'));
+      const sentBody = JSON.parse(call.arguments[1].body);
+      
+      // Configured body should be processed with input data as template variables
+      assert.equal(sentBody.configured, 'body');
+      assert.equal(sentBody.inputValue, 'data');
+      assert.equal(sentBody.priority, 'high');
     });
 
     it('should use configured body when no input provided', async () => {
@@ -343,6 +347,23 @@ describe('HttpCallNode', () => {
       assert.equal(
         call.arguments[1].body,
         JSON.stringify(configuredBody)
+      );
+    });
+
+    it('should use input as body when no configured body', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+        // No body configured
+      });
+
+      const inputData = { input: 'data', priority: 'high' };
+      await node.execute(inputData);
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(
+        call.arguments[1].body,
+        JSON.stringify(inputData)
       );
     });
 
@@ -416,6 +437,201 @@ describe('HttpCallNode', () => {
       const call = mockFetch.mock.calls[0];
       const sentBody = JSON.parse(call.arguments[1].body);
       assert.deepEqual(sentBody, inputData);
+    });
+  });
+
+  describe('template substitution', () => {
+    it('should substitute variables in URL', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/users/{{userId}}/posts/{{postId}}',
+        method: 'GET',
+      });
+
+      await node.execute({ userId: 123, postId: 456 });
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[0], 'https://api.example.com/users/123/posts/456');
+    });
+
+    it('should substitute variables in headers', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer {{token}}',
+          'X-User-ID': '{{userId}}',
+        },
+      });
+
+      await node.execute({ token: 'abc123', userId: 789 });
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[1].headers['Authorization'], 'Bearer abc123');
+      assert.equal(call.arguments[1].headers['X-User-ID'], '789');
+    });
+
+    it('should substitute variables in body', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+        body: {
+          name: '{{user.name}}',
+          email: '{{user.email}}',
+          age: '{{user.age}}',
+        },
+      });
+
+      await node.execute({
+        user: {
+          name: 'John Doe',
+          email: 'john@example.com',
+          age: 30,
+        },
+      });
+
+      const call = mockFetch.mock.calls[0];
+      const sentBody = JSON.parse(call.arguments[1].body);
+      assert.equal(sentBody.name, 'John Doe');
+      assert.equal(sentBody.email, 'john@example.com');
+      assert.equal(sentBody.age, '30');
+    });
+
+    it('should substitute nested object variables', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+        body: {
+          user: '{{user.profile.name}}',
+          setting: '{{user.profile.settings.theme}}',
+        },
+      });
+
+      await node.execute({
+        user: {
+          profile: {
+            name: 'Alice',
+            settings: { theme: 'dark' },
+          },
+        },
+      });
+
+      const call = mockFetch.mock.calls[0];
+      const sentBody = JSON.parse(call.arguments[1].body);
+      assert.equal(sentBody.user, 'Alice');
+      assert.equal(sentBody.setting, 'dark');
+    });
+
+    it('should substitute array access variables', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+        body: {
+          firstItem: '{{items[0]}}',
+          secondName: '{{users[1].name}}',
+        },
+      });
+
+      await node.execute({
+        items: ['apple', 'banana', 'cherry'],
+        users: [
+          { name: 'Alice' },
+          { name: 'Bob' },
+        ],
+      });
+
+      const call = mockFetch.mock.calls[0];
+      const sentBody = JSON.parse(call.arguments[1].body);
+      assert.equal(sentBody.firstItem, 'apple');
+      assert.equal(sentBody.secondName, 'Bob');
+    });
+
+    it('should keep original placeholder if variable not found', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/users/{{userId}}',
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer {{token}}',
+        },
+        body: {
+          name: '{{name}}',
+          missing: '{{notFound}}',
+        },
+      });
+
+      await node.execute({ userId: 123, token: 'abc', name: 'John' });
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[0], 'https://api.example.com/users/123');
+      assert.equal(call.arguments[1].headers['Authorization'], 'Bearer abc');
+      
+      const sentBody = JSON.parse(call.arguments[1].body);
+      assert.equal(sentBody.name, 'John');
+      assert.equal(sentBody.missing, '{{notFound}}');
+    });
+
+    it('should handle query parameters with templates', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/search',
+        method: 'GET',
+        queryParams: {
+          q: '{{searchTerm}}',
+          limit: '{{pageSize}}',
+          userId: '{{user.id}}',
+        },
+      });
+
+      await node.execute({
+        searchTerm: 'test query',
+        pageSize: 10,
+        user: { id: 456 },
+      });
+
+      const call = mockFetch.mock.calls[0];
+      const url = new URL(call.arguments[0]);
+      assert.equal(url.searchParams.get('q'), 'test query');
+      assert.equal(url.searchParams.get('limit'), '10');
+      assert.equal(url.searchParams.get('userId'), '456');
+    });
+
+    it('should work without input (no template substitution)', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/users/{{userId}}',
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer {{token}}',
+        },
+        body: {
+          name: '{{name}}',
+        },
+      });
+
+      await node.execute();
+
+      const call = mockFetch.mock.calls[0];
+      // Templates should remain as-is without input
+      assert.equal(call.arguments[0], 'https://api.example.com/users/{{userId}}');
+      assert.equal(call.arguments[1].headers['Authorization'], 'Bearer {{token}}');
+      
+      const sentBody = JSON.parse(call.arguments[1].body);
+      assert.equal(sentBody.name, '{{name}}');
+    });
+
+    it('should stringify object values in templates', async () => {
+      node = new HttpCallNode({
+        url: 'https://api.example.com/data',
+        method: 'POST',
+        body: {
+          userData: '{{user}}',
+        },
+      });
+
+      await node.execute({
+        user: { name: 'John', age: 30 },
+      });
+
+      const call = mockFetch.mock.calls[0];
+      const sentBody = JSON.parse(call.arguments[1].body);
+      assert.equal(sentBody.userData, '{"name":"John","age":30}');
     });
   });
 

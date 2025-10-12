@@ -51,19 +51,26 @@ const result = node.transform({
 
 ### HTTP Call Node (`http-call.js`)
 
-Executes HTTP requests with comprehensive configuration, retry policies, and response handling.
+Executes HTTP requests with comprehensive configuration, retry policies, response handling, and **template variable substitution** (similar to n8n).
 
 **Features:**
 - Full HTTP method support (GET, POST, PUT, DELETE, etc.)
+- **Template Variables** - Use `{{variable}}` syntax in URL, headers, query params, and body
+- **Input from previous nodes** - Receive and process data from previous workflow steps
 - Custom headers and query parameters
 - Request body serialization
-- **Input from previous nodes** - Use output from previous workflow nodes as request payload
 - Configurable timeout
 - Exponential backoff retry with jitter
 - Multiple response types (JSON, text, blob)
 - Request/response validation
 
-**Usage with configured body:**
+**Template Variable Syntax:**
+- Simple: `{{userId}}`, `{{token}}`
+- Nested: `{{user.profile.name}}`, `{{settings.theme}}`
+- Array access: `{{items[0]}}`, `{{users[1].name}}`
+- Fallback: Keeps `{{variable}}` if not found in input data
+
+**Usage with static configuration:**
 ```javascript
 import { HttpCallNode } from './http-call.js';
 
@@ -92,7 +99,41 @@ const result = await node.execute();
 console.log(result.status, result.data);
 ```
 
-**Usage with input from previous node:**
+**Usage with template variables (recommended):**
+```javascript
+// Configure node with template variables
+const node = new HttpCallNode({
+  url: 'https://api.example.com/users/{{userId}}/posts',
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer {{token}}',
+    'X-User-ID': '{{userId}}'
+  },
+  body: {
+    title: '{{post.title}}',
+    content: '{{post.content}}',
+    tags: '{{post.tags}}'
+  }
+});
+
+// Execute with input data from previous node
+const inputData = {
+  userId: 123,
+  token: 'abc123xyz',
+  post: {
+    title: 'My Blog Post',
+    content: 'This is the content...',
+    tags: ['tech', 'nodejs']
+  }
+};
+
+const result = await node.execute(inputData);
+// URL becomes: https://api.example.com/users/123/posts
+// Headers include: Authorization: Bearer abc123xyz
+// Body becomes: { title: 'My Blog Post', content: '...', tags: [...] }
+```
+
+**Usage with input as body (no configured body):**
 ```javascript
 // Node receives data from previous workflow step
 const node = new HttpCallNode({
@@ -101,10 +142,10 @@ const node = new HttpCallNode({
   headers: {
     'Authorization': 'Bearer token123'
   }
-  // No body configured - will use input data
+  // No body configured - will use input data directly
 });
 
-// Input data from previous node (e.g., transform node output)
+// Input data from previous node
 const inputData = {
   userId: 123,
   action: 'update',
@@ -116,7 +157,11 @@ const result = await node.execute(inputData);
 console.log(result.status, result.data);
 ```
 
-**Priority:** When both configured body and input data are provided, input data takes precedence. This allows workflows to dynamically pass data between nodes while maintaining the option for static configuration.
+**Template Processing Rules:**
+1. **With configured body + input**: Body templates are processed with input data
+2. **Without configured body + input**: Input is used directly as body
+3. **With configured body, no input**: Body is used as-is (templates remain unprocessed)
+4. **URL & Headers**: Always processed with input data when available
 
 **Configuration Options:**
 

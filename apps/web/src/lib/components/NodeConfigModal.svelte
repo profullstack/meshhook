@@ -22,14 +22,15 @@
 	const nodeConfigs = {
 		httpCall: {
 			fields: [
-				{ name: 'url', label: 'URL', type: 'text', required: true, placeholder: 'https://api.example.com/endpoint' },
+				{ name: 'url', label: 'URL', type: 'text', required: true, placeholder: 'https://api.example.com/users/{{userId}}', helpText: 'Use {{variable}} syntax to reference input data' },
 				{ name: 'method', label: 'Method', type: 'select', required: true, options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] },
-				{ name: 'headers', label: 'Headers (JSON)', type: 'textarea', placeholder: '{"Content-Type": "application/json"}' },
-				{ name: 'body', label: 'Body (JSON)', type: 'textarea', placeholder: '{"key": "value"}', helpText: 'Optional: Leave empty to use input from previous node as request body' },
+				{ name: 'headers', label: 'Headers (JSON)', type: 'textarea', placeholder: '{"Authorization": "Bearer {{token}}"}', helpText: 'Use {{variable}} for dynamic values' },
+				{ name: 'body', label: 'Body (JSON)', type: 'textarea', placeholder: '{"name": "{{user.name}}", "email": "{{user.email}}"}', helpText: 'Use {{variable}} syntax. Leave empty to use input directly as body.' },
 				{ name: 'timeout', label: 'Timeout (ms)', type: 'number', placeholder: '30000' }
 			],
 			supportsInput: true,
-			inputDescription: 'This node can receive data from the previous node and use it as the request body. If both configured body and input data are provided, input data takes precedence.'
+			supportsTemplates: true,
+			inputDescription: 'This node supports template variables using {{variable}} syntax in URL, headers, and body. You can reference nested data like {{user.profile.name}} or array items like {{items[0]}}.'
 		},
 		transform: {
 			fields: [
@@ -64,12 +65,15 @@
 		},
 		webhook: {
 			fields: [
-				{ name: 'url', label: 'Webhook URL', type: 'text', required: true, placeholder: 'https://api.example.com/webhook' },
+				{ name: 'url', label: 'Webhook URL', type: 'text', required: true, placeholder: 'https://api.example.com/webhook/{{webhookId}}', helpText: 'Use {{variable}} syntax to reference input data' },
 				{ name: 'method', label: 'HTTP Method', type: 'select', required: true, options: ['POST', 'PUT', 'PATCH'] },
-				{ name: 'headers', label: 'Headers (JSON)', type: 'textarea', placeholder: '{"Content-Type": "application/json", "Authorization": "Bearer {{token}}"}' },
-				{ name: 'bodyTemplate', label: 'Body Template', type: 'textarea', required: true, placeholder: '{\n  "title": "{{title}}",\n  "content": "{{content}}",\n  "timestamp": "{{timestamp}}"\n}', rows: 8 },
+				{ name: 'headers', label: 'Headers (JSON)', type: 'textarea', placeholder: '{"Authorization": "Bearer {{token}}"}', helpText: 'Use {{variable}} for dynamic values' },
+				{ name: 'bodyTemplate', label: 'Body Template', type: 'textarea', required: true, placeholder: '{\n  "title": "{{title}}",\n  "content": "{{content}}",\n  "user": "{{user.name}}"\n}', rows: 8, helpText: 'Use {{variable}} syntax. Supports nested paths like {{user.profile.name}}' },
 				{ name: 'description', label: 'Description', type: 'text', placeholder: 'Webhook description' }
-			]
+			],
+			supportsInput: true,
+			supportsTemplates: true,
+			inputDescription: 'This node supports template variables using {{variable}} syntax in URL, headers, and body. You can reference nested data like {{user.profile.name}} or array items like {{items[0]}}.'
 		},
 		schedule: {
 			fields: [
@@ -237,7 +241,26 @@
 			</div>
 			
 			<div class="modal-body">
-				{#if currentConfig.supportsInput && previousNode}
+				{#if currentConfig.supportsTemplates}
+					<div class="info-banner template-info">
+						<div class="info-icon">✨</div>
+						<div class="info-content">
+							<strong>Template Variables:</strong>
+							<p>{currentConfig.inputDescription}</p>
+							{#if previousNode?.data?.label}
+								<p class="previous-node-info">
+									📥 Receiving data from: <strong>{previousNode.data.label}</strong>
+								</p>
+							{/if}
+							<div class="template-examples">
+								<strong>Examples:</strong>
+								<code>{'{{userId}}'}</code>
+								<code>{'{{user.name}}'}</code>
+								<code>{'{{items[0]}}'}</code>
+							</div>
+						</div>
+					</div>
+				{:else if currentConfig.supportsInput && previousNode}
 					<div class="info-banner">
 						<div class="info-icon">ℹ️</div>
 						<div class="info-content">
@@ -528,6 +551,43 @@
 		margin-top: -0.25rem;
 		margin-bottom: 0.5rem;
 		font-style: italic;
+	}
+	
+	.template-info {
+		background: #f0fdf4;
+		border-color: #86efac;
+	}
+	
+	.template-info .info-content strong {
+		color: #15803d;
+	}
+	
+	.template-info .info-content p {
+		color: #166534;
+	}
+	
+	.template-examples {
+		margin-top: 0.75rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid #86efac;
+	}
+	
+	.template-examples strong {
+		display: block;
+		margin-bottom: 0.5rem;
+		font-size: 0.75rem;
+	}
+	
+	.template-examples code {
+		display: inline-block;
+		background: #dcfce7;
+		color: #15803d;
+		padding: 0.25rem 0.5rem;
+		border-radius: 3px;
+		font-size: 0.75rem;
+		margin-right: 0.5rem;
+		margin-bottom: 0.25rem;
+		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 	}
 	
 	label {
