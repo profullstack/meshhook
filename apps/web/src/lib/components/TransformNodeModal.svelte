@@ -126,6 +126,7 @@
 	
 	/**
 	 * Extract schema as a tree structure with nesting
+	 * All nodes are expanded by default
 	 */
 	function extractSchemaTree(obj, prefix = '', level = 0) {
 		const items = [];
@@ -145,6 +146,9 @@
 				const itemType = Array.isArray(item) ? 'array' : typeof item;
 				const isExpandable = typeof item === 'object' && item !== null;
 				
+				// Default to expanded unless explicitly collapsed
+				const isExpanded = expandedPaths.has(itemPath) ? false : true;
+				
 				items.push({
 					path: itemPath,
 					label: `[${index}]`,
@@ -152,11 +156,11 @@
 					value: item,
 					level,
 					isExpandable,
-					isExpanded: expandedPaths.has(itemPath)
+					isExpanded
 				});
 				
-				// If expanded, show children
-				if (isExpandable && expandedPaths.has(itemPath)) {
+				// Show children if expanded (default is expanded)
+				if (isExpandable && isExpanded) {
 					items.push(...extractSchemaTree(item, itemPath, level + 1));
 				}
 			});
@@ -167,6 +171,9 @@
 				const valueType = Array.isArray(value) ? 'array' : typeof value;
 				const isExpandable = typeof value === 'object' && value !== null;
 				
+				// Default to expanded unless explicitly collapsed
+				const isExpanded = expandedPaths.has(newPath) ? false : true;
+				
 				items.push({
 					path: newPath,
 					label: key,
@@ -174,11 +181,11 @@
 					value,
 					level,
 					isExpandable,
-					isExpanded: expandedPaths.has(newPath)
+					isExpanded
 				});
 				
-				// If expanded, show children
-				if (isExpandable && expandedPaths.has(newPath)) {
+				// Show children if expanded (default is expanded)
+				if (isExpandable && isExpanded) {
 					items.push(...extractSchemaTree(value, newPath, level + 1));
 				}
 			});
@@ -189,11 +196,14 @@
 	
 	/**
 	 * Toggle expand/collapse for a path
+	 * Since we default to expanded, we track collapsed paths
 	 */
 	function toggleExpand(path) {
 		if (expandedPaths.has(path)) {
+			// Currently collapsed, so expand it (remove from set)
 			expandedPaths.delete(path);
 		} else {
+			// Currently expanded, so collapse it (add to set)
 			expandedPaths.add(path);
 		}
 		expandedPaths = new Set(expandedPaths); // Trigger reactivity
@@ -672,12 +682,12 @@
 	.expand-btn {
 		background: none;
 		border: none;
-		padding: 0;
+		padding: 0.25rem;
 		cursor: pointer;
 		font-size: 0.625rem;
 		color: #999;
 		width: 1.5rem;
-		height: 2rem;
+		height: 1.5rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -685,6 +695,7 @@
 		flex-shrink: 0;
 		transition: all 0.15s ease;
 		margin-right: 0.25rem;
+		align-self: center;
 	}
 	
 	.expand-btn:hover {
@@ -694,8 +705,10 @@
 	
 	.expand-spacer {
 		width: 1.5rem;
+		height: 1.5rem;
 		flex-shrink: 0;
 		margin-right: 0.25rem;
+		align-self: center;
 	}
 	
 	.schema-item-content {
