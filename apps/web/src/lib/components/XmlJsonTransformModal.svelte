@@ -246,22 +246,46 @@
 				<p>Output preview will appear here</p>
 				<small>Execute workflow to see the transformation</small>
 			</div>
-		{:else if outputProps.testResult?.success}
-			<div class="transform-info">
-				<span class="format-badge">{outputProps.testResult.detectedFormat}</span>
-				<span class="arrow">→</span>
-				<span class="format-badge">{outputProps.testResult.outputFormat}</span>
-			</div>
-			<pre class="output-preview">{outputProps.testResult.preview}</pre>
-		{:else if outputProps.testResult?.error}
-			<div class="error-state">
-				<p>❌ Transform Error</p>
-				<pre class="error-message">{outputProps.testResult.error}</pre>
-			</div>
 		{:else}
-			<div class="empty-state">
-				<p>Waiting for transformation...</p>
-			</div>
+			{@const inputData = outputProps.currentPreviousOutput}
+			{@const inputIsXml = isXml(inputData)}
+			{@const inputIsJson = isJson(inputData)}
+			
+			{#if !inputIsXml && !inputIsJson}
+				<div class="error-state">
+					<p>❌ Invalid Input</p>
+					<pre class="error-message">Input must be valid XML or JSON</pre>
+				</div>
+			{:else}
+				{@const detectedFormat = inputIsXml ? 'XML' : 'JSON'}
+				{@const outputFormat = inputIsXml ? 'JSON' : 'XML'}
+				
+				<div class="transform-info">
+					<span class="format-badge">{detectedFormat}</span>
+					<span class="arrow">→</span>
+					<span class="format-badge">{outputFormat}</span>
+				</div>
+				
+				{#await testTransform(config, inputData)}
+					<div class="empty-state">
+						<p>Transforming...</p>
+					</div>
+				{:then result}
+					{#if result.success}
+						<pre class="output-preview">{result.preview}</pre>
+					{:else}
+						<div class="error-state">
+							<p>❌ Transform Error</p>
+							<pre class="error-message">{result.error}</pre>
+						</div>
+					{/if}
+				{:catch error}
+					<div class="error-state">
+						<p>❌ Transform Error</p>
+						<pre class="error-message">{error.message}</pre>
+					</div>
+				{/await}
+			{/if}
 		{/if}
 	{/snippet}
 </ThreePanelModal>
