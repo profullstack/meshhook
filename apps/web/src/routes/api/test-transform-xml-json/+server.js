@@ -17,8 +17,14 @@ export async function POST({ request }) {
 			);
 		}
 
+		// Ensure format is set to pretty for XML output
+		const nodeConfig = {
+			...config,
+			format: 'pretty'
+		};
+
 		// Create transform node with config
-		const node = new XmlJsonTransformNode(config || {});
+		const node = new XmlJsonTransformNode(nodeConfig);
 
 		// Perform transformation
 		const output = node.transform(input);
