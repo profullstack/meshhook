@@ -23,7 +23,8 @@
 	let config = $state(JSON.parse(JSON.stringify(node.data?.config || {
 		description: 'Transform between XML and JSON formats',
 		ignoreAttributes: false,
-		attributeNamePrefix: '@_'
+		attributeNamePrefix: '@_',
+		format: 'pretty'
 	})));
 	
 	/**
