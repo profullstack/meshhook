@@ -1,13 +1,14 @@
 <script>
 	/**
 	 * HTTP Call Modal Component
-	 * 
+	 *
 	 * HTTP-specific configuration modal using ThreePanelModal base.
 	 * Provides HTTP method selection, URL configuration, headers, body,
 	 * and test functionality with response preview.
 	 */
 	
 	import ThreePanelModal from './ThreePanelModal.svelte';
+	import { parseCurl } from '$lib/utils/curl-parser.js';
 	
 	let {
 		node,
@@ -27,6 +28,11 @@
 		body: '',
 		timeout: 30000
 	})));
+	
+	// cURL import state
+	let showCurlModal = $state(false);
+	let curlInput = $state('');
+	let curlError = $state('');
 	
 	/**
 	 * Test HTTP call with current configuration
@@ -80,6 +86,45 @@
 		};
 		onSave(updatedNode);
 	}
+	
+	/**
+	 * Open cURL import modal
+	 */
+	function openCurlModal() {
+		showCurlModal = true;
+		curlInput = '';
+		curlError = '';
+	}
+	
+	/**
+	 * Close cURL import modal
+	 */
+	function closeCurlModal() {
+		showCurlModal = false;
+		curlInput = '';
+		curlError = '';
+	}
+	
+	/**
+	 * Import cURL command and populate fields
+	 */
+	function importCurl() {
+		try {
+			curlError = '';
+			const parsed = parseCurl(curlInput);
+			
+			// Update config with parsed values
+			config.url = parsed.url;
+			config.method = parsed.method;
+			config.headers = JSON.stringify(parsed.headers, null, 2);
+			config.body = parsed.body;
+			
+			// Close modal
+			closeCurlModal();
+		} catch (err) {
+			curlError = err.message;
+		}
+	}
 </script>
 
 <ThreePanelModal
@@ -98,7 +143,12 @@
 	{#snippet children(ctx)}
 		<div class="modal-header">
 			<h2>Configure {ctx.editedNode.data?.label || 'HTTP Call'}</h2>
-			<button class="close-btn" onclick={ctx.onCancel} aria-label="Close">&times;</button>
+			<div class="header-actions">
+				<button class="btn-import-curl" onclick={openCurlModal} title="Import from cURL">
+					📋 Import cURL
+				</button>
+				<button class="close-btn" onclick={ctx.onCancel} aria-label="Close">&times;</button>
+			</div>
 		</div>
 		
 		<div class="modal-body">
@@ -242,6 +292,45 @@
 	{/snippet}
 </ThreePanelModal>
 
+<!-- cURL Import Modal -->
+{#if showCurlModal}
+	<div class="curl-modal-overlay" onclick={closeCurlModal}>
+		<div class="curl-modal" onclick={(e) => e.stopPropagation()}>
+			<div class="curl-modal-header">
+				<h3>Import from cURL</h3>
+				<button class="close-btn" onclick={closeCurlModal} aria-label="Close">&times;</button>
+			</div>
+			
+			<div class="curl-modal-body">
+				<p class="curl-help-text">
+					Paste a cURL command to automatically populate the HTTP request fields.
+				</p>
+				
+				<textarea
+					bind:value={curlInput}
+					placeholder="curl -X POST 'https://api.example.com/users' -H 'Content-Type: application/json' -d '&#123;&quot;name&quot;:&quot;John&quot;&#125;'"
+					rows="8"
+					spellcheck="false"
+					class="curl-input"
+				></textarea>
+				
+				{#if curlError}
+					<div class="curl-error">
+						<strong>Error:</strong> {curlError}
+					</div>
+				{/if}
+			</div>
+			
+			<div class="curl-modal-footer">
+				<button class="btn-secondary" onclick={closeCurlModal}>Cancel</button>
+				<button class="btn-primary" onclick={importCurl} disabled={!curlInput.trim()}>
+					Import
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <style>
 	.modal-header {
 		display: flex;
@@ -256,6 +345,31 @@
 		font-size: 1.25rem;
 		font-weight: 600;
 		color: #333;
+	}
+	
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+	
+	.btn-import-curl {
+		background: #6366f1;
+		color: white;
+		padding: 0.5rem 1rem;
+		border: none;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background 0.2s;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	
+	.btn-import-curl:hover {
+		background: #4f46e5;
 	}
 	
 	.close-btn {
@@ -555,5 +669,104 @@
 	
 	.modal-body::-webkit-scrollbar-thumb:hover {
 		background: #555;
+	}
+	
+	/* cURL Import Modal Styles */
+	.curl-modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 10000;
+		padding: 1rem;
+	}
+	
+	.curl-modal {
+		background: white;
+		border-radius: 8px;
+		width: 100%;
+		max-width: 600px;
+		max-height: 90vh;
+		display: flex;
+		flex-direction: column;
+		box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+	}
+	
+	.curl-modal-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1.5rem;
+		border-bottom: 1px solid #e0e0e0;
+	}
+	
+	.curl-modal-header h3 {
+		margin: 0;
+		font-size: 1.125rem;
+		font-weight: 600;
+		color: #333;
+	}
+	
+	.curl-modal-body {
+		flex: 1;
+		overflow-y: auto;
+		padding: 1.5rem;
+	}
+	
+	.curl-help-text {
+		margin: 0 0 1rem 0;
+		font-size: 0.875rem;
+		color: #666;
+		line-height: 1.5;
+	}
+	
+	.curl-input {
+		width: 100%;
+		padding: 0.75rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+		line-height: 1.5;
+		resize: vertical;
+		min-height: 150px;
+		box-sizing: border-box;
+	}
+	
+	.curl-input:focus {
+		outline: none;
+		border-color: var(--color-theme-1, #4075a6);
+	}
+	
+	.curl-error {
+		margin-top: 1rem;
+		padding: 0.75rem;
+		background: #fee;
+		border: 1px solid #fcc;
+		border-radius: 4px;
+		font-size: 0.875rem;
+		color: #c00;
+	}
+	
+	.curl-error strong {
+		font-weight: 600;
+	}
+	
+	.curl-modal-footer {
+		display: flex;
+		justify-content: flex-end;
+		gap: 1rem;
+		padding: 1.5rem;
+		border-top: 1px solid #e0e0e0;
+	}
+	
+	.btn-primary:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 </style>
