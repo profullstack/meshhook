@@ -34,6 +34,12 @@
 					description: 'Transform data using JMESPath'
 				},
 				{
+					type: 'xmlJsonTransform',
+					label: 'XML ↔ JSON',
+					icon: '🔀',
+					description: 'Transform between XML and JSON formats'
+				},
+				{
 					type: 'delay',
 					label: 'Delay',
 					icon: '⏱️',

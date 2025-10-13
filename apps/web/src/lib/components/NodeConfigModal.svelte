@@ -2,6 +2,7 @@
 	import HttpResponseViewer from './HttpResponseViewer.svelte';
 	import VariablePickerTemplate from './VariablePickerTemplate.svelte';
 	import TransformNodeModal from './TransformNodeModal.svelte';
+	import XmlJsonTransformModal from './XmlJsonTransformModal.svelte';
 	import HttpCallModal from './HttpCallModal.svelte';
 	import WebhookModal from './WebhookModal.svelte';
 	
@@ -226,6 +227,17 @@
 {#if editedNode.data?.type === 'transform'}
 	<!-- Use specialized Transform Node Modal -->
 	<TransformNodeModal
+		{node}
+		{onSave}
+		{onCancel}
+		{previousNodeOutput}
+		{previousNode}
+		{onRefreshPreviousNode}
+		{onExecuteWorkflow}
+	/>
+{:else if editedNode.data?.type === 'xmlJsonTransform'}
+	<!-- Use XML/JSON Transform Modal -->
+	<XmlJsonTransformModal
 		{node}
 		{onSave}
 		{onCancel}
