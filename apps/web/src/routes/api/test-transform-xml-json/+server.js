@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { XmlJsonTransformNode } from '../../../../../src/nodes/transform-xml-json.js';
+import { XmlJsonTransformNode } from '$lib/nodes/transform-xml-json.js';
 
 /**
  * Test XML/JSON transformation endpoint
