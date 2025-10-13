@@ -83,6 +83,7 @@ export class XmlJsonTransformNode {
       format: config.format === 'pretty' || config.format === true,
       suppressEmptyNode: true,
       indentBy: '  ', // 2 spaces for indentation
+      suppressBooleanAttributes: false,
     };
 
     this.parser = new XMLParser(this.parserOptions);

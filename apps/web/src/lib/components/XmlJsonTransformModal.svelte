@@ -93,12 +93,22 @@
 			
 			const result = await response.json();
 			
+			// Format preview based on output type
+			let preview;
+			if (typeof result.output === 'object') {
+				// JSON output - pretty print
+				preview = JSON.stringify(result.output, null, 2);
+			} else if (typeof result.output === 'string') {
+				// XML output - already formatted by backend
+				preview = result.output;
+			} else {
+				preview = String(result.output);
+			}
+			
 			return {
 				success: true,
 				output: result.output,
-				preview: typeof result.output === 'object' 
-					? JSON.stringify(result.output, null, 2)
-					: result.output,
+				preview,
 				detectedFormat: inputIsXml ? 'XML' : 'JSON',
 				outputFormat: inputIsXml ? 'JSON' : 'XML'
 			};
