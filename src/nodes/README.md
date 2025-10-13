@@ -49,6 +49,104 @@ const result = node.transform({
 'sum(items[*].price)'
 ```
 
+### XML/JSON Transform Node (`transform-xml-json.js`)
+
+Automatically detects and converts between XML and JSON formats. Perfect for parsing RSS/Atom feeds and converting them to JSON for webhook processing.
+
+**Features:**
+- Auto-detection of input format (XML or JSON)
+- Bidirectional conversion (XML ↔ JSON)
+- RSS and Atom feed parsing support
+- Configurable attribute handling
+- CDATA section support
+- XML namespace handling
+- Preserves data types (numbers, booleans)
+
+**Usage:**
+```javascript
+import { XmlJsonTransformNode } from './transform-xml-json.js';
+
+// Auto-detect and convert
+const node = new XmlJsonTransformNode();
+
+// XML to JSON
+const xmlInput = '<user><name>Alice</name><age>30</age></user>';
+const jsonResult = node.transform(xmlInput);
+// Result: { user: { name: 'Alice', age: 30 } }
+
+// JSON to XML
+const jsonInput = { user: { name: 'Bob', age: 25 } };
+const xmlResult = node.transform(jsonInput);
+// Result: '<user><name>Bob</name><age>25</age></user>'
+```
+
+**RSS Feed Parsing:**
+```javascript
+const node = new XmlJsonTransformNode();
+
+const rssXml = `<?xml version="1.0"?>
+<rss version="2.0">
+  <channel>
+    <title>My Blog</title>
+    <item>
+      <title>First Post</title>
+      <link>https://example.com/post1</link>
+      <description>Post content</description>
+    </item>
+  </channel>
+</rss>`;
+
+const feed = node.transform(rssXml);
+console.log(feed.rss.channel.title); // "My Blog"
+console.log(feed.rss.channel.item.title); // "First Post"
+```
+
+**Configuration Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `ignoreAttributes` | boolean | false | Ignore XML attributes |
+| `attributeNamePrefix` | string | '@_' | Prefix for attribute names |
+| `parseAttributeValue` | boolean | true | Parse attribute values to correct types |
+| `parseTagValue` | boolean | true | Parse tag values to correct types |
+| `trimValues` | boolean | true | Trim whitespace from values |
+| `isArray` | function | undefined | Function to determine if tag should be array |
+| `format` | string | 'compact' | XML output format ('compact' or 'pretty') |
+
+**Advanced Configuration:**
+```javascript
+// Custom attribute handling
+const node = new XmlJsonTransformNode({
+  ignoreAttributes: false,
+  attributeNamePrefix: '$',
+  parseAttributeValue: false // Keep as strings
+});
+
+const xml = '<user id="123"><name>Alice</name></user>';
+const result = node.transform(xml);
+// Result: { user: { $id: '123', name: 'Alice' } }
+```
+
+**Helper Functions:**
+```javascript
+import {
+  parseRssFeed,
+  parseAtomFeed,
+  xmlToJson,
+  jsonToXml
+} from './transform-xml-json.js';
+
+// Parse RSS feed
+const rssFeed = parseRssFeed(rssXmlString);
+
+// Parse Atom feed
+const atomFeed = parseAtomFeed(atomXmlString);
+
+// Direct conversion
+const json = xmlToJson('<root><item>value</item></root>');
+const xml = jsonToXml({ root: { item: 'value' } });
+```
+
 ### HTTP Call Node (`http-call.js`)
 
 Executes HTTP requests with comprehensive configuration, retry policies, response handling, and **template variable substitution** (similar to n8n).
@@ -203,6 +301,7 @@ node --test src/nodes/*.test.js
 
 # Test individual nodes
 node --test src/nodes/transform.test.js
+node --test src/nodes/transform-xml-json.test.js
 node --test src/nodes/http-call.test.js
 ```
 
@@ -220,6 +319,10 @@ async function executeNode(nodeConfig, inputFromPreviousNode) {
     case 'transform':
       const transformNode = new TransformNode(nodeConfig);
       return transformNode.transform(inputFromPreviousNode);
+      
+    case 'transform-xml-json':
+      const xmlJsonNode = new XmlJsonTransformNode(nodeConfig);
+      return xmlJsonNode.transform(inputFromPreviousNode);
       
     case 'http_call':
       const httpNode = new HttpCallNode(nodeConfig);
@@ -279,6 +382,7 @@ class Node {
 Each node type has its own error class for clear error identification:
 
 - `TransformError` - Transform operation errors
+- `TransformXmlJsonError` - XML/JSON conversion errors
 - `HttpCallError` - HTTP request errors
 
 All errors include relevant context for debugging:
@@ -292,6 +396,11 @@ try {
       status: error.statusCode,
       request: error.request,
       message: error.message
+    });
+  } else if (error instanceof TransformXmlJsonError) {
+    console.error('XML/JSON Transform Error:', {
+      message: error.message,
+      input: error.input
     });
   }
 }
@@ -320,7 +429,8 @@ Planned node types for future implementation:
 
 ## Dependencies
 
-- `jmespath` - JMESPath expression evaluation (Transform Node only)
+- `jmespath` - JMESPath expression evaluation (Transform Node)
+- `fast-xml-parser` - XML/JSON conversion (XML/JSON Transform Node)
 - Native `fetch` API - HTTP requests (Node.js 18+)
 
 ## Performance Considerations

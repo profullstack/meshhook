@@ -24,6 +24,7 @@
     "prettier": "^3.3.3"
   },
   "dependencies": {
+    "fast-xml-parser": "^5.3.0",
     "jmespath": "^0.16.0",
     "openai": "^6.3.0"
   }
