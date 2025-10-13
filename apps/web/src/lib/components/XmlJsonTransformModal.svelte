@@ -574,11 +574,12 @@
 		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 		font-size: 0.75rem;
 		line-height: 1.5;
-		white-space: pre-wrap;
+		white-space: pre;
 		word-wrap: break-word;
 		color: #333;
 		max-height: 400px;
 		overflow-y: auto;
+		overflow-x: auto;
 	}
 	
 	.empty-state {
