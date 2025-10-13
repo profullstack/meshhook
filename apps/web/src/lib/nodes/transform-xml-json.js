@@ -80,8 +80,9 @@ export class XmlJsonTransformNode {
     this.builderOptions = {
       ignoreAttributes: config.ignoreAttributes ?? false,
       attributeNamePrefix: config.attributeNamePrefix ?? '@_',
-      format: config.format === 'pretty',
+      format: config.format === 'pretty' || config.format === true,
       suppressEmptyNode: true,
+      indentBy: '  ', // 2 spaces for indentation
     };
 
     this.parser = new XMLParser(this.parserOptions);
