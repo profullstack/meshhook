@@ -578,18 +578,15 @@
 	
 	.output-preview {
 		margin: 0;
-		padding: 1rem;
-		background: #f8f9fa;
+		padding: 0.75rem;
+		background: white;
+		border: 1px solid #e0e0e0;
 		border-radius: 4px;
 		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 		font-size: 0.75rem;
 		line-height: 1.5;
-		white-space: pre;
-		word-wrap: break-word;
-		color: #333;
-		max-height: 400px;
-		overflow-y: auto;
 		overflow-x: auto;
+		color: #333;
 	}
 	
 	.empty-state {
