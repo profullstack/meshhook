@@ -53,20 +53,19 @@
 	
 	// Update currentPreviousOutput when dependencies change
 	$effect(() => {
-		// For ALL nodes, use refreshedOutput if available (from executing previous node)
-		// otherwise fall back to previousNodeOutput
-		// IMPORTANT: refreshedOutput should be the full HTTP response, not extracted arrays
 		const output = refreshedOutput || previousNodeOutput || {};
 		
-		// Safety check: if output is an array, something went wrong - use previousNodeOutput instead
+		// ERROR CHECK: refreshedOutput should NEVER be an array
+		// If it is, something is storing the loop output back into refreshedOutput
 		if (Array.isArray(output)) {
-			console.warn('refreshedOutput is an array, using previousNodeOutput instead');
-			currentPreviousOutput = previousNodeOutput
-				? JSON.parse(JSON.stringify(previousNodeOutput))
-				: {};
-		} else {
-			currentPreviousOutput = JSON.parse(JSON.stringify(output));
+			console.error('BUG: refreshedOutput is an array! This should never happen.');
+			console.error('refreshedOutput:', refreshedOutput);
+			console.error('previousNodeOutput:', previousNodeOutput);
+			console.trace('Stack trace:');
+			throw new Error('refreshedOutput should never be an array - something is storing loop output incorrectly');
 		}
+		
+		currentPreviousOutput = JSON.parse(JSON.stringify(output));
 	});
 	
 	/**
