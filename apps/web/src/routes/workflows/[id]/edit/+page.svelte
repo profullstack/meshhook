@@ -34,9 +34,19 @@
 	);
 	
 	// Make previousNodeOutput reactive - updates when nodes, selectedNode, or executionCounter change
-	const previousNodeOutput = $derived(
-		selectedNode ? getPreviousNodeOutput(selectedNode, executionCounter) : {}
-	);
+	const previousNodeOutput = $derived.by(() => {
+		console.log('=== $derived.by previousNodeOutput EVALUATING ===');
+		console.log('executionCounter:', executionCounter);
+		console.log('selectedNode:', selectedNode?.id, selectedNode?.data?.type);
+		console.log('nodes array length:', nodes.length);
+		console.log('nodes array reference:', nodes);
+		
+		const result = selectedNode ? getPreviousNodeOutput(selectedNode, executionCounter) : {};
+		
+		console.log('$derived.by result:', result);
+		console.log('=== $derived.by previousNodeOutput COMPLETE ===');
+		return result;
+	});
 
 	// Validate on changes
 	$effect(() => {
@@ -68,12 +78,19 @@
 			
 			console.log('Node is inside container:', parentId);
 			console.log('Parent container found:', !!parentContainer);
+			console.log('Parent container RAW:', parentContainer);
+			console.log('Parent container data RAW:', parentContainer?.data);
+			console.log('Parent container data.loopOutput RAW:', parentContainer?.data?.loopOutput);
+			
+			// Try accessing directly first (without unwrapping)
+			const hasLoopOutputDirect = !!parentContainer?.data?.loopOutput;
+			console.log('Parent has loopOutput (direct access):', hasLoopOutputDirect);
 			
 			// Unwrap the Proxy to access the actual data
 			const parentData = parentContainer ? JSON.parse(JSON.stringify(parentContainer.data)) : null;
 			console.log('Parent container data (unwrapped):', parentData);
-			console.log('Parent has loopOutput:', !!parentData?.loopOutput);
-			console.log('Parent loopOutput value:', parentData?.loopOutput);
+			console.log('Parent has loopOutput (unwrapped):', !!parentData?.loopOutput);
+			console.log('Parent loopOutput value (unwrapped):', parentData?.loopOutput);
 			
 			if (parentData && parentData.loopOutput) {
 				// Return first item from loop output as example
@@ -427,11 +444,25 @@
 						
 						console.log('Loop node updated with testResult and loopOutput');
 						
+						console.log('About to increment execution counter');
+						console.log('Current executionCounter:', executionCounter);
+						console.log('Nodes array after loop update:', nodes.map(n => ({
+							id: n.id.slice(0,8),
+							type: n.data?.type,
+							hasLoopOutput: !!n.data?.loopOutput,
+							loopOutputLength: n.data?.loopOutput?.length
+						})));
+						
 						// Increment execution counter AFTER nodes update completes
 						// Use queueMicrotask to ensure Svelte's reactivity has processed the nodes update
 						queueMicrotask(() => {
+							console.log('queueMicrotask executing - incrementing counter');
 							executionCounter++;
 							console.log('Execution counter incremented to:', executionCounter);
+							console.log('Nodes at counter increment:', nodes.map(n => ({
+								id: n.id.slice(0,8),
+								hasLoopOutput: !!n.data?.loopOutput
+							})));
 						});
 					} else {
 						// LEGACY LOOP (simple array extraction)
