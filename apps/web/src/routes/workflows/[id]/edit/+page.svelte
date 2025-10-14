@@ -208,19 +208,21 @@
 					const result = await response.json();
 					
 					if (result.success) {
-						// Store the original input AND the extracted output separately
+						// Store the original HTTP response as testResult (for input panel)
+						// Store the extracted array as lastOutput (for next node)
 						const loopInput = lastOutput;
-						lastOutput = result.output;
+						lastOutput = result.output;  // Extracted array for next node
 						
-						// Update node with BOTH input and output for proper display
+						// IMPORTANT: testResult should be the INPUT to the loop (HTTP response)
+						// NOT the output (extracted array), so the input panel shows correct data
 						nodes = nodes.map(n =>
 							n.id === node.id
 								? {
 									...n,
 									data: {
 										...n.data,
-										testResult: lastOutput,
-										loopInput: loopInput  // Store original input separately
+										testResult: loopInput,  // Store HTTP response for input panel
+										loopOutput: lastOutput  // Store extracted array separately
 									}
 								}
 								: n
