@@ -259,6 +259,12 @@ export function findDisconnectedNodes(nodes, edges) {
 	}
 
 	nodes.forEach((node) => {
+		// Skip validation for nodes inside containers
+		// They're connected via the container, not direct edges
+		if (node.data?.parentContainer) {
+			return;
+		}
+		
 		if (!connectedNodes.has(node.id)) {
 			errors.push(`Node ${node.id} (${node.data?.label || node.type}) is not connected`);
 		}
