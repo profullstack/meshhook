@@ -413,10 +413,14 @@
 										}
 									} else if (childNode.data?.type === 'webhook') {
 										// For webhook nodes inside loop, execute with item data for template processing
-										console.log(`🔔 WEBHOOK EXECUTION #${i + 1} - Loop iteration ${i + 1}/${arrayItems.length}`);
+										console.log(`🔔 WEBHOOK EXECUTION #${i + 1} - Loop iteration ${i + 1}/${iterationsToRun}`);
 										console.log('Webhook config:', childNode.data?.config);
 										console.log('Webhook input (iterationOutput):', iterationOutput);
 										console.log('Input type:', Array.isArray(iterationOutput) ? 'ARRAY (BUG!)' : typeof iterationOutput);
+										console.log('Sending to /api/test-webhook with:', {
+											config: childNode.data?.config,
+											input: iterationOutput
+										});
 										
 										const childResponse = await fetch('/api/test-webhook', {
 											method: 'POST',
