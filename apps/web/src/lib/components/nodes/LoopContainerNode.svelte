@@ -47,12 +47,10 @@
 	 * Handle drop event
 	 */
 	function handleDrop(event) {
-		event.preventDefault();
-		event.stopPropagation();
+		// DON'T prevent default or stop propagation
+		// Let the event bubble up to WorkflowEditor
 		isDragOver = false;
-		
-		// The actual drop handling will be done by the WorkflowEditor
-		// This just provides visual feedback
+		console.log('LoopContainerNode drop event, letting it bubble to WorkflowEditor');
 	}
 </script>
 
