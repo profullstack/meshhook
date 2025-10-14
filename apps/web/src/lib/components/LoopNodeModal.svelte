@@ -46,32 +46,30 @@
 	 */
 	async function testLoop(currentConfig, inputData) {
 		try {
-			// For now, we'll do a simple evaluation
-			// In production, this would call a JMESPath evaluation endpoint
-			const expression = currentConfig.items?.trim();
+			const response = await fetch('/api/test-loop', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					config: currentConfig,
+					input: inputData
+				})
+			});
 			
-			if (!expression) {
-				return {
-					success: false,
-					error: 'No expression provided'
-				};
-			}
+			const data = await response.json();
 			
-			// Simple path evaluation for demo
-			// In production, use proper JMESPath library
-			const result = evaluateSimplePath(expression, inputData);
-			
-			if (Array.isArray(result)) {
+			if (data.success) {
 				return {
 					success: true,
-					items: result,
-					count: result.length,
-					preview: result.slice(0, 5) // Show first 5 items
+					output: data.output,
+					count: data.count,
+					preview: data.preview
 				};
 			} else {
 				return {
 					success: false,
-					error: 'Expression did not return an array'
+					error: data.error?.message || 'Unknown error'
 				};
 			}
 		} catch (err) {
@@ -80,26 +78,6 @@
 				error: err.message
 			};
 		}
-	}
-	
-	/**
-	 * Simple path evaluator (for demo purposes)
-	 * In production, use a proper JMESPath library
-	 */
-	function evaluateSimplePath(path, data) {
-		// Handle simple paths like "items", "data.items", "items[*]"
-		const cleanPath = path.replace(/\[\*\]/g, '').trim();
-		const parts = cleanPath.split('.');
-		
-		let current = data;
-		for (const part of parts) {
-			if (current === null || current === undefined) {
-				return undefined;
-			}
-			current = current[part];
-		}
-		
-		return current;
 	}
 	
 	/**
@@ -227,8 +205,8 @@
 					
 					{#if outputProps.testResult.count > 0}
 						<div class="preview-items">
-							<p class="preview-note">Showing first {Math.min(5, outputProps.testResult.count)} items:</p>
-							{#each outputProps.testResult.preview as item, index}
+							<p class="preview-note">Showing first {Math.min(5, outputProps.testResult.count)} item{outputProps.testResult.count === 1 ? '' : 's'}:</p>
+							{#each outputProps.testResult.preview || [] as item, index}
 								<div class="preview-item">
 									<div class="item-header">
 										<span class="item-number">Item {index + 1}</span>
