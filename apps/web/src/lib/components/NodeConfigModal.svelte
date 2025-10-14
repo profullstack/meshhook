@@ -5,6 +5,7 @@
 	import XmlJsonTransformModal from './XmlJsonTransformModal.svelte';
 	import HttpCallModal from './HttpCallModal.svelte';
 	import WebhookModal from './WebhookModal.svelte';
+	import LoopNodeModal from './LoopNodeModal.svelte';
 	
 	let { node, onSave, onCancel, previousNodeOutput = {}, previousNode = null, onRefreshPreviousNode = null, onExecuteWorkflow = null } = $props();
 	
@@ -277,6 +278,17 @@
 {:else if editedNode.data?.type === 'webhook'}
 	<!-- Use Webhook Modal with three-panel layout -->
 	<WebhookModal
+		{node}
+		{onSave}
+		{onCancel}
+		{previousNodeOutput}
+		{previousNode}
+		{onRefreshPreviousNode}
+		{onExecuteWorkflow}
+	/>
+{:else if editedNode.data?.type === 'loop'}
+	<!-- Use Loop Node Modal with three-panel layout -->
+	<LoopNodeModal
 		{node}
 		{onSave}
 		{onCancel}
