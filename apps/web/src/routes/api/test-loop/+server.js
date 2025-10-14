@@ -10,9 +10,17 @@ import { LoopNode } from '$lib/nodes/loop.js';
 export async function POST({ request }) {
 	try {
 		const { config, input } = await request.json();
+		
+		// Log the request for debugging
+		console.log('=== Loop Test API Request ===');
+		console.log('Config:', JSON.stringify(config, null, 2));
+		console.log('Input type:', Array.isArray(input) ? 'array' : typeof input);
+		console.log('Input:', JSON.stringify(input, null, 2));
+		console.log('===========================');
 
 		// Validate config
 		if (!config || !config.items) {
+			console.error('Invalid config - missing items expression');
 			return json({
 				success: false,
 				error: {
@@ -28,6 +36,7 @@ export async function POST({ request }) {
 		// Validate the expression
 		const validation = loopNode.validate();
 		if (!validation.valid) {
+			console.error('Invalid expression:', validation.errors);
 			return json({
 				success: false,
 				error: {
@@ -38,7 +47,9 @@ export async function POST({ request }) {
 		}
 
 		// Execute the loop node
+		console.log('Executing loop node with expression:', config.items);
 		const result = loopNode.execute(input);
+		console.log('Loop result - array length:', result.length);
 
 		return json({
 			success: true,
@@ -47,7 +58,11 @@ export async function POST({ request }) {
 			preview: result.slice(0, 5) // First 5 items for preview
 		});
 	} catch (error) {
-		console.error('Loop test error:', error);
+		console.error('=== Loop Test Error ===');
+		console.error('Error:', error);
+		console.error('Message:', error.message);
+		console.error('Expression:', error.expression);
+		console.error('======================');
 
 		return json({
 			success: false,
