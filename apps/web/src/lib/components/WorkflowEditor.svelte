@@ -82,19 +82,27 @@
 		try {
 			const nodeData = JSON.parse(nodeDataStr);
 			
-			// Get the bounds of the react flow wrapper
-			const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
-			
-			// Calculate position - for now use simple calculation
-			// TODO: Account for zoom/pan using SvelteFlow's project function
-			const position = {
-				x: event.clientX - reactFlowBounds.left,
-				y: event.clientY - reactFlowBounds.top
-			};
+			// Use SvelteFlow instance to convert screen to flow coordinates
+			// This accounts for zoom and pan transformations
+			let position;
+			if (svelteFlowInstance && svelteFlowInstance.screenToFlowPosition) {
+				position = svelteFlowInstance.screenToFlowPosition({
+					x: event.clientX,
+					y: event.clientY
+				});
+				console.log('Using screenToFlowPosition');
+			} else {
+				// Fallback to simple calculation if instance not available
+				const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
+				position = {
+					x: event.clientX - reactFlowBounds.left,
+					y: event.clientY - reactFlowBounds.top
+				};
+				console.log('Using fallback position calculation');
+			}
 			
 			console.log('Screen position:', event.clientX, event.clientY);
-			console.log('Wrapper bounds:', reactFlowBounds);
-			console.log('Calculated flow position:', position);
+			console.log('Flow position:', position);
 
 			// Check if dropping into a loop container
 			const targetContainer = findContainerAtPosition(position);
@@ -192,6 +200,7 @@
 	
 	/**
 	 * Find container at a given position
+	 * Uses a tolerance margin to account for coordinate conversion issues
 	 */
 	function findContainerAtPosition(position) {
 		console.log('=== findContainerAtPosition ===');
@@ -201,12 +210,15 @@
 		const containers = nodes.filter(n => n.data?.isContainer);
 		console.log('Containers found:', containers.length);
 		
+		// Add tolerance for coordinate conversion issues
+		const TOLERANCE = 50;
+		
 		for (const node of containers) {
 			const bounds = {
-				x: node.position.x,
-				y: node.position.y,
-				width: node.data.dimensions?.width || 600,
-				height: node.data.dimensions?.height || 400
+				x: node.position.x - TOLERANCE,
+				y: node.position.y - TOLERANCE,
+				width: (node.data.dimensions?.width || 600) + (TOLERANCE * 2),
+				height: (node.data.dimensions?.height || 400) + (TOLERANCE * 2)
 			};
 			
 			console.log(`Container ${node.id}:`, bounds);
