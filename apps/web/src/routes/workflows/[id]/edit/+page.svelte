@@ -82,9 +82,14 @@
 				// Clone the found node to avoid immutability issues
 				const previousNode = JSON.parse(JSON.stringify(foundNode));
 				
+				// Special case: if previous node is a loop node, use its loopInput (original input)
+				// NOT its testResult (which is the extracted array)
+				if (previousNode.data?.type === 'loop' && previousNode.data?.loopInput) {
+					sampleData = previousNode.data.loopInput;
+				}
 				// If previous node has test result data, use it
 				// This shows the OUTPUT of the previous node as INPUT to current node
-				if (previousNode.data?.testResult) {
+				else if (previousNode.data?.testResult) {
 					sampleData = previousNode.data.testResult;
 				} else if (previousNode.data?.type === 'httpCall') {
 				// Otherwise provide sample data based on node type
@@ -247,11 +252,21 @@
 					const result = await response.json();
 					
 					if (result.success) {
+						// Store the original input AND the extracted output separately
+						const loopInput = lastOutput;
 						lastOutput = result.output;
-						// Update node with test result
+						
+						// Update node with BOTH input and output for proper display
 						nodes = nodes.map(n =>
 							n.id === node.id
-								? { ...n, data: { ...n.data, testResult: lastOutput } }
+								? {
+									...n,
+									data: {
+										...n.data,
+										testResult: lastOutput,
+										loopInput: loopInput  // Store original input separately
+									}
+								}
 								: n
 						);
 					} else {

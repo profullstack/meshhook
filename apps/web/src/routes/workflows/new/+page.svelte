@@ -150,11 +150,21 @@
 					const result = await response.json();
 					
 					if (result.success) {
+						// Store the original input AND the extracted output separately
+						const loopInput = lastOutput;
 						lastOutput = result.output;
-						// Update node with test result
+						
+						// Update node with BOTH input and output for proper display
 						nodes = nodes.map(n =>
 							n.id === node.id
-								? { ...n, data: { ...n.data, testResult: lastOutput } }
+								? {
+									...n,
+									data: {
+										...n.data,
+										testResult: lastOutput,
+										loopInput: loopInput  // Store original input separately
+									}
+								}
 								: n
 						);
 					} else {
