@@ -103,10 +103,13 @@
 			console.log('Position:', position);
 			console.log('Target container:', targetContainer?.id, targetContainer?.data?.label);
 			
+			// Determine if this should be a container node
+			const isLoopNode = nodeData.type === 'loop';
+			
 			// Create new node with unique ID
 			const newNode = {
 				id: `${nodeData.type}-${Date.now()}`,
-				type: nodeData.type === 'loop' ? 'loopContainer' : 'default',
+				type: isLoopNode ? 'loopContainer' : 'default',
 				// If dropped into container, position is relative to container
 				// Otherwise, position is absolute on canvas
 				position: targetContainer ? {
@@ -121,9 +124,9 @@
 				data: {
 					label: nodeData.label,
 					type: nodeData.type,
-					config: {},
+					config: isLoopNode ? { items: '', description: '' } : {},
 					// Add container-specific properties for loop nodes
-					...(nodeData.type === 'loop' ? {
+					...(isLoopNode ? {
 						isContainer: true,
 						childNodes: [],
 						dimensions: { width: 600, height: 400 }
@@ -134,6 +137,13 @@
 					} : {})
 				}
 			};
+			
+			console.log('New node created:', {
+				id: newNode.id,
+				type: newNode.type,
+				isContainer: newNode.data.isContainer,
+				hasConfig: !!newNode.data.config
+			});
 
 			// If dropped into a container, add to its childNodes
 			if (targetContainer) {
