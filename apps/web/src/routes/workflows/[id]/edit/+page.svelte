@@ -394,6 +394,11 @@
 										}
 									} else if (childNode.data?.type === 'webhook') {
 										// For webhook nodes inside loop, execute with item data for template processing
+										console.log(`🔔 WEBHOOK EXECUTION #${i + 1} - Loop iteration ${i + 1}/${arrayItems.length}`);
+										console.log('Webhook config:', childNode.data?.config);
+										console.log('Webhook input (iterationOutput):', iterationOutput);
+										console.log('Input type:', Array.isArray(iterationOutput) ? 'ARRAY (BUG!)' : typeof iterationOutput);
+										
 										const childResponse = await fetch('/api/test-webhook', {
 											method: 'POST',
 											headers: { 'Content-Type': 'application/json' },
@@ -406,9 +411,9 @@
 										const childResult = await childResponse.json();
 										if (childResult.success) {
 											iterationOutput = childResult.response;
-											console.log('Webhook executed, output:', iterationOutput);
+											console.log('✅ Webhook executed successfully, output:', iterationOutput);
 										} else {
-											console.warn(`Child node ${childNode.data?.label} failed:`, childResult.error?.message || childResult.error);
+											console.warn(`❌ Child node ${childNode.data?.label} failed:`, childResult.error?.message || childResult.error);
 											// Continue with current output (don't fail the loop)
 										}
 									}

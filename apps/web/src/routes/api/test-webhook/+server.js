@@ -12,8 +12,18 @@ export async function POST({ request }) {
 		const { config, input } = await request.json();
 
 		console.log('=== test-webhook API called ===');
+		console.trace('Called from:');
 		console.log('Config:', config);
+		console.log('Input type:', Array.isArray(input) ? 'ARRAY' : typeof input);
 		console.log('Input:', input);
+		
+		// CRITICAL BUG CHECK: If input is an array, something is wrong
+		if (Array.isArray(input)) {
+			console.error('🐛 BUG: Webhook received ARRAY input!');
+			console.error('Webhooks inside loops should receive individual items, not arrays');
+			console.error('Array length:', input.length);
+			console.error('This suggests the webhook is being called outside the loop context');
+		}
 
 		// Validate config
 		if (!config || typeof config !== 'object') {

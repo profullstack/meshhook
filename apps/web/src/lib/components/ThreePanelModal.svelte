@@ -387,8 +387,22 @@
 		try {
 			console.log('=== ThreePanelModal handleTest ===');
 			console.trace('handleTest called from:');
+			console.log('Node type:', editedNode.data?.type);
+			console.log('Node label:', editedNode.data?.label);
+			console.log('Is inside loop:', isInsideLoop);
+			console.log('Is loop container:', isLoopContainer);
 			console.log('Config:', editedNode.data?.config);
+			console.log('Input data type:', Array.isArray(currentPreviousOutput) ? 'ARRAY' : typeof currentPreviousOutput);
 			console.log('Input data:', currentPreviousOutput);
+			
+			// CRITICAL BUG CHECK: If this is a node inside a loop and currentPreviousOutput is an array,
+			// we should NOT be testing with the full array - we should use the first item
+			if (isInsideLoop && Array.isArray(currentPreviousOutput)) {
+				console.error('🐛 BUG DETECTED: Testing node inside loop with ARRAY input!');
+				console.error('This should be a single loop item, not the full array');
+				console.error('Array length:', currentPreviousOutput.length);
+			}
+			
 			console.log('================================');
 			
 			const result = await testFunction(editedNode.data?.config || {}, currentPreviousOutput);
