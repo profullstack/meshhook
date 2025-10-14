@@ -53,12 +53,19 @@
 	
 	// Update currentPreviousOutput when dependencies change
 	$effect(() => {
-		// For Loop nodes, don't use refreshedOutput as it contains the extracted array
-		// Instead, always use previousNodeOutput which should be the original input
+		console.log('=== ThreePanelModal $effect ===');
+		console.log('Node type:', node.data?.type);
+		console.log('previousNodeOutput:', previousNodeOutput);
+		console.log('refreshedOutput:', refreshedOutput);
+		
+		// For Loop nodes, prefer refreshedOutput (from executing previous node)
+		// but fall back to previousNodeOutput if available
 		if (node.data?.type === 'loop') {
-			currentPreviousOutput = previousNodeOutput
-				? JSON.parse(JSON.stringify(previousNodeOutput))
-				: {};
+			currentPreviousOutput = refreshedOutput
+				? JSON.parse(JSON.stringify(refreshedOutput))
+				: previousNodeOutput
+					? JSON.parse(JSON.stringify(previousNodeOutput))
+					: {};
 		} else {
 			currentPreviousOutput = refreshedOutput
 				? JSON.parse(JSON.stringify(refreshedOutput))
@@ -66,6 +73,9 @@
 					? JSON.parse(JSON.stringify(previousNodeOutput))
 					: {};
 		}
+		
+		console.log('currentPreviousOutput set to:', currentPreviousOutput);
+		console.log('==============================');
 	});
 	
 	/**
@@ -351,10 +361,21 @@
 		testResult = null;
 		
 		try {
+			console.log('=== ThreePanelModal handleTest ===');
+			console.log('Config:', editedNode.data?.config);
+			console.log('Input data:', currentPreviousOutput);
+			console.log('================================');
+			
 			const result = await testFunction(editedNode.data?.config || {}, currentPreviousOutput);
+			
+			console.log('=== Test Result ===');
+			console.log('Result:', result);
+			console.log('==================');
+			
 			testResult = result;
 		} catch (err) {
-			testResult = { error: err.message };
+			console.error('Test error:', err);
+			testResult = { success: false, error: err.message };
 		} finally {
 			testingOutput = false;
 		}

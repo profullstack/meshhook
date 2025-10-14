@@ -46,9 +46,12 @@
 	 */
 	async function testLoop(currentConfig, inputData) {
 		try {
-			// Debug: log what we're sending
-			console.log('Testing loop with config:', currentConfig);
-			console.log('Input data:', inputData);
+			console.log('=== LoopNodeModal testLoop ===');
+			console.log('Config:', JSON.stringify(currentConfig, null, 2));
+			console.log('Input data type:', typeof inputData);
+			console.log('Input data:', JSON.stringify(inputData, null, 2));
+			console.log('Input is empty?', !inputData || Object.keys(inputData).length === 0);
+			console.log('=============================');
 			
 			const response = await fetch('/api/test-loop', {
 				method: 'POST',
@@ -63,7 +66,13 @@
 			
 			const data = await response.json();
 			
-			console.log('Loop test result:', data);
+			console.log('=== Loop API Response ===');
+			console.log('Success:', data.success);
+			console.log('Output:', data.output);
+			console.log('Count:', data.count);
+			console.log('Preview:', data.preview);
+			console.log('Error:', data.error);
+			console.log('========================');
 			
 			if (data.success) {
 				return {
@@ -194,11 +203,6 @@
 			<div class="empty-state">
 				<p>Output preview will appear here</p>
 				<small>Enter a JMESPath expression and test</small>
-			</div>
-		{:else if !outputProps.currentPreviousOutput || Object.keys(outputProps.currentPreviousOutput).length === 0}
-			<div class="empty-state">
-				<p>Execute workflow to see loop preview</p>
-				<small>Click "Execute Workflow" in the input panel</small>
 			</div>
 		{:else if outputProps.testResult}
 			{#if outputProps.testResult.success}
