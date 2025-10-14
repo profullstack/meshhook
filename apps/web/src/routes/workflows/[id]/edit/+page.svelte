@@ -194,6 +194,16 @@
 							error: `Failed to execute ${node.data?.label || node.id}: ${result.error || 'Unknown error'}`
 						};
 					}
+				} else if (node.data?.type === 'branch') {
+					// Branch node - pass through input as-is for now
+					// During actual execution, branch logic will determine which path to take
+					// For testing, we just pass the data through
+					nodes = nodes.map(n =>
+						n.id === node.id
+							? { ...n, data: { ...n.data, testResult: lastOutput } }
+							: n
+					);
+					// lastOutput stays the same (pass-through)
 				} else if (node.data?.type === 'loop') {
 					// Execute loop node - extract array using JMESPath
 					const response = await fetch('/api/test-loop', {
