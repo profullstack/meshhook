@@ -48,103 +48,39 @@
 		// Find edges that connect to this node
 		const incomingEdges = edges.filter(edge => edge.target === currentNode.id);
 		
-		let sampleData;
-		const currentTimestamp = new Date().toISOString();
-		
+		// No previous node - return empty object (user must execute workflow)
 		if (incomingEdges.length === 0) {
-			console.log('No incoming edges, using default sample data');
-			// No previous node - provide sample data
-			sampleData = {
-				status: 'success',
-				data: {
-					user: { name: 'John Doe', email: 'john@example.com' },
-					order: { id: 12345, total: 99.99 },
-					items: [
-						{ name: 'Product A', price: 29.99 },
-						{ name: 'Product B', price: 69.99 }
-					]
-				},
-				timestamp: currentTimestamp
-			};
-		} else {
-			// Get the first previous node (for now, we'll support single input)
-			const previousNodeId = incomingEdges[0].source;
-			const foundNode = nodes.find(n => n.id === previousNodeId);
-			
-			if (!foundNode) {
-				// No node found, use default
-				sampleData = {
-					message: 'Sample data from previous node',
-					data: {
-						value: 42,
-						text: 'Hello World',
-						nested: { property: 'value' }
-					}
-				};
-			} else {
-				// Clone the found node to avoid immutability issues
-				const previousNode = JSON.parse(JSON.stringify(foundNode));
-				
-				console.log('Previous node:', previousNode.id, previousNode.data?.type);
-				console.log('Current node type:', currentNode.data?.type);
-				console.log('Current node has loopInput?', !!currentNode.data?.loopInput);
-				console.log('Previous node has loopInput?', !!previousNode.data?.loopInput);
-				console.log('Previous node has testResult?', !!previousNode.data?.testResult);
-				
-				// CRITICAL: If the CURRENT node (not previous) is a loop node and has loopInput,
-				// use that as the input (this is the original input before loop extraction)
-				if (currentNode.data?.type === 'loop' && currentNode.data?.loopInput) {
-					console.log('Using current node loopInput');
-					sampleData = currentNode.data.loopInput;
-				}
-				// Special case: if previous node is a loop node, use its loopInput (original input)
-				// NOT its testResult (which is the extracted array)
-				else if (previousNode.data?.type === 'loop' && previousNode.data?.loopInput) {
-					console.log('Using previous node loopInput');
-					sampleData = previousNode.data.loopInput;
-				}
-				// If previous node has test result data, use it
-				// This shows the OUTPUT of the previous node as INPUT to current node
-				else if (previousNode.data?.testResult) {
-					console.log('Using previous node testResult');
-					sampleData = previousNode.data.testResult;
-				} else if (previousNode.data?.type === 'httpCall') {
-					console.log('Using httpCall sample data');
-				// Otherwise provide sample data based on node type
-				sampleData = {
-					status: 200,
-					statusText: 'OK',
-					ok: true,
-					headers: {
-						'content-type': 'application/json'
-					},
-					data: {
-						user: { name: 'Alice Smith', email: 'alice@example.com' },
-						order: { id: 67890, status: 'shipped', total: 149.99 },
-						items: [
-							{ id: 1, name: 'Widget', price: 49.99, quantity: 2 },
-							{ id: 2, name: 'Gadget', price: 99.99, quantity: 1 }
-						]
-					}
-				};
-				} else {
-					console.log('Using default sample data');
-					// Default sample data
-					sampleData = {
-						message: 'Sample data from previous node',
-						data: {
-							value: 42,
-							text: 'Hello World',
-							nested: { property: 'value' }
-						}
-					};
-				}
-			}
+			console.log('No incoming edges, returning empty');
+			return {};
 		}
 		
-		console.log('Returning sample data:', Array.isArray(sampleData) ? 'ARRAY' : 'OBJECT');
-		// Return a deep clone to ensure mutability
-		return JSON.parse(JSON.stringify(sampleData));
+		// Get the first previous node
+		const previousNodeId = incomingEdges[0].source;
+		const foundNode = nodes.find(n => n.id === previousNodeId);
+		
+		// No node found - return empty
+		if (!foundNode) {
+			console.log('Previous node not found, returning empty');
+			return {};
+		}
+		
+		// Clone the found node to avoid immutability issues
+		const previousNode = JSON.parse(JSON.stringify(foundNode));
+		
+		console.log('Previous node:', previousNode.id, previousNode.data?.type);
+		console.log('Previous node has testResult?', !!previousNode.data?.testResult);
+		
+		// If previous node has test result data, use it
+		// This shows the OUTPUT of the previous node as INPUT to current node
+		if (previousNode.data?.testResult) {
+			console.log('Using previous node testResult');
+			console.log('testResult is:', Array.isArray(previousNode.data.testResult) ? 'ARRAY' : 'OBJECT');
+			return JSON.parse(JSON.stringify(previousNode.data.testResult));
+		}
+		
+		// No test result - return empty (user must execute workflow)
+		console.log('No testResult, returning empty');
+		return {};
 	}
 	
 	// Get the previous node for a given node (returns a plain object copy)
