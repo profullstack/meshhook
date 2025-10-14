@@ -712,6 +712,9 @@
 			node={selectedNode}
 			{previousNodeOutput}
 			{previousNode}
+			parentNode={selectedNode.parentId || selectedNode.data?.parentContainer
+				? nodes.find(n => n.id === (selectedNode.parentId || selectedNode.data?.parentContainer))
+				: null}
 			onRefreshPreviousNode={handleRefreshPreviousNode}
 			onExecuteWorkflow={handleExecuteWorkflow}
 			onSave={handleNodeConfigSave}
