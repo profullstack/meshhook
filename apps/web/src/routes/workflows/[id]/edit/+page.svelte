@@ -43,6 +43,8 @@
 	
 	// Get previous node output for template preview
 	function getPreviousNodeOutput(currentNode) {
+		console.log('getPreviousNodeOutput called for node:', currentNode.id, currentNode.data?.type);
+		
 		// Find edges that connect to this node
 		const incomingEdges = edges.filter(edge => edge.target === currentNode.id);
 		
@@ -50,6 +52,7 @@
 		const currentTimestamp = new Date().toISOString();
 		
 		if (incomingEdges.length === 0) {
+			console.log('No incoming edges, using default sample data');
 			// No previous node - provide sample data
 			sampleData = {
 				status: 'success',
@@ -82,21 +85,31 @@
 				// Clone the found node to avoid immutability issues
 				const previousNode = JSON.parse(JSON.stringify(foundNode));
 				
+				console.log('Previous node:', previousNode.id, previousNode.data?.type);
+				console.log('Current node type:', currentNode.data?.type);
+				console.log('Current node has loopInput?', !!currentNode.data?.loopInput);
+				console.log('Previous node has loopInput?', !!previousNode.data?.loopInput);
+				console.log('Previous node has testResult?', !!previousNode.data?.testResult);
+				
 				// CRITICAL: If the CURRENT node (not previous) is a loop node and has loopInput,
 				// use that as the input (this is the original input before loop extraction)
 				if (currentNode.data?.type === 'loop' && currentNode.data?.loopInput) {
+					console.log('Using current node loopInput');
 					sampleData = currentNode.data.loopInput;
 				}
 				// Special case: if previous node is a loop node, use its loopInput (original input)
 				// NOT its testResult (which is the extracted array)
 				else if (previousNode.data?.type === 'loop' && previousNode.data?.loopInput) {
+					console.log('Using previous node loopInput');
 					sampleData = previousNode.data.loopInput;
 				}
 				// If previous node has test result data, use it
 				// This shows the OUTPUT of the previous node as INPUT to current node
 				else if (previousNode.data?.testResult) {
+					console.log('Using previous node testResult');
 					sampleData = previousNode.data.testResult;
 				} else if (previousNode.data?.type === 'httpCall') {
+					console.log('Using httpCall sample data');
 				// Otherwise provide sample data based on node type
 				sampleData = {
 					status: 200,
@@ -115,6 +128,7 @@
 					}
 				};
 				} else {
+					console.log('Using default sample data');
 					// Default sample data
 					sampleData = {
 						message: 'Sample data from previous node',
@@ -128,6 +142,7 @@
 			}
 		}
 		
+		console.log('Returning sample data:', Array.isArray(sampleData) ? 'ARRAY' : 'OBJECT');
 		// Return a deep clone to ensure mutability
 		return JSON.parse(JSON.stringify(sampleData));
 	}
