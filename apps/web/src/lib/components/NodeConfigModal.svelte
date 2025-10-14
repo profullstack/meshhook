@@ -21,6 +21,9 @@
 	let testingPreviousNode = $state(false);
 	let refreshedOutput = $state(null);
 	
+	// JMESPath help modal state
+	let showJMESPathHelp = $state(false);
+	
 	// Node type configurations
 	const nodeConfigs = {
 		httpCall: {
@@ -222,6 +225,20 @@
 				? JSON.parse(JSON.stringify(previousNodeOutput))
 				: {};
 	});
+	
+	/**
+	 * Open JMESPath help modal
+	 */
+	function openJMESPathHelp() {
+		showJMESPathHelp = true;
+	}
+	
+	/**
+	 * Close JMESPath help modal
+	 */
+	function closeJMESPathHelp() {
+		showJMESPathHelp = false;
+	}
 </script>
 
 {#if editedNode.data?.type === 'transform'}
@@ -353,6 +370,17 @@
 							<label for={field.name}>
 								{field.label}
 								{#if field.required}<span class="required">*</span>{/if}
+								{#if field.label.includes('JMESPath')}
+									<button
+										type="button"
+										class="help-icon-btn"
+										onclick={openJMESPathHelp}
+										title="View JMESPath syntax help"
+										aria-label="JMESPath syntax help"
+									>
+										?
+									</button>
+								{/if}
 							</label>
 							{#if field.helpText}
 								<div class="help-text">{field.helpText}</div>
@@ -411,6 +439,95 @@
 					<button class="btn-secondary" onclick={handleCancel}>Cancel</button>
 					<button class="btn-primary" onclick={handleSave}>Save Configuration</button>
 				</div>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- JMESPath Help Modal -->
+{#if showJMESPathHelp}
+	<div class="help-modal-overlay" onclick={closeJMESPathHelp}>
+		<div class="help-modal" onclick={(e) => e.stopPropagation()}>
+			<div class="help-modal-header">
+				<h3>JMESPath Syntax Reference</h3>
+				<button class="close-btn" onclick={closeJMESPathHelp} aria-label="Close">&times;</button>
+			</div>
+			
+			<div class="help-modal-body">
+				<div class="help-section">
+					<h4>Basic Syntax</h4>
+					<ul>
+						<li><code>property</code> - Access property</li>
+						<li><code>parent.child</code> - Nested property</li>
+						<li><code>array[0]</code> - Array element</li>
+						<li><code>array[*]</code> - All elements</li>
+						<li><code>array[*].property</code> - Project property from all items</li>
+					</ul>
+				</div>
+				
+				<div class="help-section">
+					<h4>Filtering</h4>
+					<ul>
+						<li><code>array[?condition]</code> - Filter array</li>
+						<li><code>items[?price > `10`]</code> - Filter by comparison</li>
+						<li><code>users[?active == `true`]</code> - Filter by equality</li>
+						<li><code>items[?price > `10` && stock > `0`]</code> - Multiple conditions</li>
+					</ul>
+					<p class="help-note-small">💡 Use backticks for string literals: <code>`string`</code></p>
+				</div>
+				
+				<div class="help-section">
+					<h4>Comparison Operators</h4>
+					<ul>
+						<li><code>==</code> Equal</li>
+						<li><code>!=</code> Not equal</li>
+						<li><code>&lt;</code> Less than</li>
+						<li><code>&gt;</code> Greater than</li>
+						<li><code>&lt;=</code> Less than or equal</li>
+						<li><code>&gt;=</code> Greater than or equal</li>
+					</ul>
+				</div>
+				
+				<div class="help-section">
+					<h4>Functions</h4>
+					<ul>
+						<li><code>length(array)</code> - Get array length</li>
+						<li><code>contains(array, value)</code> - Check if contains</li>
+						<li><code>starts_with(str, prefix)</code> - String starts with</li>
+						<li><code>max(array)</code> / <code>min(array)</code> - Max/min value</li>
+						<li><code>sort_by(array, &property)</code> - Sort by property</li>
+					</ul>
+				</div>
+				
+				<div class="help-section">
+					<h4>Conditional Node Examples</h4>
+					<pre class="help-example">status == `success`
+
+status == `success` && code == `200`
+
+length(items) > `0`
+
+contains(tags, `important`)</pre>
+				</div>
+				
+				<div class="help-section">
+					<h4>Loop Node Examples</h4>
+					<pre class="help-example">data.items[*]
+
+items[?price > `10`]
+
+users[?active == `true`]
+
+items | sort_by(@, &price)</pre>
+				</div>
+				
+				<p class="help-note">
+					📚 <strong>Full Documentation:</strong> See <a href="https://jmespath.org/" target="_blank" rel="noopener">jmespath.org</a> for complete syntax reference and examples.
+				</p>
+			</div>
+			
+			<div class="help-modal-footer">
+				<button class="btn-primary" onclick={closeJMESPathHelp}>Got it!</button>
 			</div>
 		</div>
 	</div>
