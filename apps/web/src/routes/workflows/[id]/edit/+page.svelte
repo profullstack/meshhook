@@ -275,8 +275,10 @@
 		// Clone the node to avoid immutability issues
 		selectedNode = JSON.parse(JSON.stringify(node));
 		// Store previous node data in state to avoid immutability issues
-		previousNodeOutput = getPreviousNodeOutput(node);
-		previousNode = getPreviousNode(node);
+		// IMPORTANT: Get the output from the node BEFORE this one, not this node's own output
+		const prevNode = getPreviousNode(node);
+		previousNodeOutput = prevNode ? getPreviousNodeOutput(node) : {};
+		previousNode = prevNode;
 		showConfigModal = true;
 	}
 	

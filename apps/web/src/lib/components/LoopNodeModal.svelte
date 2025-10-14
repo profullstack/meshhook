@@ -204,26 +204,24 @@
 			{#if outputProps.testResult.success}
 				<div class="loop-preview">
 					<div class="preview-header">
-						<h4>Loop Preview</h4>
+						<h4>Output Per Iteration</h4>
 						<div class="item-count">
-							{outputProps.testResult.count} {outputProps.testResult.count === 1 ? 'item' : 'items'} will be processed
+							{outputProps.testResult.count} {outputProps.testResult.count === 1 ? 'iteration' : 'iterations'}
 						</div>
 					</div>
 					
 					{#if outputProps.testResult.count > 0}
 						<div class="preview-items">
-							<p class="preview-note">Showing first {Math.min(5, outputProps.testResult.count)} item{outputProps.testResult.count === 1 ? '' : 's'}:</p>
-							{#each outputProps.testResult.preview || [] as item, index}
-								<div class="preview-item">
-									<div class="item-header">
-										<span class="item-number">Item {index + 1}</span>
-									</div>
-									<pre class="item-content">{typeof item === 'object' ? JSON.stringify(item, null, 2) : String(item)}</pre>
+							<p class="preview-note">Each iteration will receive one item. Showing first item as example:</p>
+							<div class="preview-item">
+								<div class="item-header">
+									<span class="item-number">Item 1 (Example Output)</span>
 								</div>
-							{/each}
-							{#if outputProps.testResult.count > 5}
+								<pre class="item-content">{typeof outputProps.testResult.preview[0] === 'object' ? JSON.stringify(outputProps.testResult.preview[0], null, 2) : String(outputProps.testResult.preview[0])}</pre>
+							</div>
+							{#if outputProps.testResult.count > 1}
 								<div class="more-items">
-									... and {outputProps.testResult.count - 5} more items
+									The loop will execute {outputProps.testResult.count - 1} more time{outputProps.testResult.count === 2 ? '' : 's'} with the remaining items
 								</div>
 							{/if}
 						</div>
@@ -238,6 +236,7 @@
 				<div class="error-state">
 					<h4>❌ Expression Error</h4>
 					<p class="error-message">{outputProps.testResult.error}</p>
+					<small class="error-hint">Check the browser console for details</small>
 				</div>
 			{/if}
 		{:else}
@@ -669,10 +668,18 @@ data.orders[?status == `pending`]</pre>
 	}
 	
 	.error-message {
-		margin: 0;
+		margin: 0 0 0.5rem 0;
 		color: #666;
 		font-size: 0.875rem;
 		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+	}
+	
+	.error-hint {
+		display: block;
+		margin-top: 0.5rem;
+		font-size: 0.75rem;
+		color: #999;
+		font-style: italic;
 	}
 	
 	/* JMESPath Help Modal Styles */
