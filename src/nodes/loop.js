@@ -99,7 +99,13 @@ export class LoopNode {
 		}
 
 		try {
-			// Execute JMESPath expression
+			// If input is already an array, return it as-is (loop iteration mode)
+			// This happens during actual workflow execution when looping over items
+			if (Array.isArray(input)) {
+				return input;
+			}
+
+			// Execute JMESPath expression to extract array from input
 			const result = jmespath.search(input, this.itemsExpression);
 
 			// Validate that result is an array
