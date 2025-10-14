@@ -94,6 +94,10 @@
 			// Check if dropping into a loop container
 			const targetContainer = findContainerAtPosition(position);
 			
+			console.log('=== Node Drop ===');
+			console.log('Position:', position);
+			console.log('Target container:', targetContainer?.id, targetContainer?.data?.label);
+			
 			// Create new node with unique ID
 			const newNode = {
 				id: `${nodeData.type}-${Date.now()}`,
@@ -118,6 +122,9 @@
 
 			// If dropped into a container, add to its childNodes
 			if (targetContainer) {
+				console.log('Adding node to container:', targetContainer.id);
+				console.log('New node will have parentContainer:', targetContainer.id);
+				
 				nodes = nodes.map(n =>
 					n.id === targetContainer.id
 						? {
@@ -129,10 +136,16 @@
 						}
 						: n
 				);
+				
+				console.log('Container childNodes updated:', nodes.find(n => n.id === targetContainer.id)?.data?.childNodes);
 			}
 
 			// Add node to the canvas
 			nodes = [...nodes, newNode];
+			
+			console.log('Node added to canvas:', newNode.id, newNode.type);
+			console.log('Total nodes:', nodes.length);
+			console.log('==================');
 
 			if (onNodesChange) {
 				onNodesChange(nodes);
