@@ -66,21 +66,14 @@
 			const parentId = currentNode.parentId || currentNode.data?.parentContainer;
 			const parentContainer = nodes.find(n => n.id === parentId);
 			
-			console.log('=== getPreviousNodeOutput: CONTAINER CHECK ===');
 			console.log('Node is inside container:', parentId);
 			console.log('Parent container found:', !!parentContainer);
-			console.log('Parent container object:', parentContainer);
-			console.log('Parent container data (raw):', parentContainer?.data);
-			console.log('Parent container data keys (raw):', Object.keys(parentContainer?.data || {}));
 			
 			// Unwrap the Proxy to access the actual data
 			const parentData = parentContainer ? JSON.parse(JSON.stringify(parentContainer.data)) : null;
 			console.log('Parent container data (unwrapped):', parentData);
-			console.log('Parent container data keys (unwrapped):', Object.keys(parentData || {}));
 			console.log('Parent has loopOutput:', !!parentData?.loopOutput);
 			console.log('Parent loopOutput value:', parentData?.loopOutput);
-			console.log('Parent loopOutput type:', typeof parentData?.loopOutput);
-			console.log('Parent loopOutput is array?', Array.isArray(parentData?.loopOutput));
 			
 			if (parentData && parentData.loopOutput) {
 				// Return first item from loop output as example
@@ -343,6 +336,7 @@
 							// Execute each child node in order
 							for (const childNode of childNodes) {
 								console.log(`Executing child: ${childNode.data?.type} (${childNode.id.slice(0,8)})`);
+								console.log('Child node input:', iterationOutput);
 								
 								// Execute based on child node type
 								if (childNode.data?.type === 'transform') {
@@ -365,12 +359,14 @@
 										};
 									}
 								} else if (childNode.data?.type === 'httpCall') {
-									// For HTTP calls inside loop, we might want to use the item data
-									// This is a simplified version - may need template processing
+									// For HTTP calls inside loop, use the item data for template processing
 									const childResponse = await fetch('/api/test-http', {
 										method: 'POST',
 										headers: { 'Content-Type': 'application/json' },
-										body: JSON.stringify(childNode.data?.config || {})
+										body: JSON.stringify({
+											...childNode.data?.config,
+											_input: iterationOutput  // Pass input for template processing
+										})
 									});
 									
 									const childResult = await childResponse.json();
@@ -380,6 +376,27 @@
 										return {
 											success: false,
 											error: `Failed in loop iteration ${i + 1}, node ${childNode.data?.label}: ${childResult.error?.message}`
+										};
+									}
+								} else if (childNode.data?.type === 'webhook') {
+									// For webhook nodes inside loop, execute with item data for template processing
+									const childResponse = await fetch('/api/test-webhook', {
+										method: 'POST',
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify({
+											config: childNode.data?.config || {},
+											input: iterationOutput
+										})
+									});
+									
+									const childResult = await childResponse.json();
+									if (childResult.success) {
+										iterationOutput = childResult.response;
+										console.log('Webhook executed, output:', iterationOutput);
+									} else {
+										return {
+											success: false,
+											error: `Failed in loop iteration ${i + 1}, node ${childNode.data?.label}: ${childResult.error?.message || childResult.error}`
 										};
 									}
 								}
@@ -394,47 +411,28 @@
 						lastOutput = iterationResults;
 						console.log('Loop container complete, total results:', iterationResults.length);
 						
-						// DEBUG: Log before update
-						console.log('=== BEFORE UPDATE ===');
-						const beforeNode = nodes.find(n => n.id === node.id);
-						console.log('Before node data:', JSON.parse(JSON.stringify(beforeNode?.data)));
-						console.log('Before node data keys:', Object.keys(beforeNode?.data || {}));
-						console.log('Before node data.loopOutput:', beforeNode?.data?.loopOutput);
-						
 						// Update loop node with BOTH testResult and loopOutput
-						// Create completely new data object to ensure reactivity
-						const updatedData = {
-							...node.data,
-							testResult: lastOutput,
-							loopOutput: lastOutput  // Store for child node preview
-						};
-						
-						console.log('=== NEW DATA OBJECT ===');
-						console.log('Updated data:', JSON.parse(JSON.stringify(updatedData)));
-						console.log('Updated data keys:', Object.keys(updatedData));
-						console.log('Updated data.loopOutput:', updatedData.loopOutput);
-						console.log('Updated data.loopOutput is array?', Array.isArray(updatedData.loopOutput));
-						console.log('Updated data.loopOutput length:', updatedData.loopOutput?.length);
-						
 						nodes = nodes.map(n =>
 							n.id === node.id
-								? { ...n, data: updatedData }
+								? {
+									...n,
+									data: {
+										...n.data,
+										testResult: lastOutput,
+										loopOutput: lastOutput  // Store for child node preview
+									}
+								}
 								: n
 						);
 						
-						console.log('=== AFTER UPDATE ===');
-						const afterNode = nodes.find(n => n.id === node.id);
-						console.log('After node data:', JSON.parse(JSON.stringify(afterNode?.data)));
-						console.log('After node data keys:', Object.keys(afterNode?.data || {}));
-						console.log('After node data.loopOutput:', afterNode?.data?.loopOutput);
-						console.log('After node data.loopOutput is array?', Array.isArray(afterNode?.data?.loopOutput));
-						console.log('After node data.loopOutput length:', afterNode?.data?.loopOutput?.length);
-						
 						console.log('Loop node updated with testResult and loopOutput');
 						
-						// Increment execution counter to force reactive updates
-						executionCounter++;
-						console.log('Execution counter incremented to:', executionCounter);
+						// Increment execution counter AFTER nodes update completes
+						// Use queueMicrotask to ensure Svelte's reactivity has processed the nodes update
+						queueMicrotask(() => {
+							executionCounter++;
+							console.log('Execution counter incremented to:', executionCounter);
+						});
 					} else {
 						// LEGACY LOOP (simple array extraction)
 						console.log('Executing legacy loop (array extraction only)');
