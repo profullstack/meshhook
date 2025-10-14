@@ -23,8 +23,12 @@
 	// Node configuration modal state
 	let selectedNode = $state(null);
 	let showConfigModal = $state(false);
-	let previousNodeOutput = $state({});
 	let previousNode = $state(null);
+	
+	// Make previousNodeOutput reactive - updates when nodes change
+	const previousNodeOutput = $derived(
+		selectedNode ? getPreviousNodeOutput(selectedNode) : {}
+	);
 
 	// Validate on changes
 	$effect(() => {
@@ -129,6 +133,7 @@
 				? { ...n, data: { ...n.data, testResult: freshData } }
 				: n
 		);
+		// previousNodeOutput will update automatically via $derived
 	}
 	
 	// Handle executing workflow up to a specific node
@@ -417,11 +422,10 @@
 	// Handle node click - open configuration modal
 	function handleNodeClick(node) {
 		selectedNode = JSON.parse(JSON.stringify(node));
-		// Get previous node and its output
+		// Get previous node
 		const prevNode = getPreviousNode(node);
-		// Pass the actual node object to getPreviousNodeOutput so it can check for loopInput
-		previousNodeOutput = getPreviousNodeOutput(node);
 		previousNode = prevNode;
+		// previousNodeOutput will be computed automatically via $derived
 		showConfigModal = true;
 	}
 	
@@ -433,16 +437,16 @@
 		);
 		showConfigModal = false;
 		selectedNode = null;
-		previousNodeOutput = {};
 		previousNode = null;
+		// previousNodeOutput is derived, no need to reset
 	}
 	
 	// Handle modal cancel
 	function handleModalCancel() {
 		showConfigModal = false;
 		selectedNode = null;
-		previousNodeOutput = {};
 		previousNode = null;
+		// previousNodeOutput is derived, no need to reset
 	}
 
 	// Save workflow
