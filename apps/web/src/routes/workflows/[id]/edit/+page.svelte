@@ -399,9 +399,11 @@
 						);
 						
 						console.log('Loop node updated with testResult and loopOutput');
+						console.log('Updated loop node data:', nodes.find(n => n.id === node.id)?.data);
 						
 						// Increment execution counter to force reactive updates
 						executionCounter++;
+						console.log('Execution counter incremented to:', executionCounter);
 					} else {
 						// LEGACY LOOP (simple array extraction)
 						console.log('Executing legacy loop (array extraction only)');
