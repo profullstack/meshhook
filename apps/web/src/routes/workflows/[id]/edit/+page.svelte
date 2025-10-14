@@ -45,6 +45,8 @@
 	// Get previous node output for template preview
 	function getPreviousNodeOutput(currentNode) {
 		console.log('getPreviousNodeOutput called for node:', currentNode.id, currentNode.data?.type);
+		console.log('Node parentId:', currentNode.parentId);
+		console.log('Node data.parentContainer:', currentNode.data?.parentContainer);
 		
 		// Check if this node is inside a loop container
 		if (currentNode.parentId || currentNode.data?.parentContainer) {
@@ -52,6 +54,8 @@
 			const parentContainer = nodes.find(n => n.id === parentId);
 			
 			console.log('Node is inside container:', parentId);
+			console.log('Parent container found:', !!parentContainer);
+			console.log('Parent has loopOutput:', !!parentContainer?.data?.loopOutput);
 			
 			if (parentContainer && parentContainer.data?.loopOutput) {
 				// Return first item from loop output as example
