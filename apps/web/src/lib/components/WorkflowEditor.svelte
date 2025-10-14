@@ -169,25 +169,40 @@
 	 * Find container at a given position
 	 */
 	function findContainerAtPosition(position) {
-		for (const node of nodes) {
-			if (node.data?.isContainer) {
-				const bounds = {
-					x: node.position.x,
-					y: node.position.y,
-					width: node.data.dimensions?.width || 600,
-					height: node.data.dimensions?.height || 400
-				};
-				
-				if (
-					position.x >= bounds.x &&
-					position.x <= bounds.x + bounds.width &&
-					position.y >= bounds.y &&
-					position.y <= bounds.y + bounds.height
-				) {
-					return node;
-				}
+		console.log('=== findContainerAtPosition ===');
+		console.log('Looking for container at position:', position);
+		console.log('Total nodes:', nodes.length);
+		
+		const containers = nodes.filter(n => n.data?.isContainer);
+		console.log('Containers found:', containers.length);
+		
+		for (const node of containers) {
+			const bounds = {
+				x: node.position.x,
+				y: node.position.y,
+				width: node.data.dimensions?.width || 600,
+				height: node.data.dimensions?.height || 400
+			};
+			
+			console.log(`Container ${node.id}:`, bounds);
+			console.log('  Position check:', {
+				xInRange: position.x >= bounds.x && position.x <= bounds.x + bounds.width,
+				yInRange: position.y >= bounds.y && position.y <= bounds.y + bounds.height
+			});
+			
+			if (
+				position.x >= bounds.x &&
+				position.x <= bounds.x + bounds.width &&
+				position.y >= bounds.y &&
+				position.y <= bounds.y + bounds.height
+			) {
+				console.log('✅ Container found:', node.id);
+				return node;
 			}
 		}
+		
+		console.log('❌ No container found at position');
+		console.log('===============================');
 		return null;
 	}
 	
