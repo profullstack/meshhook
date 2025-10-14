@@ -68,13 +68,16 @@
 			
 			console.log('Node is inside container:', parentId);
 			console.log('Parent container found:', !!parentContainer);
-			console.log('Parent container data:', parentContainer?.data);
-			console.log('Parent has loopOutput:', !!parentContainer?.data?.loopOutput);
-			console.log('Parent loopOutput value:', parentContainer?.data?.loopOutput);
 			
-			if (parentContainer && parentContainer.data?.loopOutput) {
+			// Unwrap the Proxy to access the actual data
+			const parentData = parentContainer ? JSON.parse(JSON.stringify(parentContainer.data)) : null;
+			console.log('Parent container data (unwrapped):', parentData);
+			console.log('Parent has loopOutput:', !!parentData?.loopOutput);
+			console.log('Parent loopOutput value:', parentData?.loopOutput);
+			
+			if (parentData && parentData.loopOutput) {
 				// Return first item from loop output as example
-				const loopOutput = parentContainer.data.loopOutput;
+				const loopOutput = parentData.loopOutput;
 				if (Array.isArray(loopOutput) && loopOutput.length > 0) {
 					console.log('Returning first loop iteration item as input');
 					return loopOutput[0];
