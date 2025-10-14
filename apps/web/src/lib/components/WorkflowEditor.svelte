@@ -159,7 +159,20 @@
 				console.log('Adding node to container:', targetContainer.id);
 				console.log('New node will have parentId:', targetContainer.id);
 				
-				// Update container's childNodes array
+				// Find container index FIRST (before any modifications)
+				const containerIndex = nodes.findIndex(n => n.id === targetContainer.id);
+				console.log('Container index in array:', containerIndex);
+				
+				// Add child node BEFORE parent in array (SvelteFlow requirement)
+				nodes = [
+					...nodes.slice(0, containerIndex),
+					newNode,
+					...nodes.slice(containerIndex)
+				];
+				
+				console.log('Child node inserted at index:', containerIndex);
+				
+				// Now update container's childNodes array
 				nodes = nodes.map(n =>
 					n.id === targetContainer.id
 						? {
@@ -173,14 +186,6 @@
 				);
 				
 				console.log('Container childNodes updated:', nodes.find(n => n.id === targetContainer.id)?.data?.childNodes);
-				
-				// Add child node BEFORE parent in array (SvelteFlow requirement)
-				const containerIndex = nodes.findIndex(n => n.id === targetContainer.id);
-				nodes = [
-					...nodes.slice(0, containerIndex),
-					newNode,
-					...nodes.slice(containerIndex)
-				];
 			} else {
 				// Add node to the end of the array
 				nodes = [...nodes, newNode];
