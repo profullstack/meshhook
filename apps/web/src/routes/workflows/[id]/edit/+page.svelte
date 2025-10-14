@@ -287,8 +287,15 @@
 	
 	// Handle node click - open configuration modal
 	function handleNodeClick(node) {
-		// Clone the node to avoid immutability issues
-		selectedNode = JSON.parse(JSON.stringify(node));
+		// Clone the node WITHOUT testResult to avoid using its own output as input
+		const nodeWithoutTestResult = JSON.parse(JSON.stringify(node));
+		// Temporarily remove testResult so getPreviousNodeOutput doesn't use it
+		if (nodeWithoutTestResult.data) {
+			delete nodeWithoutTestResult.data.testResult;
+			delete nodeWithoutTestResult.data.loopInput;
+		}
+		
+		selectedNode = JSON.parse(JSON.stringify(node)); // Keep original for editing
 		// Store previous node data in state to avoid immutability issues
 		// IMPORTANT: Get the output from the node BEFORE this one, not this node's own output
 		const prevNode = getPreviousNode(node);
