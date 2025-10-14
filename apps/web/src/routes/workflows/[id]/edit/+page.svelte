@@ -206,7 +206,19 @@
 				
 				// If no loopOutput, we need to execute the parent loop first
 				console.log('No loopOutput yet, need to execute parent loop first');
-				// Fall through to normal execution path
+				console.log('Will execute parent loop node:', parentId);
+				
+				// Change target to parent loop and execute it
+				const result = await handleExecuteWorkflow(parentId);
+				
+				// After parent loop executes, the loopOutput should be available
+				// Force a re-evaluation by incrementing execution counter
+				queueMicrotask(() => {
+					executionCounter++;
+					console.log('Incremented executionCounter after parent loop execution:', executionCounter);
+				});
+				
+				return result;
 			}
 			
 			// Build execution path by traversing backwards from target node
