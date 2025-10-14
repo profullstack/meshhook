@@ -48,6 +48,11 @@ export async function POST({ request }) {
 
 		// Execute the loop node
 		console.log('Executing loop node with expression:', config.items);
+		console.log('Input structure for JMESPath:');
+		console.log('- Is array?', Array.isArray(input));
+		console.log('- Has "data" property?', input && typeof input === 'object' && 'data' in input);
+		console.log('- Input keys:', input && typeof input === 'object' && !Array.isArray(input) ? Object.keys(input) : 'N/A (is array or primitive)');
+		
 		const result = loopNode.execute(input);
 		console.log('Loop result - array length:', result.length);
 
