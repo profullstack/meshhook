@@ -66,14 +66,21 @@
 			const parentId = currentNode.parentId || currentNode.data?.parentContainer;
 			const parentContainer = nodes.find(n => n.id === parentId);
 			
+			console.log('=== getPreviousNodeOutput: CONTAINER CHECK ===');
 			console.log('Node is inside container:', parentId);
 			console.log('Parent container found:', !!parentContainer);
+			console.log('Parent container object:', parentContainer);
+			console.log('Parent container data (raw):', parentContainer?.data);
+			console.log('Parent container data keys (raw):', Object.keys(parentContainer?.data || {}));
 			
 			// Unwrap the Proxy to access the actual data
 			const parentData = parentContainer ? JSON.parse(JSON.stringify(parentContainer.data)) : null;
 			console.log('Parent container data (unwrapped):', parentData);
+			console.log('Parent container data keys (unwrapped):', Object.keys(parentData || {}));
 			console.log('Parent has loopOutput:', !!parentData?.loopOutput);
 			console.log('Parent loopOutput value:', parentData?.loopOutput);
+			console.log('Parent loopOutput type:', typeof parentData?.loopOutput);
+			console.log('Parent loopOutput is array?', Array.isArray(parentData?.loopOutput));
 			
 			if (parentData && parentData.loopOutput) {
 				// Return first item from loop output as example
@@ -387,22 +394,43 @@
 						lastOutput = iterationResults;
 						console.log('Loop container complete, total results:', iterationResults.length);
 						
+						// DEBUG: Log before update
+						console.log('=== BEFORE UPDATE ===');
+						const beforeNode = nodes.find(n => n.id === node.id);
+						console.log('Before node data:', JSON.parse(JSON.stringify(beforeNode?.data)));
+						console.log('Before node data keys:', Object.keys(beforeNode?.data || {}));
+						console.log('Before node data.loopOutput:', beforeNode?.data?.loopOutput);
+						
 						// Update loop node with BOTH testResult and loopOutput
+						// Create completely new data object to ensure reactivity
+						const updatedData = {
+							...node.data,
+							testResult: lastOutput,
+							loopOutput: lastOutput  // Store for child node preview
+						};
+						
+						console.log('=== NEW DATA OBJECT ===');
+						console.log('Updated data:', JSON.parse(JSON.stringify(updatedData)));
+						console.log('Updated data keys:', Object.keys(updatedData));
+						console.log('Updated data.loopOutput:', updatedData.loopOutput);
+						console.log('Updated data.loopOutput is array?', Array.isArray(updatedData.loopOutput));
+						console.log('Updated data.loopOutput length:', updatedData.loopOutput?.length);
+						
 						nodes = nodes.map(n =>
 							n.id === node.id
-								? {
-									...n,
-									data: {
-										...n.data,
-										testResult: lastOutput,
-										loopOutput: lastOutput  // Store for child node preview
-									}
-								}
+								? { ...n, data: updatedData }
 								: n
 						);
 						
+						console.log('=== AFTER UPDATE ===');
+						const afterNode = nodes.find(n => n.id === node.id);
+						console.log('After node data:', JSON.parse(JSON.stringify(afterNode?.data)));
+						console.log('After node data keys:', Object.keys(afterNode?.data || {}));
+						console.log('After node data.loopOutput:', afterNode?.data?.loopOutput);
+						console.log('After node data.loopOutput is array?', Array.isArray(afterNode?.data?.loopOutput));
+						console.log('After node data.loopOutput length:', afterNode?.data?.loopOutput?.length);
+						
 						console.log('Loop node updated with testResult and loopOutput');
-						console.log('Updated loop node data:', nodes.find(n => n.id === node.id)?.data);
 						
 						// Increment execution counter to force reactive updates
 						executionCounter++;
