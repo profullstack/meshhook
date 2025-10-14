@@ -53,11 +53,6 @@
 	
 	// Update currentPreviousOutput when dependencies change
 	$effect(() => {
-		console.log('=== ThreePanelModal $effect ===');
-		console.log('Node type:', node.data?.type);
-		console.log('previousNodeOutput:', previousNodeOutput);
-		console.log('refreshedOutput:', refreshedOutput);
-		
 		// For Loop nodes, prefer refreshedOutput (from executing previous node)
 		// but fall back to previousNodeOutput if available
 		if (node.data?.type === 'loop') {
@@ -73,9 +68,6 @@
 					? JSON.parse(JSON.stringify(previousNodeOutput))
 					: {};
 		}
-		
-		console.log('currentPreviousOutput set to:', currentPreviousOutput);
-		console.log('==============================');
 	});
 	
 	/**
