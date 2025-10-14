@@ -1,16 +1,16 @@
 <script>
 	/**
 	 * Loop Container Node Component
-	 * 
+	 *
 	 * A custom SvelteFlow node that acts as a visual container (swimlane) for other nodes.
 	 * Nodes can be dragged into this container, and during execution, the loop will
 	 * iterate over an array and execute child nodes once per item.
 	 */
 	
-	import { Handle, Position } from '@xyflow/svelte';
+	import { Handle, Position, NodeResizer } from '@xyflow/svelte';
 	
 	// Props from SvelteFlow
-	let { data, id } = $props();
+	let { data, id, selected } = $props();
 	
 	// Container dimensions from node data
 	const width = $derived(data.dimensions?.width || 600);
@@ -57,6 +57,7 @@
 <div
 	class="loop-container-node"
 	class:drag-over={isDragOver}
+	class:selected={selected}
 	style="width: {width}px; height: {height}px;"
 	ondragover={handleDragOver}
 	ondragleave={handleDragLeave}
@@ -64,6 +65,10 @@
 	role="region"
 	aria-label="Loop container"
 >
+	<!-- Resize handles when selected -->
+	{#if selected}
+		<NodeResizer minWidth={400} minHeight={300} />
+	{/if}
 	<!-- Input handle (top center) -->
 	<Handle
 		type="target"

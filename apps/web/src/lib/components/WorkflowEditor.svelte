@@ -9,6 +9,7 @@
 	// State
 	let reactFlowWrapper = $state(null);
 	let selectedNodeId = $state(null);
+	let svelteFlowInstance = $state(null);
 	
 	// Register custom node types
 	const nodeTypes = {
@@ -84,12 +85,16 @@
 			// Get the bounds of the react flow wrapper
 			const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
 			
-			// Calculate position relative to the wrapper
-			// Simple conversion without zoom/pan for now
+			// Calculate position - for now use simple calculation
+			// TODO: Account for zoom/pan using SvelteFlow's project function
 			const position = {
 				x: event.clientX - reactFlowBounds.left,
 				y: event.clientY - reactFlowBounds.top
 			};
+			
+			console.log('Screen position:', event.clientX, event.clientY);
+			console.log('Wrapper bounds:', reactFlowBounds);
+			console.log('Calculated flow position:', position);
 
 			// Check if dropping into a loop container
 			const targetContainer = findContainerAtPosition(position);
@@ -227,6 +232,7 @@
 
 <div class="workflow-editor" bind:this={reactFlowWrapper} ondrop={handleDrop} ondragover={handleDragOver} onclick={handleCanvasNodeClick} role="application">
 	<SvelteFlow
+		bind:this={svelteFlowInstance}
 		{nodes}
 		{edges}
 		{nodeTypes}
