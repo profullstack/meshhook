@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { LoopNode } from '../../../../../src/nodes/loop.js';
+import { LoopNode } from '$lib/nodes/loop.js';
 
 /**
  * Test Loop Node Endpoint

@@ -322,8 +322,8 @@
 
 <!-- cURL Import Modal -->
 {#if showCurlModal}
-	<div class="curl-modal-overlay" onclick={closeCurlModal}>
-		<div class="curl-modal" onclick={(e) => e.stopPropagation()}>
+	<div class="curl-modal-overlay" onclick={closeCurlModal} onkeydown={(e) => e.key === 'Escape' && closeCurlModal()} role="dialog" aria-modal="true" tabindex="-1">
+		<div class="curl-modal" onclick={(e) => e.stopPropagation()} role="document">
 			<div class="curl-modal-header">
 				<h3>Import from cURL</h3>
 				<button class="close-btn" onclick={closeCurlModal} aria-label="Close">&times;</button>
@@ -361,8 +361,8 @@
 
 <!-- Template Syntax Help Modal -->
 {#if showTemplateSyntaxModal}
-	<div class="help-modal-overlay" onclick={closeTemplateSyntaxModal}>
-		<div class="help-modal" onclick={(e) => e.stopPropagation()}>
+	<div class="help-modal-overlay" onclick={closeTemplateSyntaxModal} onkeydown={(e) => e.key === 'Escape' && closeTemplateSyntaxModal()} role="dialog" aria-modal="true" tabindex="-1">
+		<div class="help-modal" onclick={(e) => e.stopPropagation()} role="document">
 			<div class="help-modal-header">
 				<h3>Template Syntax Reference</h3>
 				<button class="close-btn" onclick={closeTemplateSyntaxModal} aria-label="Close">&times;</button>

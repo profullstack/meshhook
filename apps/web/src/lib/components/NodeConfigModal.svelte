@@ -458,8 +458,8 @@
 
 <!-- JMESPath Help Modal -->
 {#if showJMESPathHelp}
-	<div class="help-modal-overlay" onclick={closeJMESPathHelp}>
-		<div class="help-modal" onclick={(e) => e.stopPropagation()}>
+	<div class="help-modal-overlay" onclick={closeJMESPathHelp} onkeydown={(e) => e.key === 'Escape' && closeJMESPathHelp()} role="dialog" aria-modal="true" tabindex="-1">
+		<div class="help-modal" onclick={(e) => e.stopPropagation()} role="document">
 			<div class="help-modal-header">
 				<h3>JMESPath Syntax Reference</h3>
 				<button class="close-btn" onclick={closeJMESPathHelp} aria-label="Close">&times;</button>
