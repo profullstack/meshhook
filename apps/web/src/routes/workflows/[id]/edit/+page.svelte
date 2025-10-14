@@ -25,14 +25,17 @@
 	let showConfigModal = $state(false);
 	let previousNode = $state(null);
 	
+	// Track execution state to force reactive updates
+	let executionCounter = $state(0);
+	
 	// Get the actual selected node from nodes array (always fresh)
 	const selectedNode = $derived(
 		selectedNodeId ? nodes.find(n => n.id === selectedNodeId) : null
 	);
 	
-	// Make previousNodeOutput reactive - updates when nodes or selectedNode change
+	// Make previousNodeOutput reactive - updates when nodes, selectedNode, or executionCounter change
 	const previousNodeOutput = $derived(
-		selectedNode ? getPreviousNodeOutput(selectedNode) : {}
+		selectedNode ? getPreviousNodeOutput(selectedNode, executionCounter) : {}
 	);
 
 	// Validate on changes
@@ -52,8 +55,9 @@
 	}
 	
 	// Get previous node output for template preview
-	function getPreviousNodeOutput(currentNode) {
+	function getPreviousNodeOutput(currentNode, _executionCounter) {
 		console.log('getPreviousNodeOutput called for node:', currentNode.id, currentNode.data?.type);
+		console.log('Execution counter:', _executionCounter);
 		console.log('Node parentId:', currentNode.parentId);
 		console.log('Node data.parentContainer:', currentNode.data?.parentContainer);
 		
@@ -395,6 +399,9 @@
 						);
 						
 						console.log('Loop node updated with testResult and loopOutput');
+						
+						// Increment execution counter to force reactive updates
+						executionCounter++;
 					} else {
 						// LEGACY LOOP (simple array extraction)
 						console.log('Executing legacy loop (array extraction only)');
