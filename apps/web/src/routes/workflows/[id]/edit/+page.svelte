@@ -42,9 +42,9 @@
 	}
 	
 	// Get previous node output for template preview
-	function getPreviousNodeOutput(node) {
+	function getPreviousNodeOutput(currentNode) {
 		// Find edges that connect to this node
-		const incomingEdges = edges.filter(edge => edge.target === node.id);
+		const incomingEdges = edges.filter(edge => edge.target === currentNode.id);
 		
 		let sampleData;
 		const currentTimestamp = new Date().toISOString();
@@ -83,6 +83,7 @@
 				const previousNode = JSON.parse(JSON.stringify(foundNode));
 				
 				// If previous node has test result data, use it
+				// This shows the OUTPUT of the previous node as INPUT to current node
 				if (previousNode.data?.testResult) {
 					sampleData = previousNode.data.testResult;
 				} else if (previousNode.data?.type === 'httpCall') {
