@@ -76,7 +76,8 @@ export class LoopNode {
 	}
 
 	/**
-	 * Execute the loop node to extract array items
+	 * Extract array from input using JMESPath expression
+	 * This is used during testing and initial workflow execution
 	 *
 	 * @param {any} input - Input data to extract items from
 	 * @returns {Array} Array of items to loop over
@@ -84,12 +85,12 @@ export class LoopNode {
 	 *
 	 * @example
 	 * const node = new LoopNode({ items: 'users[*]' });
-	 * const result = node.execute({
+	 * const result = node.extractArray({
 	 *   users: [{ name: 'Alice' }, { name: 'Bob' }]
 	 * });
 	 * // Result: [{ name: 'Alice' }, { name: 'Bob' }]
 	 */
-	execute(input) {
+	extractArray(input) {
 		// Check for compilation errors
 		if (this.compilationError) {
 			throw new LoopError(
@@ -99,12 +100,6 @@ export class LoopNode {
 		}
 
 		try {
-			// If input is already an array, return it as-is (loop iteration mode)
-			// This happens during actual workflow execution when looping over items
-			if (Array.isArray(input)) {
-				return input;
-			}
-
 			// Execute JMESPath expression to extract array from input
 			const result = jmespath.search(input, this.itemsExpression);
 
@@ -125,10 +120,22 @@ export class LoopNode {
 
 			// Wrap other errors
 			throw new LoopError(
-				`Loop execution failed: ${error.message}`,
+				`Loop extraction failed: ${error.message}`,
 				this.itemsExpression
 			);
 		}
+	}
+
+	/**
+	 * Execute the loop node (for backward compatibility and workflow execution)
+	 * Delegates to extractArray
+	 *
+	 * @param {any} input - Input data to extract items from
+	 * @returns {Array} Array of items to loop over
+	 * @throws {LoopError} If extraction fails or result is not an array
+	 */
+	execute(input) {
+		return this.extractArray(input);
 	}
 
 	/**
