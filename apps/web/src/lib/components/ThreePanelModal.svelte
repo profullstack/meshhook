@@ -120,7 +120,8 @@
 		try {
 			const result = await onExecuteWorkflow(node.id);
 			if (result && result.success) {
-				refreshedOutput = result.output;
+				// DON'T set refreshedOutput here - it's already set by the workflow execution
+				// The workflow updates each node's testResult, which getPreviousNodeOutput uses
 				hasExecutedPreviousNode = true;
 			} else {
 				alert(`Failed to execute workflow: ${result?.error || 'Unknown error'}`);
