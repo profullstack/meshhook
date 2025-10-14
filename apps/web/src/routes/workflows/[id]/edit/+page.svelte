@@ -168,9 +168,10 @@
 	}
 	
 	// Handle executing workflow up to a specific node
-	async function handleExecuteWorkflow(targetNodeId) {
+	async function handleExecuteWorkflow(targetNodeId, options = {}) {
 		console.log('=== handleExecuteWorkflow START ===');
 		console.log('Target node ID:', targetNodeId);
+		console.log('Options:', options);
 		
 		try {
 			// Find the target node
@@ -207,9 +208,10 @@
 				// If no loopOutput, we need to execute the parent loop first
 				console.log('No loopOutput yet, need to execute parent loop first');
 				console.log('Will execute parent loop node:', parentId);
+				console.log('Test mode (single iteration):', options.testMode);
 				
-				// Change target to parent loop and execute it
-				const result = await handleExecuteWorkflow(parentId);
+				// Change target to parent loop and execute it with testMode flag
+				const result = await handleExecuteWorkflow(parentId, options);
 				
 				// After parent loop executes, the loopOutput should be available
 				// Force a re-evaluation by incrementing execution counter
@@ -320,6 +322,7 @@
 					// lastOutput stays the same (pass-through)
 				} else if (node.data?.type === 'loop') {
 					console.log('Loop node detected, isContainer:', node.data?.isContainer);
+					console.log('Test mode (single iteration):', options.testMode);
 					
 					// Check if this is a container loop
 					if (node.data?.isContainer) {
@@ -355,9 +358,13 @@
 						// Execute child nodes for each array item
 						const iterationResults = [];
 						
-						for (let i = 0; i < arrayItems.length; i++) {
+						// If in test mode, only execute first iteration
+						const iterationsToRun = options.testMode ? Math.min(1, arrayItems.length) : arrayItems.length;
+						console.log(`Running ${iterationsToRun} iteration(s) ${options.testMode ? '(TEST MODE)' : ''}`);
+						
+						for (let i = 0; i < iterationsToRun; i++) {
 							const item = arrayItems[i];
-							console.log(`\n=== Loop Iteration ${i + 1}/${arrayItems.length} ===`);
+							console.log(`\n=== Loop Iteration ${i + 1}/${iterationsToRun} ===`);
 							console.log('Item:', item);
 							
 							let iterationOutput = item;

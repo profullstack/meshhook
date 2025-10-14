@@ -112,7 +112,7 @@
 	/**
 	 * Execute workflow up to this node to get real data
 	 * For loop containers: executes previous node to get input
-	 * For child nodes: executes parent loop to get loop data
+	 * For child nodes: executes parent loop to get loop data (single iteration for testing)
 	 */
 	async function handleExecuteWorkflow() {
 		if (!onExecuteWorkflow) {
@@ -123,7 +123,9 @@
 		executingWorkflow = true;
 		
 		try {
-			const result = await onExecuteWorkflow(node.id);
+			// When executing from a child node inside a loop, use test mode (single iteration)
+			// This provides quick feedback during configuration without running all iterations
+			const result = await onExecuteWorkflow(node.id, { testMode: isInsideLoop });
 			if (result && result.success) {
 				// DON'T set refreshedOutput here - it's already set by the workflow execution
 				// The workflow updates each node's testResult, which getPreviousNodeOutput uses
