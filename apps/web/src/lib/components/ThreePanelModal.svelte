@@ -120,20 +120,30 @@
 			return;
 		}
 		
+		console.log('=== ThreePanelModal handleExecuteWorkflow ===');
+		console.log('Node ID:', node.id);
+		console.log('Is inside loop:', isInsideLoop);
+		console.log('Test mode will be:', isInsideLoop);
+		
 		executingWorkflow = true;
 		
 		try {
 			// When executing from a child node inside a loop, use test mode (single iteration)
 			// This provides quick feedback during configuration without running all iterations
 			const result = await onExecuteWorkflow(node.id, { testMode: isInsideLoop });
+			
+			console.log('Execute workflow result:', result);
+			
 			if (result && result.success) {
 				// DON'T set refreshedOutput here - it's already set by the workflow execution
 				// The workflow updates each node's testResult, which getPreviousNodeOutput uses
 				hasExecutedPreviousNode = true;
+				console.log('Workflow executed successfully, hasExecutedPreviousNode set to true');
 			} else {
 				alert(`Failed to execute workflow: ${result?.error || 'Unknown error'}`);
 			}
 		} catch (err) {
+			console.error('Execute workflow error:', err);
 			alert(`Error executing workflow: ${err.message}`);
 		} finally {
 			executingWorkflow = false;
