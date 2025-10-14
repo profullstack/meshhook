@@ -55,11 +55,18 @@
 	$effect(() => {
 		// For ALL nodes, use refreshedOutput if available (from executing previous node)
 		// otherwise fall back to previousNodeOutput
-		currentPreviousOutput = refreshedOutput
-			? JSON.parse(JSON.stringify(refreshedOutput))
-			: previousNodeOutput
+		// IMPORTANT: refreshedOutput should be the full HTTP response, not extracted arrays
+		const output = refreshedOutput || previousNodeOutput || {};
+		
+		// Safety check: if output is an array, something went wrong - use previousNodeOutput instead
+		if (Array.isArray(output)) {
+			console.warn('refreshedOutput is an array, using previousNodeOutput instead');
+			currentPreviousOutput = previousNodeOutput
 				? JSON.parse(JSON.stringify(previousNodeOutput))
 				: {};
+		} else {
+			currentPreviousOutput = JSON.parse(JSON.stringify(output));
+		}
 	});
 	
 	/**
