@@ -136,6 +136,33 @@
 							error: `Failed to execute ${node.data?.label || node.id}: ${result.error || 'Unknown error'}`
 						};
 					}
+				} else if (node.data?.type === 'loop') {
+					// Execute loop node - extract array using JMESPath
+					const response = await fetch('/api/test-loop', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							config: node.data?.config || {},
+							input: lastOutput
+						})
+					});
+					
+					const result = await response.json();
+					
+					if (result.success) {
+						lastOutput = result.output;
+						// Update node with test result
+						nodes = nodes.map(n =>
+							n.id === node.id
+								? { ...n, data: { ...n.data, testResult: lastOutput } }
+								: n
+						);
+					} else {
+						return {
+							success: false,
+							error: `Failed to execute ${node.data?.label || node.id}: ${result.error || 'Unknown error'}`
+						};
+					}
 				}
 				// Add more node types as needed
 			}
