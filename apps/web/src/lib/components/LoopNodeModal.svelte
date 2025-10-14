@@ -46,6 +46,10 @@
 	 */
 	async function testLoop(currentConfig, inputData) {
 		try {
+			// Debug: log what we're sending
+			console.log('Testing loop with config:', currentConfig);
+			console.log('Input data:', inputData);
+			
 			const response = await fetch('/api/test-loop', {
 				method: 'POST',
 				headers: {
@@ -59,6 +63,8 @@
 			
 			const data = await response.json();
 			
+			console.log('Loop test result:', data);
+			
 			if (data.success) {
 				return {
 					success: true,
@@ -69,10 +75,11 @@
 			} else {
 				return {
 					success: false,
-					error: data.error?.message || 'Unknown error'
+					error: data.error?.message || data.error || 'Unknown error'
 				};
 			}
 		} catch (err) {
+			console.error('Loop test error:', err);
 			return {
 				success: false,
 				error: err.message
