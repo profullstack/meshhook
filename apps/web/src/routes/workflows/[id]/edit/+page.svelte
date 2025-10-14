@@ -46,6 +46,27 @@
 	function getPreviousNodeOutput(currentNode) {
 		console.log('getPreviousNodeOutput called for node:', currentNode.id, currentNode.data?.type);
 		
+		// Check if this node is inside a loop container
+		if (currentNode.parentId || currentNode.data?.parentContainer) {
+			const parentId = currentNode.parentId || currentNode.data?.parentContainer;
+			const parentContainer = nodes.find(n => n.id === parentId);
+			
+			console.log('Node is inside container:', parentId);
+			
+			if (parentContainer && parentContainer.data?.loopOutput) {
+				// Return first item from loop output as example
+				const loopOutput = parentContainer.data.loopOutput;
+				if (Array.isArray(loopOutput) && loopOutput.length > 0) {
+					console.log('Returning first loop iteration item as input');
+					return loopOutput[0];
+				}
+			}
+			
+			// If no loop output yet, return empty
+			console.log('No loop output available, returning empty');
+			return {};
+		}
+		
 		// Find edges that connect to this node
 		const incomingEdges = edges.filter(edge => edge.target === currentNode.id);
 		

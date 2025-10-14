@@ -82,23 +82,35 @@
 		try {
 			const nodeData = JSON.parse(nodeDataStr);
 			
-			// Use SvelteFlow instance to convert screen to flow coordinates
-			// This accounts for zoom and pan transformations
+			// Try to use SvelteFlow's coordinate conversion
 			let position;
-			if (svelteFlowInstance && svelteFlowInstance.screenToFlowPosition) {
-				position = svelteFlowInstance.screenToFlowPosition({
-					x: event.clientX,
-					y: event.clientY
-				});
-				console.log('Using screenToFlowPosition');
+			
+			// Check if we have access to the flow instance methods
+			if (svelteFlowInstance) {
+				console.log('SvelteFlow instance available, methods:', Object.keys(svelteFlowInstance || {}));
+				
+				// Try different possible method names
+				if (typeof svelteFlowInstance.screenToFlowPosition === 'function') {
+					position = svelteFlowInstance.screenToFlowPosition({x: event.clientX, y: event.clientY});
+					console.log('Using screenToFlowPosition');
+				} else if (typeof svelteFlowInstance.project === 'function') {
+					position = svelteFlowInstance.project({x: event.clientX, y: event.clientY});
+					console.log('Using project method');
+				} else {
+					console.log('No coordinate conversion method found, using fallback');
+					const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
+					position = {
+						x: event.clientX - reactFlowBounds.left,
+						y: event.clientY - reactFlowBounds.top
+					};
+				}
 			} else {
-				// Fallback to simple calculation if instance not available
+				console.log('SvelteFlow instance not available, using fallback');
 				const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
 				position = {
 					x: event.clientX - reactFlowBounds.left,
 					y: event.clientY - reactFlowBounds.top
 				};
-				console.log('Using fallback position calculation');
 			}
 			
 			console.log('Screen position:', event.clientX, event.clientY);

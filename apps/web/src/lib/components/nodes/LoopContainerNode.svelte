@@ -69,12 +69,20 @@
 	{#if selected}
 		<NodeResizer minWidth={400} minHeight={300} />
 	{/if}
-	<!-- Input handle (top center) -->
+	<!-- Input handle (top center) - for data coming into the loop -->
 	<Handle
 		type="target"
 		position={Position.Top}
 		id="input"
 		style="left: 50%; transform: translateX(-50%);"
+	/>
+	
+	<!-- Internal input handle (left side) - for child nodes to connect to -->
+	<Handle
+		type="source"
+		position={Position.Left}
+		id="loop-item"
+		style="top: 50%; transform: translateY(-50%);"
 	/>
 	
 	<!-- Container header -->
