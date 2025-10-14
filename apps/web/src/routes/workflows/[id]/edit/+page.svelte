@@ -21,11 +21,16 @@
 	let validationErrors = $state([]);
 	
 	// Node configuration modal state
-	let selectedNode = $state(null);
+	let selectedNodeId = $state(null);
 	let showConfigModal = $state(false);
 	let previousNode = $state(null);
 	
-	// Make previousNodeOutput reactive - updates when nodes change
+	// Get the actual selected node from nodes array (always fresh)
+	const selectedNode = $derived(
+		selectedNodeId ? nodes.find(n => n.id === selectedNodeId) : null
+	);
+	
+	// Make previousNodeOutput reactive - updates when nodes or selectedNode change
 	const previousNodeOutput = $derived(
 		selectedNode ? getPreviousNodeOutput(selectedNode) : {}
 	);
@@ -421,11 +426,11 @@
 	
 	// Handle node click - open configuration modal
 	function handleNodeClick(node) {
-		selectedNode = JSON.parse(JSON.stringify(node));
+		selectedNodeId = node.id;
 		// Get previous node
 		const prevNode = getPreviousNode(node);
 		previousNode = prevNode;
-		// previousNodeOutput will be computed automatically via $derived
+		// selectedNode and previousNodeOutput will be computed automatically via $derived
 		showConfigModal = true;
 	}
 	
@@ -436,17 +441,17 @@
 			n.id === updatedNode.id ? updatedNode : n
 		);
 		showConfigModal = false;
-		selectedNode = null;
+		selectedNodeId = null;
 		previousNode = null;
-		// previousNodeOutput is derived, no need to reset
+		// selectedNode and previousNodeOutput are derived, no need to reset
 	}
 	
 	// Handle modal cancel
 	function handleModalCancel() {
 		showConfigModal = false;
-		selectedNode = null;
+		selectedNodeId = null;
 		previousNode = null;
-		// previousNodeOutput is derived, no need to reset
+		// selectedNode and previousNodeOutput are derived, no need to reset
 	}
 
 	// Save workflow
