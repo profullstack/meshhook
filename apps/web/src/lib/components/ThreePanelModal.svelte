@@ -53,11 +53,19 @@
 	
 	// Update currentPreviousOutput when dependencies change
 	$effect(() => {
-		currentPreviousOutput = refreshedOutput
-			? JSON.parse(JSON.stringify(refreshedOutput))
-			: previousNodeOutput
+		// For Loop nodes, don't use refreshedOutput as it contains the extracted array
+		// Instead, always use previousNodeOutput which should be the original input
+		if (node.data?.type === 'loop') {
+			currentPreviousOutput = previousNodeOutput
 				? JSON.parse(JSON.stringify(previousNodeOutput))
 				: {};
+		} else {
+			currentPreviousOutput = refreshedOutput
+				? JSON.parse(JSON.stringify(refreshedOutput))
+				: previousNodeOutput
+					? JSON.parse(JSON.stringify(previousNodeOutput))
+					: {};
+		}
 	});
 	
 	/**
