@@ -102,7 +102,17 @@
 			const newNode = {
 				id: `${nodeData.type}-${Date.now()}`,
 				type: nodeData.type === 'loop' ? 'loopContainer' : 'default',
-				position,
+				// If dropped into container, position is relative to container
+				// Otherwise, position is absolute on canvas
+				position: targetContainer ? {
+					x: position.x - targetContainer.position.x,
+					y: position.y - targetContainer.position.y
+				} : position,
+				// IMPORTANT: Set parentNode for SvelteFlow's parent-child rendering
+				...(targetContainer ? {
+					parentNode: targetContainer.id,
+					extent: 'parent'  // Constrain movement to parent bounds
+				} : {}),
 				data: {
 					label: nodeData.label,
 					type: nodeData.type,
