@@ -12,6 +12,11 @@ export async function POST({ request }) {
 	try {
 		const config = await request.json();
 
+		console.log('=== test-http API called ===');
+		console.log('Config:', config);
+		console.log('Input data (inputData):', config.inputData);
+		console.log('Input data type:', Array.isArray(config.inputData) ? 'ARRAY' : typeof config.inputData);
+
 		// Validate required fields
 		if (!config.url) {
 			throw error(400, 'URL is required');

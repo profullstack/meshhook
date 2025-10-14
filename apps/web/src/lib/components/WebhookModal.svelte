@@ -46,7 +46,7 @@
 					method: currentConfig.method,
 					headers: currentConfig.headers,
 					body: currentConfig.bodyTemplate,
-					inputData
+					inputData  // Pass input data for template interpolation
 				})
 			});
 			
