@@ -456,6 +456,8 @@
 						console.log('Loop container complete, total results:', iterationResults.length);
 						
 						// Update loop node with BOTH testResult and loopOutput
+						// IMPORTANT: loopOutput should contain the ORIGINAL array items, not the iteration results
+						// This allows child nodes to see the input data for template processing
 						nodes = nodes.map(n =>
 							n.id === node.id
 								? {
@@ -463,7 +465,7 @@
 									data: {
 										...n.data,
 										testResult: lastOutput,
-										loopOutput: lastOutput  // Store for child node preview
+										loopOutput: arrayItems  // Store ORIGINAL items for child node preview
 									}
 								}
 								: n
