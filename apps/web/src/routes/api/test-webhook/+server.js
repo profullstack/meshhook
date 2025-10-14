@@ -11,6 +11,10 @@ export async function POST({ request }) {
 	try {
 		const { config, input } = await request.json();
 
+		console.log('=== test-webhook API called ===');
+		console.log('Config:', config);
+		console.log('Input:', input);
+
 		// Validate config
 		if (!config || typeof config !== 'object') {
 			return json({
@@ -19,11 +23,22 @@ export async function POST({ request }) {
 			}, { status: 400 });
 		}
 
+		// Validate required fields
+		if (!config.url) {
+			return json({
+				success: false,
+				error: 'URL is required in webhook config'
+			}, { status: 400 });
+		}
+
 		// Create webhook node
 		const webhookNode = new WebhookNode(config);
 
 		// Execute webhook with input data
 		const response = await webhookNode.execute(input);
+
+		console.log('Webhook executed successfully');
+		console.log('Response:', response);
 
 		return json({
 			success: true,
@@ -45,6 +60,6 @@ export async function POST({ request }) {
 				statusCode: error.statusCode
 			},
 			request: null
-		}, { status: 500 });
+		}, { status: 200 }); // Return 200 so client can display error
 	}
 }
