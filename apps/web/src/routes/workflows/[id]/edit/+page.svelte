@@ -456,16 +456,17 @@
 						console.log('Loop container complete, total results:', iterationResults.length);
 						
 						// Update loop node with BOTH testResult and loopOutput
-						// IMPORTANT: loopOutput should contain the ORIGINAL array items, not the iteration results
-						// This allows child nodes to see the input data for template processing
+						// testResult: iteration results (output for next node in workflow)
+						// loopOutput: original array items (input for child node configuration/preview)
 						nodes = nodes.map(n =>
 							n.id === node.id
 								? {
 									...n,
 									data: {
 										...n.data,
-										testResult: lastOutput,
-										loopOutput: arrayItems  // Store ORIGINAL items for child node preview
+										testResult: iterationResults,  // Iteration results for workflow output
+										loopOutput: arrayItems,  // Original items for child node preview/config
+										loopInput: lastOutput  // Store the input that was used to extract the array
 									}
 								}
 								: n
