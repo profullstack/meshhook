@@ -11,7 +11,7 @@
 	let loading = $state(false);
 	let loadingMessage = $state('');
 
-	const filteredRuns = $derived(() => {
+	const filteredRuns = $derived.by(() => {
 		let result = runs;
 
 		if (filterStatus !== 'all') {
@@ -25,7 +25,6 @@
 		return result;
 	});
 
-	const filtered = filteredRuns();
 	const workflows = $derived(
 		Array.from(new Set(runs.map((r) => r.workflow_id))).map((id) => {
 			const run = runs.find((r) => r.workflow_id === id);
@@ -118,14 +117,14 @@
 			</select>
 		</div>
 
-		{#if filtered.length === 0}
+		{#if filteredRuns.length === 0}
 			<div class="empty-state">
 				<p class="empty-icon">🏃</p>
 				<p class="empty-text">No runs found</p>
 			</div>
 		{:else}
 			<div class="runs-grid">
-				{#each filtered as run (run.id)}
+				{#each filteredRuns as run (run.id)}
 					<RunCard {run} onView={handleView} onRetry={handleRetry} onCancel={handleCancel} />
 				{/each}
 			</div>

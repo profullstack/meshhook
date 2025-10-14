@@ -277,7 +277,16 @@
 	}
 </script>
 
-<div class="workflow-editor" bind:this={reactFlowWrapper} ondrop={handleDrop} ondragover={handleDragOver} onclick={handleCanvasNodeClick} role="application">
+<div
+	class="workflow-editor"
+	bind:this={reactFlowWrapper}
+	ondrop={handleDrop}
+	ondragover={handleDragOver}
+	onclick={handleCanvasNodeClick}
+	onkeydown={(e) => e.key === 'Enter' && handleCanvasNodeClick(e)}
+	role="button"
+	tabindex="0"
+>
 	<SvelteFlow
 		bind:this={svelteFlowInstance}
 		{nodes}

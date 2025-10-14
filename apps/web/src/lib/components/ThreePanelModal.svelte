@@ -394,6 +394,8 @@
 	});
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="transform-modal-overlay" onclick={handleOverlayClick} onkeydown={(e) => e.key === 'Escape' && handleCancel()} role="dialog" aria-modal="true" tabindex="-1">
 	<div class="transform-modal-container" style:grid-template-columns={showInputPanel && showOutputPanel ? '350px 1fr 350px' : showInputPanel ? '350px 1fr' : showOutputPanel ? '1fr 350px' : '1fr'}>
 		<!-- Left Panel: Input -->
@@ -506,6 +508,8 @@
 													draggable={!item.isExpandable}
 													ondragstart={(e) => !item.isExpandable && handleDragStart(e, item.path)}
 													ondragend={handleDragEnd}
+													role="button"
+													tabindex="0"
 													title={item.isExpandable ? `${item.type} - click arrow to expand` : `Click or drag to insert {{${item.path}}}`}
 												>
 													<span class="type-icon">{getTypeIcon(item.type)}</span>

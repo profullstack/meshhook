@@ -15,7 +15,7 @@
 	let modalOpen = $state(false);
 	let editingSecret = $state(null);
 
-	const filteredSecrets = $derived(() => {
+	const filteredSecrets = $derived.by(() => {
 		let result = secrets;
 
 		if (searchQuery) {
@@ -29,8 +29,6 @@
 
 		return result;
 	});
-
-	const filtered = filteredSecrets();
 
 	function handleCreate() {
 		editingSecret = null;
@@ -133,7 +131,7 @@
 			</select>
 		</div>
 
-		{#if filtered.length === 0}
+		{#if filteredSecrets.length === 0}
 			<div class="empty-state">
 				<p class="empty-icon">🔐</p>
 				<p class="empty-text">
@@ -157,7 +155,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each filtered as secret (secret.id)}
+						{#each filteredSecrets as secret (secret.id)}
 							<tr>
 								<td class="secret-name">{secret.name}</td>
 								<td>{secret.project?.name || 'Unknown'}</td>

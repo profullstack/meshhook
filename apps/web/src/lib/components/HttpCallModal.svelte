@@ -322,8 +322,12 @@
 
 <!-- cURL Import Modal -->
 {#if showCurlModal}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div class="curl-modal-overlay" onclick={closeCurlModal} onkeydown={(e) => e.key === 'Escape' && closeCurlModal()} role="dialog" aria-modal="true" tabindex="-1">
-		<div class="curl-modal" onclick={(e) => e.stopPropagation()} role="document">
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div class="curl-modal" onclick={(e) => e.stopPropagation()}>
 			<div class="curl-modal-header">
 				<h3>Import from cURL</h3>
 				<button class="close-btn" onclick={closeCurlModal} aria-label="Close">&times;</button>
@@ -361,8 +365,12 @@
 
 <!-- Template Syntax Help Modal -->
 {#if showTemplateSyntaxModal}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div class="help-modal-overlay" onclick={closeTemplateSyntaxModal} onkeydown={(e) => e.key === 'Escape' && closeTemplateSyntaxModal()} role="dialog" aria-modal="true" tabindex="-1">
-		<div class="help-modal" onclick={(e) => e.stopPropagation()} role="document">
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div class="help-modal" onclick={(e) => e.stopPropagation()}>
 			<div class="help-modal-header">
 				<h3>Template Syntax Reference</h3>
 				<button class="close-btn" onclick={closeTemplateSyntaxModal} aria-label="Close">&times;</button>
