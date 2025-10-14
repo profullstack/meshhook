@@ -64,7 +64,9 @@
 			
 			console.log('Node is inside container:', parentId);
 			console.log('Parent container found:', !!parentContainer);
+			console.log('Parent container data:', parentContainer?.data);
 			console.log('Parent has loopOutput:', !!parentContainer?.data?.loopOutput);
+			console.log('Parent loopOutput value:', parentContainer?.data?.loopOutput);
 			
 			if (parentContainer && parentContainer.data?.loopOutput) {
 				// Return first item from loop output as example
@@ -154,6 +156,34 @@
 			}
 			
 			console.log('Target node:', targetNode.data?.type, targetNode.data?.label);
+			console.log('Target node parentId:', targetNode.parentId);
+			
+			// Check if this is a child node inside a loop container
+			if (targetNode.parentId || targetNode.data?.parentContainer) {
+				const parentId = targetNode.parentId || targetNode.data?.parentContainer;
+				const parentContainer = nodes.find(n => n.id === parentId);
+				
+				console.log('Target is inside container:', parentId);
+				console.log('Parent container has loopOutput:', !!parentContainer?.data?.loopOutput);
+				
+				// If parent has loopOutput, just execute this child node with first item as input
+				if (parentContainer && parentContainer.data?.loopOutput) {
+					const loopOutput = parentContainer.data.loopOutput;
+					if (Array.isArray(loopOutput) && loopOutput.length > 0) {
+						console.log('Executing child node with first loop item as input');
+						const firstItem = loopOutput[0];
+						
+						// Execute just this child node
+						// For now, just pass through the input (webhook nodes don't execute in test mode)
+						console.log('Child node execution complete (pass-through)');
+						return { success: true, output: firstItem };
+					}
+				}
+				
+				// If no loopOutput, we need to execute the parent loop first
+				console.log('No loopOutput yet, need to execute parent loop first');
+				// Fall through to normal execution path
+			}
 			
 			// Build execution path by traversing backwards from target node
 			const executionPath = [];
