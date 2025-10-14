@@ -212,8 +212,9 @@
 		const containers = nodes.filter(n => n.data?.isContainer);
 		console.log('Containers found:', containers.length);
 		
-		// Add tolerance for coordinate conversion issues
-		const TOLERANCE = 50;
+		// Add large tolerance for coordinate conversion issues
+		// The screen-to-flow coordinate conversion isn't perfect
+		const TOLERANCE = 200;
 		
 		for (const node of containers) {
 			const bounds = {
