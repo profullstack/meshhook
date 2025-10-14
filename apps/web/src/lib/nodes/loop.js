@@ -104,8 +104,11 @@ export class LoopNode {
 
 			// Validate that result is an array
 			if (!Array.isArray(result)) {
+				// Provide helpful error message
+				const inputType = input === null ? 'null' : Array.isArray(input) ? 'array' : typeof input;
+				const resultType = result === null ? 'null' : typeof result;
 				throw new LoopError(
-					`Loop expression must return an array, got ${result === null ? 'null' : typeof result}`,
+					`Loop expression must return an array, got ${resultType}. Input was ${inputType}. Expression: "${this.itemsExpression}"`,
 					this.itemsExpression
 				);
 			}
