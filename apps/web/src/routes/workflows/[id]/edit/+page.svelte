@@ -340,18 +340,21 @@
 						lastOutput = iterationResults;
 						console.log('Loop container complete, total results:', iterationResults.length);
 						
-						// Update loop node with test result
+						// Update loop node with BOTH testResult and loopOutput
 						nodes = nodes.map(n =>
 							n.id === node.id
 								? {
 									...n,
 									data: {
 										...n.data,
-										testResult: lastOutput
+										testResult: lastOutput,
+										loopOutput: lastOutput  // Store for child node preview
 									}
 								}
 								: n
 						);
+						
+						console.log('Loop node updated with testResult and loopOutput');
 					} else {
 						// LEGACY LOOP (simple array extraction)
 						console.log('Executing legacy loop (array extraction only)');
