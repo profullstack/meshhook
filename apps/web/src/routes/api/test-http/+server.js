@@ -78,7 +78,8 @@ export async function POST({ request }) {
 		let executionError = null;
 
 		try {
-			response = await httpNode.execute();
+			// Pass inputData to execute() for template interpolation
+			response = await httpNode.execute(config.inputData);
 		} catch (err) {
 			executionError = err;
 		}
