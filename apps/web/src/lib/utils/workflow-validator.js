@@ -262,10 +262,25 @@ export function findDisconnectedNodes(nodes, edges) {
 		// Skip validation for nodes inside containers
 		// They're connected via the container, not direct edges
 		if (node.data?.parentContainer) {
+			console.log(`Skipping validation for ${node.id} - has parentContainer`);
+			return;
+		}
+		
+		// Skip validation for container nodes themselves
+		// They may not have edges if they only contain child nodes
+		if (node.data?.isContainer) {
+			console.log(`Skipping validation for ${node.id} - is container`);
+			return;
+		}
+		
+		// Skip validation for nodes with parentId (SvelteFlow parent-child)
+		if (node.parentId) {
+			console.log(`Skipping validation for ${node.id} - has parentId`);
 			return;
 		}
 		
 		if (!connectedNodes.has(node.id)) {
+			console.log(`Node ${node.id} NOT connected - adding error`);
 			errors.push(`Node ${node.id} (${node.data?.label || node.type}) is not connected`);
 		}
 	});
