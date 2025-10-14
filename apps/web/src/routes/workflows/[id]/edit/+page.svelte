@@ -82,9 +82,14 @@
 				// Clone the found node to avoid immutability issues
 				const previousNode = JSON.parse(JSON.stringify(foundNode));
 				
+				// CRITICAL: If the CURRENT node (not previous) is a loop node and has loopInput,
+				// use that as the input (this is the original input before loop extraction)
+				if (currentNode.data?.type === 'loop' && currentNode.data?.loopInput) {
+					sampleData = currentNode.data.loopInput;
+				}
 				// Special case: if previous node is a loop node, use its loopInput (original input)
 				// NOT its testResult (which is the extracted array)
-				if (previousNode.data?.type === 'loop' && previousNode.data?.loopInput) {
+				else if (previousNode.data?.type === 'loop' && previousNode.data?.loopInput) {
 					sampleData = previousNode.data.loopInput;
 				}
 				// If previous node has test result data, use it
@@ -287,19 +292,11 @@
 	
 	// Handle node click - open configuration modal
 	function handleNodeClick(node) {
-		// Clone the node WITHOUT testResult to avoid using its own output as input
-		const nodeWithoutTestResult = JSON.parse(JSON.stringify(node));
-		// Temporarily remove testResult so getPreviousNodeOutput doesn't use it
-		if (nodeWithoutTestResult.data) {
-			delete nodeWithoutTestResult.data.testResult;
-			delete nodeWithoutTestResult.data.loopInput;
-		}
-		
-		selectedNode = JSON.parse(JSON.stringify(node)); // Keep original for editing
-		// Store previous node data in state to avoid immutability issues
-		// IMPORTANT: Get the output from the node BEFORE this one, not this node's own output
+		selectedNode = JSON.parse(JSON.stringify(node));
+		// Get previous node and its output
 		const prevNode = getPreviousNode(node);
-		previousNodeOutput = prevNode ? getPreviousNodeOutput(node) : {};
+		// Pass the actual node object to getPreviousNodeOutput so it can check for loopInput
+		previousNodeOutput = getPreviousNodeOutput(node);
 		previousNode = prevNode;
 		showConfigModal = true;
 	}
