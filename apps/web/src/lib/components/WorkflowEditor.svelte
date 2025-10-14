@@ -116,9 +116,9 @@
 					x: position.x - targetContainer.position.x,
 					y: position.y - targetContainer.position.y
 				} : position,
-				// IMPORTANT: Set parentNode for SvelteFlow's parent-child rendering
+				// IMPORTANT: Use parentId (not parentNode) for SvelteFlow's parent-child rendering
 				...(targetContainer ? {
-					parentNode: targetContainer.id,
+					parentId: targetContainer.id,  // Correct property name per SvelteFlow docs
 					extent: 'parent'  // Constrain movement to parent bounds
 				} : {}),
 				data: {
@@ -141,15 +141,17 @@
 			console.log('New node created:', {
 				id: newNode.id,
 				type: newNode.type,
+				parentId: newNode.parentId,
 				isContainer: newNode.data.isContainer,
 				hasConfig: !!newNode.data.config
 			});
 
-			// If dropped into a container, add to its childNodes
+			// IMPORTANT: Per SvelteFlow docs, children must appear BEFORE parent in nodes array
 			if (targetContainer) {
 				console.log('Adding node to container:', targetContainer.id);
-				console.log('New node will have parentContainer:', targetContainer.id);
+				console.log('New node will have parentId:', targetContainer.id);
 				
+				// Update container's childNodes array
 				nodes = nodes.map(n =>
 					n.id === targetContainer.id
 						? {
@@ -163,10 +165,18 @@
 				);
 				
 				console.log('Container childNodes updated:', nodes.find(n => n.id === targetContainer.id)?.data?.childNodes);
+				
+				// Add child node BEFORE parent in array (SvelteFlow requirement)
+				const containerIndex = nodes.findIndex(n => n.id === targetContainer.id);
+				nodes = [
+					...nodes.slice(0, containerIndex),
+					newNode,
+					...nodes.slice(containerIndex)
+				];
+			} else {
+				// Add node to the end of the array
+				nodes = [...nodes, newNode];
 			}
-
-			// Add node to the canvas
-			nodes = [...nodes, newNode];
 			
 			console.log('Node added to canvas:', newNode.id, newNode.type);
 			console.log('Total nodes:', nodes.length);
