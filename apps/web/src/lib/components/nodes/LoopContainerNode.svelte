@@ -77,14 +77,6 @@
 		style="left: 50%; transform: translateX(-50%);"
 	/>
 	
-	<!-- Internal input handle (left side) - for child nodes to connect to -->
-	<Handle
-		type="source"
-		position={Position.Left}
-		id="loop-item"
-		style="top: 50%; transform: translateY(-50%);"
-	/>
-	
 	<!-- Container header -->
 	<div class="container-header">
 		<div class="header-left">
