@@ -355,69 +355,68 @@
 								console.log(`Executing child: ${childNode.data?.type} (${childNode.id.slice(0,8)})`);
 								console.log('Child node input:', iterationOutput);
 								
-								// Execute based on child node type
-								if (childNode.data?.type === 'transform') {
-									const childResponse = await fetch('/api/test-transform', {
-										method: 'POST',
-										headers: { 'Content-Type': 'application/json' },
-										body: JSON.stringify({
-											config: childNode.data?.config || {},
-											input: iterationOutput
-										})
-									});
-									
-									const childResult = await childResponse.json();
-									if (childResult.success) {
-										iterationOutput = childResult.output;
-									} else {
-										return {
-											success: false,
-											error: `Failed in loop iteration ${i + 1}, node ${childNode.data?.label}: ${childResult.error}`
-										};
+								try {
+									// Execute based on child node type
+									if (childNode.data?.type === 'transform') {
+										const childResponse = await fetch('/api/test-transform', {
+											method: 'POST',
+											headers: { 'Content-Type': 'application/json' },
+											body: JSON.stringify({
+												config: childNode.data?.config || {},
+												input: iterationOutput
+											})
+										});
+										
+										const childResult = await childResponse.json();
+										if (childResult.success) {
+											iterationOutput = childResult.output;
+										} else {
+											console.warn(`Child node ${childNode.data?.label} failed:`, childResult.error);
+											// Continue with current output (don't fail the loop)
+										}
+									} else if (childNode.data?.type === 'httpCall') {
+										// For HTTP calls inside loop, use the item data for template processing
+										const childResponse = await fetch('/api/test-http', {
+											method: 'POST',
+											headers: { 'Content-Type': 'application/json' },
+											body: JSON.stringify({
+												...childNode.data?.config,
+												_input: iterationOutput  // Pass input for template processing
+											})
+										});
+										
+										const childResult = await childResponse.json();
+										if (childResult.success) {
+											iterationOutput = childResult.response;
+										} else {
+											console.warn(`Child node ${childNode.data?.label} failed:`, childResult.error?.message);
+											// Continue with current output (don't fail the loop)
+										}
+									} else if (childNode.data?.type === 'webhook') {
+										// For webhook nodes inside loop, execute with item data for template processing
+										const childResponse = await fetch('/api/test-webhook', {
+											method: 'POST',
+											headers: { 'Content-Type': 'application/json' },
+											body: JSON.stringify({
+												config: childNode.data?.config || {},
+												input: iterationOutput
+											})
+										});
+										
+										const childResult = await childResponse.json();
+										if (childResult.success) {
+											iterationOutput = childResult.response;
+											console.log('Webhook executed, output:', iterationOutput);
+										} else {
+											console.warn(`Child node ${childNode.data?.label} failed:`, childResult.error?.message || childResult.error);
+											// Continue with current output (don't fail the loop)
+										}
 									}
-								} else if (childNode.data?.type === 'httpCall') {
-									// For HTTP calls inside loop, use the item data for template processing
-									const childResponse = await fetch('/api/test-http', {
-										method: 'POST',
-										headers: { 'Content-Type': 'application/json' },
-										body: JSON.stringify({
-											...childNode.data?.config,
-											_input: iterationOutput  // Pass input for template processing
-										})
-									});
-									
-									const childResult = await childResponse.json();
-									if (childResult.success) {
-										iterationOutput = childResult.response;
-									} else {
-										return {
-											success: false,
-											error: `Failed in loop iteration ${i + 1}, node ${childNode.data?.label}: ${childResult.error?.message}`
-										};
-									}
-								} else if (childNode.data?.type === 'webhook') {
-									// For webhook nodes inside loop, execute with item data for template processing
-									const childResponse = await fetch('/api/test-webhook', {
-										method: 'POST',
-										headers: { 'Content-Type': 'application/json' },
-										body: JSON.stringify({
-											config: childNode.data?.config || {},
-											input: iterationOutput
-										})
-									});
-									
-									const childResult = await childResponse.json();
-									if (childResult.success) {
-										iterationOutput = childResult.response;
-										console.log('Webhook executed, output:', iterationOutput);
-									} else {
-										return {
-											success: false,
-											error: `Failed in loop iteration ${i + 1}, node ${childNode.data?.label}: ${childResult.error?.message || childResult.error}`
-										};
-									}
+									// Add more node types as needed
+								} catch (error) {
+									console.error(`Error executing child node ${childNode.data?.label}:`, error);
+									// Continue with current output (don't fail the loop)
 								}
-								// Add more node types as needed
 							}
 							
 							iterationResults.push(iterationOutput);
