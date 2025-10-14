@@ -117,22 +117,22 @@
 			// Create new node with unique ID
 			const newNode = {
 				id: `${nodeData.type}-${Date.now()}`,
-				// Use 'group' type for loop containers per SvelteFlow docs
-				type: isLoopNode ? 'group' : 'default',
+				// Use custom loopContainer type to get our styled component
+				type: isLoopNode ? 'loopContainer' : 'default',
 				// If dropped into container, position is relative to container
 				// Otherwise, position is absolute on canvas
 				position: targetContainer ? {
 					x: position.x - targetContainer.position.x,
 					y: position.y - targetContainer.position.y
 				} : position,
-				// IMPORTANT: Use parentId (not parentNode) for SvelteFlow's parent-child rendering
+				// IMPORTANT: Use parentId for SvelteFlow's parent-child rendering
 				...(targetContainer ? {
-					parentId: targetContainer.id,  // Correct property name per SvelteFlow docs
-					extent: 'parent'  // Constrain movement to parent bounds
+					parentId: targetContainer.id,
+					extent: 'parent'
 				} : {}),
-				// Add style for group nodes (required for SvelteFlow parent nodes)
+				// Add style with dimensions for parent nodes
 				...(isLoopNode ? {
-					style: 'width: 600px; height: 400px; background: rgba(240, 244, 248, 0.5); border: 3px solid #4075a6; border-radius: 12px;'
+					style: 'width: 600px; height: 400px;'
 				} : {}),
 				data: {
 					label: nodeData.label,
