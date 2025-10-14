@@ -41,10 +41,21 @@
 		showJMESPathHelp = false;
 	}
 	
+	// Track if we're currently testing to prevent double execution
+	let isTesting = false;
+	
 	/**
 	 * Test loop expression - evaluate JMESPath and show results
 	 */
 	async function testLoop(currentConfig, inputData) {
+		// Prevent double execution
+		if (isTesting) {
+			console.log('Test already in progress, skipping duplicate call');
+			return { success: false, error: 'Test already in progress' };
+		}
+		
+		isTesting = true;
+		
 		try {
 			console.log('=== LoopNodeModal testLoop ===');
 			console.log('Config:', JSON.stringify(currentConfig, null, 2));
@@ -93,6 +104,8 @@
 				success: false,
 				error: err.message
 			};
+		} finally {
+			isTesting = false;
 		}
 	}
 	
