@@ -1,6 +1,7 @@
 <script>
 	import { SvelteFlow, Controls, MiniMap, Background, Panel } from '@xyflow/svelte';
 	import '@xyflow/svelte/dist/style.css';
+	import LoopContainerNode from './nodes/LoopContainerNode.svelte';
 
 	// Props
 	let { nodes = $bindable([]), edges = $bindable([]), onNodesChange, onEdgesChange, onNodeClick } = $props();
@@ -8,6 +9,11 @@
 	// State
 	let reactFlowWrapper = $state(null);
 	let selectedNodeId = $state(null);
+	
+	// Register custom node types
+	const nodeTypes = {
+		loopContainer: LoopContainerNode
+	};
 
 	// Handle connection creation
 	function handleConnect(connection) {
@@ -85,17 +91,45 @@
 				y: event.clientY - reactFlowBounds.top
 			};
 
+			// Check if dropping into a loop container
+			const targetContainer = findContainerAtPosition(position);
+			
 			// Create new node with unique ID
 			const newNode = {
 				id: `${nodeData.type}-${Date.now()}`,
-				type: 'default',
+				type: nodeData.type === 'loop' ? 'loopContainer' : 'default',
 				position,
 				data: {
 					label: nodeData.label,
 					type: nodeData.type,
-					config: {}
+					config: {},
+					// Add container-specific properties for loop nodes
+					...(nodeData.type === 'loop' ? {
+						isContainer: true,
+						childNodes: [],
+						dimensions: { width: 600, height: 400 }
+					} : {}),
+					// Add parent container reference if dropped inside a container
+					...(targetContainer ? {
+						parentContainer: targetContainer.id
+					} : {})
 				}
 			};
+
+			// If dropped into a container, add to its childNodes
+			if (targetContainer) {
+				nodes = nodes.map(n =>
+					n.id === targetContainer.id
+						? {
+							...n,
+							data: {
+								...n.data,
+								childNodes: [...(n.data.childNodes || []), newNode.id]
+							}
+						}
+						: n
+				);
+			}
 
 			// Add node to the canvas
 			nodes = [...nodes, newNode];
@@ -106,6 +140,32 @@
 		} catch (error) {
 			console.error('Error adding node:', error);
 		}
+	}
+	
+	/**
+	 * Find container at a given position
+	 */
+	function findContainerAtPosition(position) {
+		for (const node of nodes) {
+			if (node.data?.isContainer) {
+				const bounds = {
+					x: node.position.x,
+					y: node.position.y,
+					width: node.data.dimensions?.width || 600,
+					height: node.data.dimensions?.height || 400
+				};
+				
+				if (
+					position.x >= bounds.x &&
+					position.x <= bounds.x + bounds.width &&
+					position.y >= bounds.y &&
+					position.y <= bounds.y + bounds.height
+				) {
+					return node;
+				}
+			}
+		}
+		return null;
 	}
 	
 	// Handle node click in the canvas
@@ -131,6 +191,7 @@
 	<SvelteFlow
 		{nodes}
 		{edges}
+		{nodeTypes}
 		fitView
 		onconnect={handleConnect}
 		ondelete={(event) => {

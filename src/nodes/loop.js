@@ -3,11 +3,11 @@ import jmespath from 'jmespath';
 /**
  * Loop Node Implementation
  *
- * Extracts an array from input data using JMESPath expressions.
- * The extracted array is then passed to subsequent nodes, where each
- * item in the array will be processed individually by the workflow engine.
+ * Supports two modes:
+ * 1. Simple Loop (legacy): Extracts an array from input data using JMESPath
+ * 2. Container Loop (new): Acts as a container that executes child nodes for each array item
  *
- * @example Basic array extraction
+ * @example Basic array extraction (legacy mode)
  * const node = new LoopNode({ items: 'data.items[*]' });
  * const result = node.execute({
  *   data: {
@@ -16,15 +16,14 @@ import jmespath from 'jmespath';
  * });
  * // Result: [{ id: 1 }, { id: 2 }, { id: 3 }]
  *
- * @example Filtering items
- * const node = new LoopNode({ items: 'items[?price > `10`]' });
- * const result = node.execute({
- *   items: [
- *     { name: 'A', price: 5 },
- *     { name: 'B', price: 15 }
- *   ]
+ * @example Container loop with child nodes (new mode)
+ * const node = new LoopNode({
+ *   items: 'data.items[*]',
+ *   isContainer: true,
+ *   childNodes: ['transform-1', 'http-1']
  * });
- * // Result: [{ name: 'B', price: 15 }]
+ * const result = await node.executeContainer(input, childNodesArray, executeChildNode);
+ * // Result: [result1, result2, result3] - one result per array item
  */
 
 /**
@@ -55,10 +54,14 @@ export class LoopNode {
 	 * @param {Object} config - Node configuration
 	 * @param {string} config.items - JMESPath expression that returns an array
 	 * @param {string} config.description - Optional description
+	 * @param {boolean} config.isContainer - Whether this is a container loop
+	 * @param {Array<string>} config.childNodes - IDs of child nodes (for container mode)
 	 */
 	constructor(config) {
 		this.itemsExpression = config.items;
 		this.description = config.description;
+		this.isContainer = config.isContainer || false;
+		this.childNodes = config.childNodes || [];
 		this.compiledExpression = null;
 		this.compilationError = null;
 
@@ -188,6 +191,59 @@ export class LoopNode {
 	}
 
 	/**
+	 * Execute container loop - iterates over array and executes child nodes for each item
+	 *
+	 * @param {any} input - Input data to extract array from
+	 * @param {Array} childNodes - Array of child node objects
+	 * @param {Function} executeChildNode - Function to execute a child node: (node, input) => Promise<output>
+	 * @returns {Promise<Array>} Array of results from executing child nodes for each item
+	 * @throws {LoopError} If execution fails
+	 *
+	 * @example
+	 * const results = await loopNode.executeContainer(
+	 *   { data: { items: [1, 2, 3] } },
+	 *   [transformNode, httpNode],
+	 *   async (node, input) => await node.execute(input)
+	 * );
+	 */
+	async executeContainer(input, childNodes, executeChildNode) {
+		// Extract array using JMESPath
+		const items = this.extractArray(input);
+		
+		if (!Array.isArray(items)) {
+			throw new LoopError(
+				'Container loop requires an array',
+				this.itemsExpression
+			);
+		}
+		
+		// Execute child nodes for each item
+		const results = [];
+		
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i];
+			let currentInput = item;
+			
+			// Execute each child node in sequence
+			for (const childNode of childNodes) {
+				try {
+					currentInput = await executeChildNode(childNode, currentInput);
+				} catch (error) {
+					throw new LoopError(
+						`Failed to execute child node in loop iteration ${i}: ${error.message}`,
+						this.itemsExpression
+					);
+				}
+			}
+			
+			// Store the final output from the last child node
+			results.push(currentInput);
+		}
+		
+		return results;
+	}
+
+	/**
 	 * Get node metadata
 	 *
 	 * @returns {Object} Node metadata
@@ -197,6 +253,8 @@ export class LoopNode {
 			type: 'loop',
 			itemsExpression: this.itemsExpression,
 			description: this.description,
+			isContainer: this.isContainer,
+			childNodes: this.childNodes,
 			valid: this.validate().valid,
 		};
 	}

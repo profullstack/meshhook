@@ -3,6 +3,8 @@
  * Validates DAG structure, node configurations, and connections
  */
 
+import { validateContainerWorkflow } from './container-utils.js';
+
 /**
  * Validate entire workflow
  * @param {Object} workflow - Workflow object with nodes and edges
@@ -29,6 +31,12 @@ export function validateWorkflow(workflow) {
 	// Validate edges
 	const edgeErrors = validateEdges(edges, nodes);
 	errors.push(...edgeErrors);
+
+	// Validate container relationships
+	const containerValidation = validateContainerWorkflow(nodes, edges);
+	if (!containerValidation.valid) {
+		errors.push(...containerValidation.errors);
+	}
 
 	// Check for cycles
 	const cycleErrors = detectCycles(nodes, edges);
@@ -120,6 +128,22 @@ export function validateNodeConfig(node) {
 		case 'conditional':
 			if (!config.condition) {
 				errors.push(`Node ${node.id}: Condition is required for Conditional`);
+			}
+			break;
+
+		case 'loopContainer':
+		case 'loop':
+			if (!config.items) {
+				errors.push(`Node ${node.id}: Items expression is required for Loop`);
+			}
+			// Validate container-specific properties
+			if (data?.isContainer) {
+				if (!data.dimensions || !data.dimensions.width || !data.dimensions.height) {
+					errors.push(`Node ${node.id}: Container dimensions are required`);
+				}
+				if (!Array.isArray(data.childNodes)) {
+					errors.push(`Node ${node.id}: Container must have childNodes array`);
+				}
 			}
 			break;
 	}

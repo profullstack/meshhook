@@ -5,6 +5,7 @@
 	import ValidationPanel from '$lib/components/ValidationPanel.svelte';
 	import { validateWorkflow } from '$lib/utils/workflow-validator.js';
 	import { organizeCanvas } from '$lib/utils/layout-organizer.js';
+	import { getChildNodes, getContainerExecutionOrder } from '$lib/utils/container-utils.js';
 	import { goto } from '$app/navigation';
 
 	let { data } = $props();
@@ -107,12 +108,17 @@
 	
 	// Handle executing workflow up to a specific node
 	async function handleExecuteWorkflow(targetNodeId) {
+		console.log('=== handleExecuteWorkflow START ===');
+		console.log('Target node ID:', targetNodeId);
+		
 		try {
 			// Find the target node
 			const targetNode = nodes.find(n => n.id === targetNodeId);
 			if (!targetNode) {
 				return { success: false, error: 'Target node not found' };
 			}
+			
+			console.log('Target node:', targetNode.data?.type, targetNode.data?.label);
 			
 			// Build execution path by traversing backwards from target node
 			const executionPath = [];
@@ -139,10 +145,15 @@
 			
 			buildPath(targetNodeId);
 			
+			console.log('Execution path:', executionPath.map(n => `${n.data?.type}(${n.id.slice(0,8)})`).join(' → '));
+			
 			// Execute nodes in order
 			let lastOutput = {};
 			
 			for (const node of executionPath) {
+				console.log(`\n--- Executing: ${node.data?.type} (${node.id.slice(0,8)}) ---`);
+				console.log('Input (lastOutput):', lastOutput);
+				
 				if (node.data?.type === 'httpCall') {
 					// Execute HTTP call
 					const response = await fetch('/api/test-http', {
@@ -155,12 +166,14 @@
 					
 					if (result.success) {
 						lastOutput = result.response;
+						console.log('HTTP response received, length:', JSON.stringify(lastOutput).length);
 						// Update node with test result
 						nodes = nodes.map(n =>
 							n.id === node.id
 								? { ...n, data: { ...n.data, testResult: lastOutput } }
 								: n
 						);
+						console.log('HTTP node updated with testResult');
 					} else {
 						return {
 							success: false,
@@ -196,59 +209,179 @@
 					}
 				} else if (node.data?.type === 'branch') {
 					// Branch node - pass through input as-is for now
-					// During actual execution, branch logic will determine which path to take
-					// For testing, we just pass the data through
+					console.log('Branch node - passing through input');
 					nodes = nodes.map(n =>
 						n.id === node.id
 							? { ...n, data: { ...n.data, testResult: lastOutput } }
 							: n
 					);
+					console.log('Branch node updated with testResult');
 					// lastOutput stays the same (pass-through)
 				} else if (node.data?.type === 'loop') {
-					// Execute loop node - extract array using JMESPath
-					const response = await fetch('/api/test-loop', {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({
-							config: node.data?.config || {},
-							input: lastOutput
-						})
-					});
+					console.log('Loop node detected, isContainer:', node.data?.isContainer);
 					
-					const result = await response.json();
-					
-					if (result.success) {
-						// Store the original HTTP response as testResult (for input panel)
-						// Store the extracted array as lastOutput (for next node)
-						const loopInput = lastOutput;
-						lastOutput = result.output;  // Extracted array for next node
+					// Check if this is a container loop
+					if (node.data?.isContainer) {
+						// CONTAINER LOOP EXECUTION
+						console.log('Executing loop container');
 						
-						// IMPORTANT: testResult should be the INPUT to the loop (HTTP response)
-						// NOT the output (extracted array), so the input panel shows correct data
+						// Extract array using JMESPath
+						const response = await fetch('/api/test-loop', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								config: node.data?.config || {},
+								input: lastOutput
+							})
+						});
+						
+						const extractResult = await response.json();
+						
+						if (!extractResult.success) {
+							return {
+								success: false,
+								error: `Failed to extract array in ${node.data?.label || node.id}: ${extractResult.error || 'Unknown error'}`
+							};
+						}
+						
+						const arrayItems = extractResult.output;
+						console.log('Extracted array with', arrayItems.length, 'items');
+						
+						// Get child nodes in execution order
+						const childNodes = getContainerExecutionOrder(node, nodes, edges);
+						console.log('Child nodes to execute:', childNodes.map(n => n.data?.type).join(' → '));
+						
+						// Execute child nodes for each array item
+						const iterationResults = [];
+						
+						for (let i = 0; i < arrayItems.length; i++) {
+							const item = arrayItems[i];
+							console.log(`\n=== Loop Iteration ${i + 1}/${arrayItems.length} ===`);
+							console.log('Item:', item);
+							
+							let iterationOutput = item;
+							
+							// Execute each child node in order
+							for (const childNode of childNodes) {
+								console.log(`Executing child: ${childNode.data?.type} (${childNode.id.slice(0,8)})`);
+								
+								// Execute based on child node type
+								if (childNode.data?.type === 'transform') {
+									const childResponse = await fetch('/api/test-transform', {
+										method: 'POST',
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify({
+											config: childNode.data?.config || {},
+											input: iterationOutput
+										})
+									});
+									
+									const childResult = await childResponse.json();
+									if (childResult.success) {
+										iterationOutput = childResult.output;
+									} else {
+										return {
+											success: false,
+											error: `Failed in loop iteration ${i + 1}, node ${childNode.data?.label}: ${childResult.error}`
+										};
+									}
+								} else if (childNode.data?.type === 'httpCall') {
+									// For HTTP calls inside loop, we might want to use the item data
+									// This is a simplified version - may need template processing
+									const childResponse = await fetch('/api/test-http', {
+										method: 'POST',
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify(childNode.data?.config || {})
+									});
+									
+									const childResult = await childResponse.json();
+									if (childResult.success) {
+										iterationOutput = childResult.response;
+									} else {
+										return {
+											success: false,
+											error: `Failed in loop iteration ${i + 1}, node ${childNode.data?.label}: ${childResult.error?.message}`
+										};
+									}
+								}
+								// Add more node types as needed
+							}
+							
+							iterationResults.push(iterationOutput);
+							console.log('Iteration result:', iterationOutput);
+						}
+						
+						// Store results
+						lastOutput = iterationResults;
+						console.log('Loop container complete, total results:', iterationResults.length);
+						
+						// Update loop node with test result
 						nodes = nodes.map(n =>
 							n.id === node.id
 								? {
 									...n,
 									data: {
 										...n.data,
-										testResult: loopInput,  // Store HTTP response for input panel
-										loopOutput: lastOutput  // Store extracted array separately
+										testResult: lastOutput
 									}
 								}
 								: n
 						);
 					} else {
-						return {
-							success: false,
-							error: `Failed to execute ${node.data?.label || node.id}: ${result.error || 'Unknown error'}`
-						};
+						// LEGACY LOOP (simple array extraction)
+						console.log('Executing legacy loop (array extraction only)');
+						
+						const response = await fetch('/api/test-loop', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								config: node.data?.config || {},
+								input: lastOutput
+							})
+						});
+						
+						const result = await response.json();
+						
+						if (result.success) {
+							const loopInput = lastOutput;
+							lastOutput = result.output;
+							
+							console.log('Loop extracted array, length:', lastOutput.length);
+							
+							nodes = nodes.map(n =>
+								n.id === node.id
+									? {
+										...n,
+										data: {
+											...n.data,
+											testResult: loopInput,
+											loopOutput: lastOutput
+										}
+									}
+									: n
+							);
+						} else {
+							return {
+								success: false,
+								error: `Failed to execute ${node.data?.label || node.id}: ${result.error || 'Unknown error'}`
+							};
+						}
 					}
 				}
 				// Add more node types as needed
 			}
 			
+			console.log('=== handleExecuteWorkflow COMPLETE ===');
+			console.log('Final output:', lastOutput);
+			console.log('Nodes after execution:', nodes.map(n => ({
+				id: n.id.slice(0,8),
+				type: n.data?.type,
+				hasTestResult: !!n.data?.testResult
+			})));
+			
 			return { success: true, output: lastOutput };
 		} catch (error) {
+			console.error('handleExecuteWorkflow error:', error);
 			return { success: false, error: error.message };
 		}
 	}
