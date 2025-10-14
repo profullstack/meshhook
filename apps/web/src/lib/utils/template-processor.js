@@ -1,121 +1,189 @@
 /**
- * Template processor for webhook body templates
- * Supports {{ variable }} syntax for field mapping
- * Uses JMESPath for complex expressions
+ * Enhanced Template Processor with Array Looping Support
+ * 
+ * Supports:
+ * - Simple variable substitution: {{variable}}
+ * - Nested paths: {{object.property}}
+ * - Array access: {{array[0]}}
+ * - Array looping: {{#each array}}...{{/each}}
+ * - Loop item access: {{this}} or {{this.property}}
+ * - Loop index: {{@index}}
  */
-
-import jmespath from 'jmespath';
 
 /**
- * Process a template string with data using {{ }} syntax
- * @param {string} template - Template string with {{ }} placeholders
- * @param {object} data - Data object to extract values from
- * @returns {string} Processed template with values replaced
+ * Get value from object by path string
+ * @param {Object} obj - Source object
+ * @param {string} path - Dot/bracket notation path
+ * @returns {*} Value at path or undefined
  */
-export function processTemplate(template, data) {
-	if (!template || typeof template !== 'string') {
-		return template;
-	}
-
-	// Match {{ expression }} patterns
-	const regex = /\{\{([^}]+)\}\}/g;
+export function getValueByPath(obj, path) {
+	if (!path || path === 'this') return obj;
 	
-	return template.replace(regex, (match, expression) => {
-		const trimmedExpr = expression.trim();
+	const parts = path.split(/\.|\[|\]/).filter(Boolean);
+	let current = obj;
+	
+	for (const part of parts) {
+		if (current === null || current === undefined) {
+			return undefined;
+		}
+		current = current[part];
+	}
+	
+	return current;
+}
+
+/**
+ * Process a loop block
+ * @param {string} arrayPath - Path to array in data
+ * @param {string} loopContent - Content inside loop block
+ * @param {Object} data - Source data object
+ * @returns {string} Processed loop output
+ */
+function processLoop(arrayPath, loopContent, data) {
+	const array = getValueByPath(data, arrayPath.trim());
+	
+	if (!Array.isArray(array)) {
+		return `<!-- Error: ${arrayPath} is not an array -->`;
+	}
+	
+	if (array.length === 0) {
+		return '<!-- Empty array -->';
+	}
+	
+	return array.map((item, index) => {
+		// Replace {{this}} with current item
+		// Replace {{this.property}} with item property
+		// Replace {{@index}} with current index
+		return loopContent.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+			const trimmedPath = path.trim();
+			
+			// Handle special @index variable
+			if (trimmedPath === '@index') {
+				return String(index);
+			}
+			
+			// Handle @index0 (0-based) and @index1 (1-based)
+			if (trimmedPath === '@index0') {
+				return String(index);
+			}
+			if (trimmedPath === '@index1') {
+				return String(index + 1);
+			}
+			
+			// Handle 'this' reference
+			if (trimmedPath === 'this') {
+				if (typeof item === 'object') {
+					return JSON.stringify(item, null, 2);
+				}
+				return String(item);
+			}
+			
+			// Handle 'this.property' reference
+			if (trimmedPath.startsWith('this.')) {
+				const propPath = trimmedPath.substring(5);
+				const value = getValueByPath(item, propPath);
+				
+				if (value === undefined || value === null) {
+					return match;
+				}
+				
+				if (typeof value === 'object') {
+					return JSON.stringify(value, null, 2);
+				}
+				
+				return String(value);
+			}
+			
+			// For simple property names without 'this.', try to get from item
+			const value = getValueByPath(item, trimmedPath);
+			
+			if (value === undefined || value === null) {
+				return match;
+			}
+			
+			if (typeof value === 'object') {
+				return JSON.stringify(value, null, 2);
+			}
+			
+			return String(value);
+		});
+	}).join('');
+}
+
+/**
+ * Process template with variable substitution and loop support
+ * @param {string} templateStr - Template string
+ * @param {Object} data - Data object for substitution
+ * @returns {string} Processed template
+ */
+export function processTemplate(templateStr, data) {
+	if (!templateStr) return '';
+	
+	try {
+		// First, process all loops
+		let result = templateStr.replace(
+			/\{\{#each\s+([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g,
+			(match, arrayPath, loopContent) => {
+				return processLoop(arrayPath, loopContent, data);
+			}
+		);
 		
-		try {
-			// Use JMESPath to evaluate the expression
-			const result = jmespath.search(data, trimmedExpr);
+		// Then process remaining simple variables
+		result = result.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+			const trimmedPath = path.trim();
 			
-			// Handle different result types
-			if (result === null || result === undefined) {
-				return '';
+			// Skip loop directives that might remain
+			if (trimmedPath.startsWith('#') || trimmedPath.startsWith('/')) {
+				return match;
 			}
 			
-			if (typeof result === 'object') {
-				return JSON.stringify(result);
+			const value = getValueByPath(data, trimmedPath);
+			
+			if (value === undefined || value === null) {
+				return match; // Keep original if not found
 			}
 			
-			return String(result);
-		} catch (error) {
-			console.error(`Template processing error for expression "${trimmedExpr}":`, error);
-			return match; // Return original placeholder on error
-		}
-	});
-}
-
-/**
- * Process a template object (like headers or body JSON)
- * @param {object|string} template - Template object or string
- * @param {object} data - Data object to extract values from
- * @returns {object|string} Processed template with values replaced
- */
-export function processTemplateObject(template, data) {
-	if (typeof template === 'string') {
-		try {
-			// Try to parse as JSON first
-			const parsed = JSON.parse(template);
-			return processTemplateObject(parsed, data);
-		} catch {
-			// If not JSON, process as string template
-			return processTemplate(template, data);
-		}
-	}
-	
-	if (Array.isArray(template)) {
-		return template.map(item => processTemplateObject(item, data));
-	}
-	
-	if (template && typeof template === 'object') {
-		const result = {};
-		for (const [key, value] of Object.entries(template)) {
-			const processedKey = processTemplate(key, data);
-			result[processedKey] = processTemplateObject(value, data);
-		}
+			if (typeof value === 'object') {
+				return JSON.stringify(value, null, 2);
+			}
+			
+			return String(value);
+		});
+		
 		return result;
+	} catch (error) {
+		return `Error: ${error.message}`;
 	}
-	
-	return template;
 }
 
 /**
- * Validate a template string for syntax errors
- * @param {string} template - Template string to validate
- * @returns {object} Validation result with { valid: boolean, errors: string[] }
+ * Validate template syntax
+ * @param {string} templateStr - Template to validate
+ * @returns {{valid: boolean, errors: string[]}} Validation result
  */
-export function validateTemplate(template) {
+export function validateTemplate(templateStr) {
 	const errors = [];
 	
-	if (!template || typeof template !== 'string') {
+	if (!templateStr) {
 		return { valid: true, errors: [] };
 	}
 	
-	// Check for unmatched braces
-	const openBraces = (template.match(/\{\{/g) || []).length;
-	const closeBraces = (template.match(/\}\}/g) || []).length;
+	// Check for balanced loop tags
+	const eachMatches = (templateStr.match(/\{\{#each/g) || []).length;
+	const endEachMatches = (templateStr.match(/\{\{\/each\}\}/g) || []).length;
 	
-	if (openBraces !== closeBraces) {
-		errors.push('Unmatched template braces {{ }}');
+	if (eachMatches !== endEachMatches) {
+		errors.push(`Unbalanced loop tags: ${eachMatches} {{#each}} but ${endEachMatches} {{/each}}`);
 	}
 	
-	// Extract all expressions and validate them
-	const regex = /\{\{([^}]+)\}\}/g;
+	// Check for nested loops (currently not supported)
+	const loopRegex = /\{\{#each\s+([^}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
 	let match;
-	
-	while ((match = regex.exec(template)) !== null) {
-		const expression = match[1].trim();
-		
-		if (!expression) {
-			errors.push('Empty template expression found');
-			continue;
-		}
-		
-		// Basic JMESPath syntax validation
-		// We'll validate by attempting to search with empty data
-		try {
-			jmespath.search({}, expression);
-		} catch (error) {
-			errors.push(`Invalid JMESPath expression "${expression}": ${error.message}`);
+	while ((match = loopRegex.exec(templateStr)) !== null) {
+		const loopContent = match[2];
+		if (loopContent.includes('{{#each')) {
+			errors.push('Nested loops are not currently supported');
+			break;
 		}
 	}
 	
@@ -123,25 +191,4 @@ export function validateTemplate(template) {
 		valid: errors.length === 0,
 		errors
 	};
-}
-
-/**
- * Extract all template variables from a template string
- * @param {string} template - Template string
- * @returns {string[]} Array of variable expressions found
- */
-export function extractTemplateVariables(template) {
-	if (!template || typeof template !== 'string') {
-		return [];
-	}
-	
-	const variables = [];
-	const regex = /\{\{([^}]+)\}\}/g;
-	let match;
-	
-	while ((match = regex.exec(template)) !== null) {
-		variables.push(match[1].trim());
-	}
-	
-	return variables;
 }

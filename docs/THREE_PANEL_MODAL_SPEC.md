@@ -216,7 +216,44 @@ Webhook-specific configuration modal using ThreePanelModal base.
 ### Unique Features to Retain
 - Template editor with syntax highlighting
 - Real-time output preview
-- Template syntax help
+- Template syntax help with array looping support
+
+### Array Looping Feature
+The transform node now supports looping over arrays in templates, enabling use cases like RSS feed processing:
+
+**Syntax:**
+```
+{{#each arrayPath}}
+  {{this}} or {{property}}
+  {{@index}} - 0-based index
+  {{@index1}} - 1-based index
+{{/each}}
+```
+
+**Example - RSS Feed:**
+```html
+<ul>
+{{#each channel.item}}
+  <li>
+    <a href="{{link}}">{{title}}</a>
+    <p>{{description}}</p>
+    <small>Published: {{pubDate}}</small>
+  </li>
+{{/each}}
+</ul>
+```
+
+**Features:**
+- Loop over any array in input data
+- Access current item with `{{this}}` or direct property names
+- Access nested properties with `{{this.property}}`
+- Use `{{@index}}` for 0-based index or `{{@index1}}` for 1-based
+- Combine with regular variable substitution
+- Multiple loops in same template (non-nested)
+
+**Limitations:**
+- Nested loops not currently supported
+- Loop blocks must be properly balanced
 
 ## Implementation Plan
 

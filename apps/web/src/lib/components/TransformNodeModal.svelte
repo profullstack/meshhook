@@ -1,12 +1,13 @@
 <script>
 	/**
 	 * Transform Node Modal Component
-	 * 
+	 *
 	 * Transform-specific configuration modal using ThreePanelModal base.
-	 * Provides template editor with variable substitution and real-time preview.
+	 * Provides template editor with variable substitution, array looping, and real-time preview.
 	 */
 	
 	import ThreePanelModal from './ThreePanelModal.svelte';
+	import { processTemplate } from '$lib/utils/template-processor.js';
 	
 	let {
 		node,
@@ -23,49 +24,6 @@
 		template: '',
 		description: ''
 	})));
-	
-	/**
-	 * Process template with variable substitution for preview
-	 */
-	function processTemplate(templateStr, data) {
-		if (!templateStr) return '';
-		
-		try {
-			return templateStr.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-				const trimmedPath = path.trim();
-				const value = getValueByPath(data, trimmedPath);
-				
-				if (value === undefined || value === null) {
-					return match; // Keep original if not found
-				}
-				
-				if (typeof value === 'object') {
-					return JSON.stringify(value, null, 2);
-				}
-				
-				return String(value);
-			});
-		} catch (error) {
-			return `Error: ${error.message}`;
-		}
-	}
-	
-	/**
-	 * Get value from object by path string
-	 */
-	function getValueByPath(obj, path) {
-		const parts = path.split(/\.|\[|\]/).filter(Boolean);
-		let current = obj;
-		
-		for (const part of parts) {
-			if (current === null || current === undefined) {
-				return undefined;
-			}
-			current = current[part];
-		}
-		
-		return current;
-	}
 	
 	/**
 	 * Test transform - just process the template with current input
@@ -160,14 +118,31 @@
 					ondragover={(e) => e.preventDefault()}
 				></textarea>
 				<div class="template-help">
-					<details>
+					<details open>
 						<summary>Template Syntax Help</summary>
-						<ul>
-							<li><code>{'{{variable}}'}</code> - Insert simple variable</li>
-							<li><code>{'{{object.property}}'}</code> - Access nested property</li>
-							<li><code>{'{{array[0]}}'}</code> - Access array element</li>
-							<li><code>{'{{data.items[0].name}}'}</code> - Complex path</li>
-						</ul>
+						<div class="help-section">
+							<h4>Variables</h4>
+							<ul>
+								<li><code>{'{{variable}}'}</code> - Insert simple variable</li>
+								<li><code>{'{{object.property}}'}</code> - Access nested property</li>
+								<li><code>{'{{array[0]}}'}</code> - Access array element</li>
+								<li><code>{'{{data.items[0].name}}'}</code> - Complex path</li>
+							</ul>
+						</div>
+						<div class="help-section">
+							<h4>Array Loops</h4>
+							<ul>
+								<li><code>{'{{#each items}}...{{/each}}'}</code> - Loop over array</li>
+								<li><code>{'{{this}}'}</code> - Current item in loop</li>
+								<li><code>{'{{this.property}}'}</code> - Property of current item</li>
+								<li><code>{'{{@index}}'}</code> - Current index (0-based)</li>
+								<li><code>{'{{@index1}}'}</code> - Current index (1-based)</li>
+							</ul>
+						</div>
+						<div class="help-section">
+							<h4>RSS Feed Example</h4>
+							<pre class="help-example">{'{{#each channel.item}}\n<li>\n  <a href="{{link}}">{{title}}</a>\n  <p>{{description}}</p>\n</li>\n{{/each}}'}</pre>
+						</div>
 						<p class="help-note">💡 Tip: Click variables in the input panel or drag them into the template editor</p>
 					</details>
 				</div>
@@ -324,6 +299,34 @@
 		border-radius: 2px;
 		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 		font-size: 0.75rem;
+	}
+	
+	.help-section {
+		margin-top: 0.75rem;
+	}
+	
+	.help-section:first-child {
+		margin-top: 0.5rem;
+	}
+	
+	.help-section h4 {
+		margin: 0 0 0.5rem 0;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: #444;
+	}
+	
+	.help-example {
+		margin: 0.5rem 0 0 0;
+		padding: 0.5rem;
+		background: #fff;
+		border: 1px solid #e0e0e0;
+		border-radius: 3px;
+		font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+		font-size: 0.7rem;
+		line-height: 1.4;
+		overflow-x: auto;
+		color: #333;
 	}
 	
 	.help-note {
