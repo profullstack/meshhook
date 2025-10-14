@@ -17,7 +17,8 @@
 		previousNodeOutput = {},
 		previousNode = null,
 		onRefreshPreviousNode = null,
-		onExecuteWorkflow = null
+		onExecuteWorkflow = null,
+		isInsideLoop = false  // Will be set by parent when node is inside a loop
 	} = $props();
 	
 	// Local config state

@@ -16,7 +16,8 @@
 		previousNodeOutput = {},
 		previousNode = null,
 		onRefreshPreviousNode = null,
-		onExecuteWorkflow = null
+		onExecuteWorkflow = null,
+		isInsideLoop = false  // Will be set by parent when node is inside a loop
 	} = $props();
 	
 	// Local config state
@@ -99,6 +100,7 @@
 	showInputPanel={true}
 	showOutputPanel={true}
 	testFunction={testWebhook}
+	{isInsideLoop}
 >
 	{#snippet children(ctx)}
 		<div class="modal-header">
@@ -176,12 +178,17 @@
 		</div>
 		
 		<div class="modal-footer">
-			<button class="btn-test" onclick={ctx.onTest} disabled={ctx.testingOutput || !config.url}>
+			<button
+				class="btn-test"
+				onclick={ctx.onTest}
+				disabled={ctx.testingOutput || !config.url}
+				title={ctx.isInsideLoop ? "Test this webhook with the first item from loop data" : "Test the webhook with current input"}
+			>
 				{#if ctx.testingOutput}
 					<span class="spinner-small"></span>
 					Testing...
 				{:else}
-					🧪 Test Webhook
+					{ctx.testButtonLabel}
 				{/if}
 			</button>
 			<button class="btn-secondary" onclick={ctx.onCancel}>Cancel</button>

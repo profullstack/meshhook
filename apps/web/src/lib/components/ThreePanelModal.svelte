@@ -24,7 +24,10 @@
 		showOutputPanel = true,
 		testFunction = null,
 		children,
-		outputSnippet
+		outputSnippet,
+		// New props for dual button mode
+		isLoopContainer = false,  // true for loop node itself
+		isInsideLoop = false      // true for nodes inside a loop
 	} = $props();
 	
 	// Local state for editing
@@ -108,6 +111,8 @@
 	
 	/**
 	 * Execute workflow up to this node to get real data
+	 * For loop containers: executes previous node to get input
+	 * For child nodes: executes parent loop to get loop data
 	 */
 	async function handleExecuteWorkflow() {
 		if (!onExecuteWorkflow) {
@@ -132,6 +137,27 @@
 			executingWorkflow = false;
 		}
 	}
+	
+	/**
+	 * Get button labels based on context
+	 */
+	const executeButtonLabel = $derived(() => {
+		if (isLoopContainer) {
+			return executingWorkflow ? 'Executing...' : '▶ Execute Previous Node';
+		} else if (isInsideLoop) {
+			return executingWorkflow ? 'Executing...' : '▶ Execute Parent Loop';
+		}
+		return executingWorkflow ? 'Executing...' : '▶️ Execute';
+	});
+	
+	const testButtonLabel = $derived(() => {
+		if (isLoopContainer) {
+			return '🔄 Execute Loop';
+		} else if (isInsideLoop) {
+			return '🧪 Test with Loop Data';
+		}
+		return '🧪 Test';
+	});
 	
 	/**
 	 * Get value from object by path string
@@ -390,7 +416,13 @@
 		testResult,
 		testingOutput,
 		onTest: handleTest,
-		activeOutputTab
+		activeOutputTab,
+		// Expose button labels for child components
+		executeButtonLabel: executeButtonLabel(),
+		testButtonLabel: testButtonLabel(),
+		executingWorkflow,
+		isLoopContainer,
+		isInsideLoop
 	});
 </script>
 
@@ -409,15 +441,19 @@
 								class="btn-execute-workflow"
 								onclick={handleExecuteWorkflow}
 								disabled={executingWorkflow}
-								title="Execute workflow up to this node"
+								title={isLoopContainer
+									? "Execute the node before the loop to get fresh input data"
+									: isInsideLoop
+										? "Execute the parent loop to get fresh loop data"
+										: "Execute workflow up to this node"}
 							>
 								{#if executingWorkflow}
 									<span class="spinner-small"></span>
 								{:else}
-									▶️ Execute
+									{executeButtonLabel()}
 								{/if}
 							</button>
-							{#if previousNode && previousNode.data?.type === 'httpCall'}
+							{#if previousNode && previousNode.data?.type === 'httpCall' && !isLoopContainer && !isInsideLoop}
 								<button
 									class="btn-refresh-small"
 									onclick={handleTestPreviousNode}

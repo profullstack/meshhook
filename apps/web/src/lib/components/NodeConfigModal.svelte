@@ -7,7 +7,19 @@
 	import WebhookModal from './WebhookModal.svelte';
 	import LoopNodeModal from './LoopNodeModal.svelte';
 	
-	let { node, onSave, onCancel, previousNodeOutput = {}, previousNode = null, onRefreshPreviousNode = null, onExecuteWorkflow = null } = $props();
+	let {
+		node,
+		onSave,
+		onCancel,
+		previousNodeOutput = {},
+		previousNode = null,
+		onRefreshPreviousNode = null,
+		onExecuteWorkflow = null,
+		parentNode = null  // The parent container node (e.g., loop)
+	} = $props();
+	
+	// Determine if this node is inside a loop container
+	const isInsideLoop = $derived(parentNode?.data?.type === 'loop');
 	
 	// Local state for editing - deep clone to avoid immutability
 	let editedNode = $state(JSON.parse(JSON.stringify(node)));
@@ -252,6 +264,7 @@
 		{previousNode}
 		{onRefreshPreviousNode}
 		{onExecuteWorkflow}
+		{isInsideLoop}
 	/>
 {:else if editedNode.data?.type === 'xmlJsonTransform'}
 	<!-- Use XML/JSON Transform Modal -->
@@ -263,6 +276,7 @@
 		{previousNode}
 		{onRefreshPreviousNode}
 		{onExecuteWorkflow}
+		{isInsideLoop}
 	/>
 {:else if editedNode.data?.type === 'httpCall'}
 	<!-- Use HTTP Call Modal with three-panel layout -->
@@ -274,6 +288,7 @@
 		{previousNode}
 		{onRefreshPreviousNode}
 		{onExecuteWorkflow}
+		{isInsideLoop}
 	/>
 {:else if editedNode.data?.type === 'webhook'}
 	<!-- Use Webhook Modal with three-panel layout -->
@@ -285,6 +300,7 @@
 		{previousNode}
 		{onRefreshPreviousNode}
 		{onExecuteWorkflow}
+		{isInsideLoop}
 	/>
 {:else if editedNode.data?.type === 'loop'}
 	<!-- Use Loop Node Modal with three-panel layout -->

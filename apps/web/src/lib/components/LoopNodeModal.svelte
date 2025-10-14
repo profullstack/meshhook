@@ -136,6 +136,7 @@
 	showInputPanel={true}
 	showOutputPanel={true}
 	testFunction={testLoop}
+	isLoopContainer={true}
 >
 	{#snippet children(ctx)}
 		<div class="modal-header">
@@ -198,12 +199,12 @@
 		</div>
 		
 		<div class="modal-footer">
-			<button class="btn-test" onclick={ctx.onTest} disabled={ctx.testingOutput || !config.items}>
+			<button class="btn-test" onclick={ctx.onTest} disabled={ctx.testingOutput || !config.items} title="Execute the loop with current input to extract array items">
 				{#if ctx.testingOutput}
 					<span class="spinner-small"></span>
 					Testing...
 				{:else}
-					🧪 Test Expression
+					{ctx.testButtonLabel}
 				{/if}
 			</button>
 			<button class="btn-secondary" onclick={ctx.onCancel}>Cancel</button>
