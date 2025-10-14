@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { WebhookNode } from '$lib/../../src/nodes/webhook.js';
+import { WebhookNode } from '$lib/nodes/webhook.js';
 
 /**
  * Test webhook execution endpoint
