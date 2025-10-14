@@ -341,11 +341,19 @@
 	async function handleTest() {
 		if (!testFunction) return;
 		
+		// Prevent double execution
+		if (testingOutput) {
+			console.log('Test already in progress, skipping');
+			console.trace('Called from:');
+			return;
+		}
+		
 		testingOutput = true;
 		testResult = null;
 		
 		try {
 			console.log('=== ThreePanelModal handleTest ===');
+			console.trace('handleTest called from:');
 			console.log('Config:', editedNode.data?.config);
 			console.log('Input data:', currentPreviousOutput);
 			console.log('================================');
