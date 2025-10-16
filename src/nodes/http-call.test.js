@@ -494,6 +494,83 @@ describe('HttpCallNode', () => {
 
       const call = mockFetch.mock.calls[0];
       const sentBody = JSON.parse(call.arguments[1].body);
+    it('should send XML body with text/xml Content-Type without JSON stringifying', async () => {
+      const xmlBody = '<?xml version="1.0"?><root><item>test</item></root>';
+      
+      node = new HttpCallNode({
+        url: 'https://api.example.com/xml',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml',
+        },
+        body: xmlBody,
+      });
+
+      await node.execute();
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[1].headers['Content-Type'], 'text/xml');
+      assert.equal(call.arguments[1].body, xmlBody);
+      // Should NOT be JSON stringified
+      assert.ok(!call.arguments[1].body.startsWith('"'));
+    });
+
+    it('should send XML body with application/xml Content-Type', async () => {
+      const xmlBody = '<?xml version="1.0"?><root><item>test</item></root>';
+      
+      node = new HttpCallNode({
+        url: 'https://api.example.com/xml',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/xml',
+        },
+        body: xmlBody,
+      });
+
+      await node.execute();
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[1].headers['Content-Type'], 'application/xml');
+      assert.equal(call.arguments[1].body, xmlBody);
+    });
+
+    it('should send plain text body with text/plain Content-Type', async () => {
+      const textBody = 'This is plain text content';
+      
+      node = new HttpCallNode({
+        url: 'https://api.example.com/text',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: textBody,
+      });
+
+      await node.execute();
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[1].headers['Content-Type'], 'text/plain');
+      assert.equal(call.arguments[1].body, textBody);
+    });
+
+    it('should still JSON stringify objects when Content-Type is application/json', async () => {
+      const jsonBody = { key: 'value', nested: { data: 123 } };
+      
+      node = new HttpCallNode({
+        url: 'https://api.example.com/json',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonBody,
+      });
+
+      await node.execute();
+
+      const call = mockFetch.mock.calls[0];
+      assert.equal(call.arguments[1].headers['Content-Type'], 'application/json');
+      assert.equal(call.arguments[1].body, JSON.stringify(jsonBody));
+    });
       assert.deepEqual(sentBody, inputData);
     });
   });

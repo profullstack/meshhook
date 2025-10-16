@@ -343,12 +343,21 @@ export class HttpCallNode {
 
     // Add body for methods that support it
     if (bodyToUse && ['POST', 'PUT', 'PATCH'].includes(this.method)) {
-      if (typeof bodyToUse === 'object') {
+      // Check if user has explicitly set a Content-Type header
+      const contentType = options.headers['Content-Type'] || options.headers['content-type'] || '';
+      const hasContentType = contentType.length > 0;
+      
+      // Only JSON-stringify if the content type is JSON or not explicitly set
+      const isJsonContentType = !hasContentType || contentType.includes('application/json');
+      
+      if (typeof bodyToUse === 'object' && isJsonContentType) {
+        // Stringify objects only for JSON content type
         options.body = JSON.stringify(bodyToUse);
-        if (!options.headers['Content-Type']) {
+        if (!hasContentType) {
           options.headers['Content-Type'] = 'application/json';
         }
       } else {
+        // Pass through as-is for non-JSON content types or string bodies
         options.body = bodyToUse;
       }
     }
