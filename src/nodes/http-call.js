@@ -384,15 +384,21 @@ export class HttpCallNode {
 
     // Parse response based on type
     try {
-      if (this.responseType === 'json') {
+      // Get the actual content-type from the response
+      const contentType = response.headers.get('content-type') || '';
+      
+      // Check if response is XML-based (text/xml, application/xml, application/rss+xml, etc.)
+      const isXmlContent = contentType.includes('xml');
+      
+      if (this.responseType === 'json' && !isXmlContent) {
         result.data = await response.json();
-      } else if (this.responseType === 'text') {
+      } else if (this.responseType === 'text' || isXmlContent) {
+        // Return text for explicit text type or any XML content
         result.data = await response.text();
       } else if (this.responseType === 'blob') {
         result.data = await response.blob();
       } else {
         // Auto-detect based on content-type
-        const contentType = response.headers.get('content-type') || '';
         if (contentType.includes('application/json')) {
           result.data = await response.json();
         } else {

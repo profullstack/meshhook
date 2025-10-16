@@ -283,6 +283,64 @@ describe('HttpCallNode', () => {
       assert.equal(result.data, 'plain text response');
     });
 
+    it('should return raw XML when response Content-Type is text/xml', async () => {
+      const xmlResponse = '<?xml version="1.0"?><root><item>test</item></root>';
+      
+      mockFetch = mock.fn(async () => ({
+        ok: true,
+        status: 200,
+        headers: new Map([['content-type', 'text/xml']]),
+        text: async () => xmlResponse,
+      }));
+      global.fetch = mockFetch;
+
+      node = new HttpCallNode({
+        url: 'https://api.example.com/xml',
+        responseType: 'json', // Even with json responseType, should respect actual Content-Type
+      });
+      
+      const result = await node.execute();
+      assert.equal(result.data, xmlResponse);
+    });
+
+    it('should return raw XML when response Content-Type is application/xml', async () => {
+      const xmlResponse = '<?xml version="1.0"?><root><item>test</item></root>';
+      
+      mockFetch = mock.fn(async () => ({
+        ok: true,
+        status: 200,
+        headers: new Map([['content-type', 'application/xml']]),
+        text: async () => xmlResponse,
+      }));
+      global.fetch = mockFetch;
+
+      node = new HttpCallNode({
+        url: 'https://api.example.com/xml',
+      });
+      
+      const result = await node.execute();
+      assert.equal(result.data, xmlResponse);
+    });
+
+    it('should return raw RSS when response Content-Type is application/rss+xml', async () => {
+      const rssResponse = '<?xml version="1.0"?><rss version="2.0"><channel><title>Test</title></channel></rss>';
+      
+      mockFetch = mock.fn(async () => ({
+        ok: true,
+        status: 200,
+        headers: new Map([['content-type', 'application/rss+xml']]),
+        text: async () => rssResponse,
+      }));
+      global.fetch = mockFetch;
+
+      node = new HttpCallNode({
+        url: 'https://api.example.com/rss',
+      });
+      
+      const result = await node.execute();
+      assert.equal(result.data, rssResponse);
+    });
+
     it('should use input data from previous node as request body', async () => {
       node = new HttpCallNode({
         url: 'https://api.example.com/data',
