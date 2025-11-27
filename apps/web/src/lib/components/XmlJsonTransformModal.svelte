@@ -184,6 +184,21 @@
 				/>
 			</div>
 			
+			<div class="form-group">
+				<label for="source-path">Source Path (JMESPath)</label>
+				<input
+					id="source-path"
+					type="text"
+					bind:value={config.sourcePath}
+					placeholder="data (leave empty to use entire input)"
+				/>
+				<small class="help-text">
+					Extract XML/JSON from nested path before transforming.
+					Use JMESPath syntax like "data" or "response.body.content".
+					Leave empty to transform the entire input.
+				</small>
+			</div>
+			
 			<details class="advanced-options">
 				<summary>Advanced Options</summary>
 				

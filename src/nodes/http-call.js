@@ -361,6 +361,17 @@ export class HttpCallNode {
         options.body = bodyToUse;
       }
     }
+    
+    // For GET requests, ensure no body or Content-Type is sent
+    // even if input data was provided
+    if (this.method === 'GET') {
+      delete options.body;
+      // Only keep Content-Type if explicitly configured by user
+      if (!this.headers['Content-Type'] && !this.headers['content-type']) {
+        delete options.headers['Content-Type'];
+        delete options.headers['content-type'];
+      }
+    }
 
     return options;
   }
@@ -370,13 +381,6 @@ export class HttpCallNode {
    * @private
    */
   async _handleResponse(response) {
-    const result = {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries()),
-    };
-
     // Handle error responses
     if (!response.ok) {
       const errorBody = await response.text();
@@ -396,24 +400,27 @@ export class HttpCallNode {
       // Get the actual content-type from the response
       const contentType = response.headers.get('content-type') || '';
       
-      // Check if response is XML-based (text/xml, application/xml, application/rss+xml, etc.)
-      const isXmlContent = contentType.includes('xml');
+      // Always return consistent structure: { headers, data }
+      const headers = Object.fromEntries(response.headers.entries());
+      let data;
       
-      if (this.responseType === 'json' && !isXmlContent) {
-        result.data = await response.json();
-      } else if (this.responseType === 'text' || isXmlContent) {
-        // Return text for explicit text type or any XML content
-        result.data = await response.text();
+      // For explicit responseType settings, use them directly
+      if (this.responseType === 'text') {
+        data = await response.text();
       } else if (this.responseType === 'blob') {
-        result.data = await response.blob();
+        data = await response.blob();
       } else {
-        // Auto-detect based on content-type
+        // For 'json' or auto-detect, check the actual content-type
         if (contentType.includes('application/json')) {
-          result.data = await response.json();
+          // Parse as JSON
+          data = await response.json();
         } else {
-          result.data = await response.text();
+          // Return raw text for everything else (XML, RSS, HTML, etc.)
+          data = await response.text();
         }
       }
+      
+      return { headers, data };
     } catch (error) {
       throw new HttpCallError(
         `Failed to parse response: ${error.message}`,
@@ -421,8 +428,6 @@ export class HttpCallNode {
         { url: this.url, method: this.method }
       );
     }
-
-    return result;
   }
 
   /**

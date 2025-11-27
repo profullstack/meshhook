@@ -94,8 +94,8 @@ describe('HttpCallNode', () => {
 
       const result = await node.execute();
       
-      assert.equal(result.status, 200);
-      assert.equal(result.ok, true);
+      // JSON responses return { headers, data }
+      assert.ok(result.headers);
       assert.deepEqual(result.data, { success: true, data: 'test' });
       assert.equal(mockFetch.mock.calls.length, 1);
     });
@@ -188,7 +188,9 @@ describe('HttpCallNode', () => {
 
       const result = await node.execute();
       
-      assert.equal(result.status, 200);
+      // JSON responses return { headers, data }
+      assert.ok(result.headers);
+      assert.deepEqual(result.data, { success: true });
       assert.equal(mockFetch.mock.calls.length, 3);
     });
 
@@ -258,15 +260,16 @@ describe('HttpCallNode', () => {
     });
 
     it('should handle different response types', async () => {
-      // Test JSON response
+      // Test JSON response - returns { headers, data }
       node = new HttpCallNode({
         url: 'https://api.example.com/json',
         responseType: 'json',
       });
       let result = await node.execute();
+      assert.ok(result.headers);
       assert.deepEqual(result.data, { success: true, data: 'test' });
 
-      // Test text response
+      // Test text response - returns { headers, data }
       mockFetch = mock.fn(async () => ({
         ok: true,
         status: 200,
@@ -280,6 +283,7 @@ describe('HttpCallNode', () => {
         responseType: 'text',
       });
       result = await node.execute();
+      assert.ok(result.headers);
       assert.equal(result.data, 'plain text response');
     });
 
@@ -291,15 +295,18 @@ describe('HttpCallNode', () => {
         status: 200,
         headers: new Map([['content-type', 'text/xml']]),
         text: async () => xmlResponse,
+        json: async () => { throw new Error('Should not call json()'); },
       }));
       global.fetch = mockFetch;
 
       node = new HttpCallNode({
         url: 'https://api.example.com/xml',
-        responseType: 'json', // Even with json responseType, should respect actual Content-Type
+        // No responseType specified, should auto-detect and return raw text for XML
       });
       
       const result = await node.execute();
+      // Non-JSON responses return { headers, data } with data as raw text
+      assert.ok(result.headers);
       assert.equal(result.data, xmlResponse);
     });
 
@@ -311,6 +318,7 @@ describe('HttpCallNode', () => {
         status: 200,
         headers: new Map([['content-type', 'application/xml']]),
         text: async () => xmlResponse,
+        json: async () => { throw new Error('Should not call json()'); },
       }));
       global.fetch = mockFetch;
 
@@ -319,6 +327,7 @@ describe('HttpCallNode', () => {
       });
       
       const result = await node.execute();
+      assert.ok(result.headers);
       assert.equal(result.data, xmlResponse);
     });
 
@@ -330,6 +339,7 @@ describe('HttpCallNode', () => {
         status: 200,
         headers: new Map([['content-type', 'application/rss+xml']]),
         text: async () => rssResponse,
+        json: async () => { throw new Error('Should not call json()'); },
       }));
       global.fetch = mockFetch;
 
@@ -338,6 +348,7 @@ describe('HttpCallNode', () => {
       });
       
       const result = await node.execute();
+      assert.ok(result.headers);
       assert.equal(result.data, rssResponse);
     });
 

@@ -1,4 +1,5 @@
 import { XMLParser, XMLBuilder } from 'fast-xml-parser';
+import jmespath from 'jmespath';
 
 /**
  * Transform XML/JSON Node Implementation
@@ -49,6 +50,7 @@ export class XmlJsonTransformNode {
   /**
    * Create an XML/JSON transform node
    * @param {Object} config - Node configuration
+   * @param {string} config.sourcePath - JMESPath expression to extract data from input object (optional)
    * @param {boolean} config.ignoreAttributes - Ignore XML attributes (default: false)
    * @param {string} config.attributeNamePrefix - Prefix for attribute names (default: '@_')
    * @param {boolean} config.ignoreDeclaration - Ignore XML declaration (default: true)
@@ -60,6 +62,7 @@ export class XmlJsonTransformNode {
    * @param {string} config.format - Output format for XML ('pretty' or 'compact', default: 'compact')
    */
   constructor(config = {}) {
+    this.sourcePath = config.sourcePath ?? null;
     // Parser options for XML to JSON
     this.parserOptions = {
       ignoreAttributes: config.ignoreAttributes ?? false,
@@ -139,6 +142,40 @@ export class XmlJsonTransformNode {
   }
 
   /**
+   * Extract data from input using sourcePath (JMESPath expression)
+   * @private
+   * @param {any} input - Input data
+   * @returns {any} Extracted data
+   * @throws {TransformXmlJsonError} If extraction fails
+   */
+  _extractFromPath(input) {
+    if (!this.sourcePath) {
+      return input;
+    }
+
+    try {
+      const extracted = jmespath.search(input, this.sourcePath);
+      
+      if (extracted === null || extracted === undefined) {
+        throw new TransformXmlJsonError(
+          `sourcePath '${this.sourcePath}' returned null or undefined`,
+          input
+        );
+      }
+      
+      return extracted;
+    } catch (error) {
+      if (error instanceof TransformXmlJsonError) {
+        throw error;
+      }
+      throw new TransformXmlJsonError(
+        `Failed to extract data using sourcePath '${this.sourcePath}': ${error.message}`,
+        input
+      );
+    }
+  }
+
+  /**
    * Transform input between XML and JSON formats
    *
    * @param {any} input - Input data (XML string, JSON object, or JSON string)
@@ -154,6 +191,11 @@ export class XmlJsonTransformNode {
    * const node = new XmlJsonTransformNode();
    * const result = node.transform({ user: { name: 'Alice' } });
    * // Result: '<user><name>Alice</name></user>'
+   *
+   * @example With sourcePath
+   * const node = new XmlJsonTransformNode({ sourcePath: 'data' });
+   * const result = node.transform({ headers: {...}, data: '<?xml...>' });
+   * // Extracts input.data, then transforms the XML to JSON
    */
   transform(input) {
     // Validate input
@@ -164,20 +206,24 @@ export class XmlJsonTransformNode {
       );
     }
 
-    if (typeof input === 'string' && input.trim() === '') {
-      throw new TransformXmlJsonError('Input cannot be empty string', input);
+    // Extract data from sourcePath if specified
+    const dataToTransform = this._extractFromPath(input);
+
+    // Validate extracted data
+    if (typeof dataToTransform === 'string' && dataToTransform.trim() === '') {
+      throw new TransformXmlJsonError('Input cannot be empty string', dataToTransform);
     }
 
     try {
       // Auto-detect format and transform
-      if (this._isXml(input)) {
-        return this._xmlToJson(input);
-      } else if (this._isJson(input)) {
-        return this._jsonToXml(input);
+      if (this._isXml(dataToTransform)) {
+        return this._xmlToJson(dataToTransform);
+      } else if (this._isJson(dataToTransform)) {
+        return this._jsonToXml(dataToTransform);
       } else {
         throw new TransformXmlJsonError(
           'Unable to detect input format. Input must be valid XML or JSON.',
-          input
+          dataToTransform
         );
       }
     } catch (error) {
@@ -186,7 +232,7 @@ export class XmlJsonTransformNode {
       }
       throw new TransformXmlJsonError(
         `Transform failed: ${error.message}`,
-        input
+        dataToTransform
       );
     }
   }
@@ -272,6 +318,7 @@ export class XmlJsonTransformNode {
       description: 'Transform between XML and JSON formats',
       valid: this.validate().valid,
       options: {
+        sourcePath: this.sourcePath,
         ignoreAttributes: this.parserOptions.ignoreAttributes,
         attributeNamePrefix: this.parserOptions.attributeNamePrefix,
       },

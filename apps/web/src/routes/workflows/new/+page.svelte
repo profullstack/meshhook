@@ -3,6 +3,7 @@
 	import NodePalette from '$lib/components/NodePalette.svelte';
 	import NodeConfigModal from '$lib/components/NodeConfigModal.svelte';
 	import { goto } from '$app/navigation';
+	import { trackWorkflowCreated, trackWorkflowSaved, trackWorkflowExecuted, trackNodeAdded, trackError } from '$lib/utils/analytics.js';
 
 	let { data } = $props();
 
@@ -210,11 +211,20 @@
 
 			const result = await response.json();
 			
+			// Track workflow creation
+			trackWorkflowCreated({
+				id: result.workflow.id,
+				name: workflowName,
+				nodeCount: nodes.length
+			});
+			
 			// Redirect to the workflow edit page
 			goto(`/workflows/${result.workflow.id}/edit`);
 		} catch (err) {
 			saveError = err.message;
 			console.error('Error saving workflow:', err);
+			// Track error
+			trackError({ message: err.message, context: 'workflow_save' });
 			alert(`Error saving workflow: ${err.message}`);
 		} finally {
 			saving = false;

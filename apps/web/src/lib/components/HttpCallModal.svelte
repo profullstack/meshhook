@@ -43,13 +43,15 @@
 	 */
 	async function testHttpCall(currentConfig, inputData) {
 		try {
+			// Use the local config state instead of the passed currentConfig
+			// because currentConfig might be stale from when the modal opened
 			const response = await fetch('/api/test-http', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					...currentConfig,
+					...config,  // Use local config state
 					inputData
 				})
 			});

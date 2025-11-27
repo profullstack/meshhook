@@ -1,6 +1,7 @@
 <script>
 	import { createClient } from '$lib/supabase.js';
 	import { goto } from '$app/navigation';
+	import { trackSignIn, trackSignUp, trackError } from '$lib/utils/analytics.js';
 
 	let email = $state('');
 	let password = $state('');
@@ -21,9 +22,14 @@
 
 			if (signInError) throw signInError;
 
+			// Track successful sign in
+			trackSignIn({ method: 'email' });
+
 			goto('/workflows');
 		} catch (err) {
 			error = err.message;
+			// Track sign in error
+			trackError({ message: err.message, context: 'sign_in' });
 		} finally {
 			loading = false;
 		}
@@ -41,9 +47,14 @@
 
 			if (signUpError) throw signUpError;
 
+			// Track successful sign up
+			trackSignUp({ method: 'email' });
+
 			error = 'Check your email for the confirmation link!';
 		} catch (err) {
 			error = err.message;
+			// Track sign up error
+			trackError({ message: err.message, context: 'sign_up' });
 		} finally {
 			loading = false;
 		}

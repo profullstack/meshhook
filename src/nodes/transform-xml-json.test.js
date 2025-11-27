@@ -330,6 +330,116 @@ describe('XmlJsonTransformNode', () => {
     });
   });
 
+  describe('sourcePath configuration', () => {
+    it('should extract XML from nested path before transforming', () => {
+      const node = new XmlJsonTransformNode({ sourcePath: 'data' });
+      const input = {
+        headers: { 'content-type': 'application/xml' },
+        data: '<root><name>Alice</name><age>30</age></root>',
+      };
+      
+      const result = node.transform(input);
+      
+      assert.ok(result);
+      assert.equal(typeof result, 'object');
+      assert.equal(result.root.name, 'Alice');
+      assert.equal(result.root.age, 30);
+    });
+
+    it('should extract XML from deeply nested path', () => {
+      const node = new XmlJsonTransformNode({ sourcePath: 'response.body.content' });
+      const input = {
+        response: {
+          body: {
+            content: '<user><email>test@example.com</email></user>',
+          },
+        },
+      };
+      
+      const result = node.transform(input);
+      
+      assert.ok(result);
+      assert.equal(result.user.email, 'test@example.com');
+    });
+
+    it('should use entire input when sourcePath is not specified', () => {
+      const node = new XmlJsonTransformNode();
+      const xmlInput = '<root><name>Bob</name></root>';
+      
+      const result = node.transform(xmlInput);
+      
+      assert.ok(result);
+      assert.equal(result.root.name, 'Bob');
+    });
+
+    it('should handle array index in sourcePath', () => {
+      const node = new XmlJsonTransformNode({ sourcePath: 'items[0].data' });
+      const input = {
+        items: [
+          { data: '<item><id>1</id></item>' },
+          { data: '<item><id>2</id></item>' },
+        ],
+      };
+      
+      const result = node.transform(input);
+      
+      assert.ok(result);
+      assert.equal(result.item.id, 1);
+    });
+
+    it('should throw error when sourcePath does not exist', () => {
+      const node = new XmlJsonTransformNode({ sourcePath: 'nonexistent.path' });
+      const input = { data: '<root></root>' };
+      
+      assert.throws(
+        () => node.transform(input),
+        TransformXmlJsonError
+      );
+    });
+
+    it('should throw error when sourcePath returns null', () => {
+      const node = new XmlJsonTransformNode({ sourcePath: 'data' });
+      const input = { data: null };
+      
+      assert.throws(
+        () => node.transform(input),
+        TransformXmlJsonError
+      );
+    });
+
+    it('should work with sourcePath for JSON to XML conversion', () => {
+      const node = new XmlJsonTransformNode({ sourcePath: 'payload' });
+      const input = {
+        metadata: { timestamp: '2024-01-01' },
+        payload: { root: { name: 'Test' } },
+      };
+      
+      const result = node.transform(input);
+      
+      assert.ok(result);
+      assert.equal(typeof result, 'string');
+      assert.ok(result.includes('<root>'));
+      assert.ok(result.includes('<name>Test</name>'));
+    });
+
+    it('should handle http-call response structure', () => {
+      const node = new XmlJsonTransformNode({ sourcePath: 'data' });
+      const httpResponse = {
+        status: 200,
+        headers: {
+          'content-type': 'application/xml',
+          'content-length': '100',
+        },
+        data: '<?xml version="1.0"?><rss><channel><title>Feed</title></channel></rss>',
+      };
+      
+      const result = node.transform(httpResponse);
+      
+      assert.ok(result);
+      assert.equal(result.rss.channel.title, 'Feed');
+    });
+  });
+
   describe('Edge cases', () => {
     it('should handle XML with CDATA sections', () => {
       const node = new XmlJsonTransformNode();

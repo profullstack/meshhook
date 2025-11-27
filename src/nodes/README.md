@@ -56,6 +56,7 @@ Automatically detects and converts between XML and JSON formats. Perfect for par
 **Features:**
 - Auto-detection of input format (XML or JSON)
 - Bidirectional conversion (XML ↔ JSON)
+- **Source Path Extraction** - Extract XML/JSON from nested object paths using JMESPath
 - RSS and Atom feed parsing support
 - Configurable attribute handling
 - CDATA section support
@@ -101,10 +102,60 @@ console.log(feed.rss.channel.title); // "My Blog"
 console.log(feed.rss.channel.item.title); // "First Post"
 ```
 
+**Using sourcePath to Extract from Nested Objects:**
+```javascript
+// When http-call returns { headers: {...}, data: "<?xml...>" }
+const node = new XmlJsonTransformNode({ sourcePath: 'data' });
+
+const httpResponse = {
+  status: 200,
+  headers: { 'content-type': 'application/xml' },
+  data: '<rss><channel><title>Feed</title></channel></rss>'
+};
+
+const result = node.transform(httpResponse);
+// Extracts httpResponse.data, then transforms the XML to JSON
+// Result: { rss: { channel: { title: 'Feed' } } }
+```
+
+**Deeply Nested Paths:**
+```javascript
+const node = new XmlJsonTransformNode({
+  sourcePath: 'response.body.content'
+});
+
+const input = {
+  response: {
+    body: {
+      content: '<user><name>Alice</name></user>'
+    }
+  }
+};
+
+const result = node.transform(input);
+// Result: { user: { name: 'Alice' } }
+```
+
+**Array Access in Paths:**
+```javascript
+const node = new XmlJsonTransformNode({ sourcePath: 'items[0].data' });
+
+const input = {
+  items: [
+    { data: '<item><id>1</id></item>' },
+    { data: '<item><id>2</id></item>' }
+  ]
+};
+
+const result = node.transform(input);
+// Result: { item: { id: 1 } }
+```
+
 **Configuration Options:**
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `sourcePath` | string | null | JMESPath expression to extract data from input object |
 | `ignoreAttributes` | boolean | false | Ignore XML attributes |
 | `attributeNamePrefix` | string | '@_' | Prefix for attribute names |
 | `parseAttributeValue` | boolean | true | Parse attribute values to correct types |

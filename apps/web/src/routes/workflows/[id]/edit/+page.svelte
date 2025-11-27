@@ -7,6 +7,7 @@
 	import { organizeCanvas } from '$lib/utils/layout-organizer.js';
 	import { getChildNodes, getContainerExecutionOrder } from '$lib/utils/container-utils.js';
 	import { goto } from '$app/navigation';
+	import { trackWorkflowSaved, trackWorkflowExecuted, trackFeatureUsed, trackError } from '$lib/utils/analytics.js';
 
 	let { data } = $props();
 
@@ -612,8 +613,18 @@
 			}
 
 			workflowStatus = publish ? 'published' : 'draft';
+			
+			// Track workflow saved/published
+			trackWorkflowSaved({
+				id: data.workflow.id,
+				name: workflowName,
+				status: publish ? 'published' : 'draft'
+			});
+			
 			alert(publish ? 'Workflow published!' : 'Workflow saved as draft');
 		} catch (error) {
+			// Track error
+			trackError({ message: error.message, context: publish ? 'workflow_publish' : 'workflow_save' });
 			alert(`Error saving workflow: ${error.message}`);
 		} finally {
 			saving = false;
@@ -646,8 +657,12 @@
 			
 			// Update nodes - this triggers Svelte reactivity
 			nodes = organizedNodes;
+			
+			// Track feature usage
+			trackFeatureUsed('organize_canvas', { nodeCount: nodes.length });
 		} catch (error) {
 			console.error('Error organizing canvas:', error);
+			trackError({ message: error.message, context: 'organize_canvas' });
 			alert('Failed to organize canvas');
 		}
 	}

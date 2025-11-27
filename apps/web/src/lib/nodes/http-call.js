@@ -227,13 +227,6 @@ export class HttpCallNode {
    * @private
    */
   async _handleResponse(response) {
-    const result = {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries()),
-    };
-
     // Handle error responses
     if (!response.ok) {
       const errorBody = await response.text();
@@ -250,21 +243,30 @@ export class HttpCallNode {
 
     // Parse response based on type
     try {
-      if (this.responseType === 'json') {
-        result.data = await response.json();
-      } else if (this.responseType === 'text') {
-        result.data = await response.text();
+      // Get the actual content-type from the response
+      const contentType = response.headers.get('content-type') || '';
+      
+      // Always return consistent structure: { headers, data }
+      const headers = Object.fromEntries(response.headers.entries());
+      let data;
+      
+      // For explicit responseType settings, use them directly
+      if (this.responseType === 'text') {
+        data = await response.text();
       } else if (this.responseType === 'blob') {
-        result.data = await response.blob();
+        data = await response.blob();
       } else {
-        // Auto-detect based on content-type
-        const contentType = response.headers.get('content-type') || '';
+        // For 'json' or auto-detect, check the actual content-type
         if (contentType.includes('application/json')) {
-          result.data = await response.json();
+          // Parse as JSON
+          data = await response.json();
         } else {
-          result.data = await response.text();
+          // Return raw text for everything else (XML, RSS, HTML, etc.)
+          data = await response.text();
         }
       }
+      
+      return { headers, data };
     } catch (error) {
       throw new HttpCallError(
         `Failed to parse response: ${error.message}`,
@@ -272,8 +274,6 @@ export class HttpCallNode {
         { url: this.url, method: this.method }
       );
     }
-
-    return result;
   }
 
   /**
