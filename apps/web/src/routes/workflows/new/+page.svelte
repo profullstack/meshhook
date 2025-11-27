@@ -278,13 +278,13 @@
 	.workflows-page {
 		display: flex;
 		flex-direction: column;
-		height: 100vh;
-		background: #f8f9fa;
+		height: calc(100vh - 64px);
+		background-color: var(--color-bg-secondary);
 	}
 
 	.page-header {
-		background: white;
-		border-bottom: 1px solid #e0e0e0;
+		background-color: var(--color-nav-bg);
+		border-bottom: 1px solid var(--color-nav-border);
 		padding: 1rem 2rem;
 	}
 
@@ -299,41 +299,41 @@
 		margin: 0;
 		font-size: 1.5rem;
 		font-weight: 600;
-		color: #333;
+		color: var(--color-text-primary);
 	}
 
 	.header-actions {
 		display: flex;
-		gap: 1rem;
+		gap: 0.75rem;
 	}
 
 	button {
 		padding: 0.5rem 1rem;
 		border: none;
-		border-radius: 4px;
+		border-radius: 6px;
 		font-size: 0.875rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s;
+		transition: all var(--transition-fast);
 	}
 
 	.btn-primary {
-		background: var(--color-theme-1);
-		color: white;
+		background-color: var(--color-button-primary);
+		color: var(--color-text-inverse);
 	}
 
 	.btn-primary:hover {
-		background: var(--color-theme-2);
+		background-color: var(--color-button-primary-hover);
 	}
 
 	.btn-secondary {
-		background: white;
-		color: #333;
-		border: 1px solid #ddd;
+		background-color: var(--color-card-bg);
+		color: var(--color-text-primary);
+		border: 1px solid var(--color-border-primary);
 	}
 
 	.btn-secondary:hover {
-		background: #f5f5f5;
+		background-color: var(--color-bg-hover);
 	}
 
 	.workflow-container {
@@ -345,5 +345,6 @@
 	.editor-container {
 		flex: 1;
 		position: relative;
+		background-color: var(--color-bg-tertiary);
 	}
 </style>

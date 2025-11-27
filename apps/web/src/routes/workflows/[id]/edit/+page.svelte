@@ -749,13 +749,13 @@
 	.workflows-page {
 		display: flex;
 		flex-direction: column;
-		height: 100vh;
-		background: #f8f9fa;
+		height: calc(100vh - 64px);
+		background-color: var(--color-bg-secondary);
 	}
 
 	.page-header {
-		background: white;
-		border-bottom: 1px solid #e0e0e0;
+		background-color: var(--color-nav-bg);
+		border-bottom: 1px solid var(--color-nav-border);
 		padding: 1rem 2rem;
 	}
 
@@ -775,16 +775,17 @@
 
 	.btn-back {
 		padding: 0.5rem 1rem;
-		background: white;
-		border: 1px solid #ddd;
-		border-radius: 4px;
+		background-color: var(--color-card-bg);
+		border: 1px solid var(--color-border-primary);
+		border-radius: 6px;
 		font-size: 0.875rem;
+		color: var(--color-text-primary);
 		cursor: pointer;
-		transition: all 0.2s;
+		transition: all var(--transition-fast);
 	}
 
 	.btn-back:hover {
-		background: #f5f5f5;
+		background-color: var(--color-bg-hover);
 	}
 
 	.workflow-info {
@@ -798,19 +799,20 @@
 		border: none;
 		font-size: 1.5rem;
 		font-weight: 600;
-		color: #333;
+		color: var(--color-text-primary);
+		background-color: transparent;
 		padding: 0.25rem 0.5rem;
-		border-radius: 4px;
-		transition: background 0.2s;
+		border-radius: 6px;
+		transition: background-color var(--transition-fast);
 	}
 
 	.workflow-name-input:hover {
-		background: #f5f5f5;
+		background-color: var(--color-bg-hover);
 	}
 
 	.workflow-name-input:focus {
 		outline: none;
-		background: #f5f5f5;
+		background-color: var(--color-bg-hover);
 	}
 
 	.status-badge {
@@ -818,57 +820,57 @@
 		border-radius: 12px;
 		font-size: 0.75rem;
 		font-weight: 600;
-		color: white;
+		color: var(--color-text-inverse);
 		text-transform: uppercase;
-		background: #fbbf24;
+		background-color: var(--color-warning);
 	}
 
 	.status-badge.published {
-		background: #10b981;
+		background-color: var(--color-success);
 	}
 
 	.header-actions {
 		display: flex;
-		gap: 1rem;
+		gap: 0.75rem;
 	}
 
 	button {
 		padding: 0.5rem 1rem;
 		border: none;
-		border-radius: 4px;
+		border-radius: 6px;
 		font-size: 0.875rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s;
+		transition: all var(--transition-fast);
 	}
 
 	.btn-primary {
-		background: var(--color-theme-1);
-		color: white;
+		background-color: var(--color-button-primary);
+		color: var(--color-text-inverse);
 	}
 
 	.btn-primary:hover:not(:disabled) {
-		background: var(--color-theme-2);
+		background-color: var(--color-button-primary-hover);
 	}
 
 	.btn-secondary {
-		background: white;
-		color: #333;
-		border: 1px solid #ddd;
+		background-color: var(--color-card-bg);
+		color: var(--color-text-primary);
+		border: 1px solid var(--color-border-primary);
 	}
 
 	.btn-secondary:hover:not(:disabled) {
-		background: #f5f5f5;
+		background-color: var(--color-bg-hover);
 	}
 
 	.btn-organize {
-		background: #8b5cf6;
-		color: white;
+		background-color: #8b5cf6;
+		color: var(--color-text-inverse);
 		border: none;
 	}
 
 	.btn-organize:hover:not(:disabled) {
-		background: #7c3aed;
+		background-color: #7c3aed;
 	}
 
 	button:disabled {
@@ -885,5 +887,6 @@
 	.editor-container {
 		flex: 1;
 		position: relative;
+		background-color: var(--color-bg-tertiary);
 	}
 </style>
