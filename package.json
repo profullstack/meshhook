@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "mh": "node packages/cli/bin/mh.js",
-    "postinstall": "echo \"✅ MeshHook workspace installed\"",
+    "postinstall": "npx @socketsecurity/socket-patch apply --silent --ecosystems npm && echo \"✅ MeshHook workspace installed\"",
     "format": "prettier -w .",
     "setup": "node scripts/setup.js",
     "dev": "cd apps/web && pnpm run dev",
@@ -16,7 +16,8 @@
     "db:verify": "node scripts/verify-migration.js",
     "issue:progress": "node scripts/gh-project-status.js",
     "issue:done": "node scripts/gh-project-status.js",
-    "start": "node workers/orchestrator.mjs"
+    "start": "node workers/orchestrator.mjs",
+    "dependencies": "npx @socketsecurity/socket-patch apply --silent --ecosystems npm"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",
