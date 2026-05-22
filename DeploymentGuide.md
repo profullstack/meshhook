@@ -160,7 +160,7 @@ services:
 
   worker:
     build: .
-    command: node worker.js
+    command: node build/worker.js
     env_file: .env
     restart: unless-stopped
 
