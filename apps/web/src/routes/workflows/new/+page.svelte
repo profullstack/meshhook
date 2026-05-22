@@ -3,6 +3,7 @@
 	import NodePalette from '$lib/components/NodePalette.svelte';
 	import NodeConfigModal from '$lib/components/NodeConfigModal.svelte';
 	import { goto } from '$app/navigation';
+	import { trackWorkflowCreated, trackWorkflowSaved, trackWorkflowExecuted, trackNodeAdded, trackError } from '$lib/utils/analytics.js';
 
 	let { data } = $props();
 
@@ -29,7 +30,8 @@
 	
 	// Handle node click to open configuration
 	function handleNodeClick(node) {
-		selectedNode = node;
+		// Clone the node to avoid immutability issues
+		selectedNode = JSON.parse(JSON.stringify(node));
 		showConfigModal = true;
 	}
 	
@@ -44,6 +46,142 @@
 	function handleNodeConfigCancel() {
 		showConfigModal = false;
 		selectedNode = null;
+	}
+	
+	// Handle executing workflow up to a specific node
+	async function handleExecuteWorkflow(targetNodeId) {
+		try {
+			// Find the target node
+			const targetNode = nodes.find(n => n.id === targetNodeId);
+			if (!targetNode) {
+				return { success: false, error: 'Target node not found' };
+			}
+			
+			// Build execution path by traversing backwards from target node
+			const executionPath = [];
+			const visited = new Set();
+			
+			function buildPath(nodeId) {
+				if (visited.has(nodeId)) return;
+				visited.add(nodeId);
+				
+				const node = nodes.find(n => n.id === nodeId);
+				if (!node) return;
+				
+				// Find incoming edges
+				const incomingEdges = edges.filter(e => e.target === nodeId);
+				
+				// Process dependencies first
+				for (const edge of incomingEdges) {
+					buildPath(edge.source);
+				}
+				
+				// Add current node to path
+				executionPath.push(node);
+			}
+			
+			buildPath(targetNodeId);
+			
+			// Execute nodes in order
+			let lastOutput = {};
+			
+			for (const node of executionPath) {
+				if (node.data?.type === 'httpCall') {
+					// Execute HTTP call
+					const response = await fetch('/api/test-http', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(node.data?.config || {})
+					});
+					
+					const result = await response.json();
+					
+					if (result.success) {
+						lastOutput = result.response;
+						// Update node with test result
+						nodes = nodes.map(n =>
+							n.id === node.id
+								? { ...n, data: { ...n.data, testResult: lastOutput } }
+								: n
+						);
+					} else {
+						return {
+							success: false,
+							error: `Failed to execute ${node.data?.label || node.id}: ${result.error?.message || 'Unknown error'}`
+						};
+					}
+				} else if (node.data?.type === 'transform') {
+					// Execute transform node
+					const response = await fetch('/api/test-transform', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							config: node.data?.config || {},
+							input: lastOutput
+						})
+					});
+					
+					const result = await response.json();
+					
+					if (result.success) {
+						lastOutput = result.output;
+						// Update node with test result
+						nodes = nodes.map(n =>
+							n.id === node.id
+								? { ...n, data: { ...n.data, testResult: lastOutput } }
+								: n
+						);
+					} else {
+						return {
+							success: false,
+							error: `Failed to execute ${node.data?.label || node.id}: ${result.error || 'Unknown error'}`
+						};
+					}
+				} else if (node.data?.type === 'loop') {
+					// Execute loop node - extract array using JMESPath
+					const response = await fetch('/api/test-loop', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							config: node.data?.config || {},
+							input: lastOutput
+						})
+					});
+					
+					const result = await response.json();
+					
+					if (result.success) {
+						// Store the original input AND the extracted output separately
+						const loopInput = lastOutput;
+						lastOutput = result.output;
+						
+						// Update node with BOTH input and output for proper display
+						nodes = nodes.map(n =>
+							n.id === node.id
+								? {
+									...n,
+									data: {
+										...n.data,
+										testResult: lastOutput,
+										loopInput: loopInput  // Store original input separately
+									}
+								}
+								: n
+						);
+					} else {
+						return {
+							success: false,
+							error: `Failed to execute ${node.data?.label || node.id}: ${result.error || 'Unknown error'}`
+						};
+					}
+				}
+				// Add more node types as needed
+			}
+			
+			return { success: true, output: lastOutput };
+		} catch (error) {
+			return { success: false, error: error.message };
+		}
 	}
 
 	// Save workflow
@@ -73,11 +211,20 @@
 
 			const result = await response.json();
 			
+			// Track workflow creation
+			trackWorkflowCreated({
+				id: result.workflow.id,
+				name: workflowName,
+				nodeCount: nodes.length
+			});
+			
 			// Redirect to the workflow edit page
 			goto(`/workflows/${result.workflow.id}/edit`);
 		} catch (err) {
 			saveError = err.message;
 			console.error('Error saving workflow:', err);
+			// Track error
+			trackError({ message: err.message, context: 'workflow_save' });
 			alert(`Error saving workflow: ${err.message}`);
 		} finally {
 			saving = false;
@@ -120,6 +267,7 @@
 	{#if showConfigModal && selectedNode}
 		<NodeConfigModal
 			node={selectedNode}
+			onExecuteWorkflow={handleExecuteWorkflow}
 			onSave={handleNodeConfigSave}
 			onCancel={handleNodeConfigCancel}
 		/>
@@ -130,13 +278,13 @@
 	.workflows-page {
 		display: flex;
 		flex-direction: column;
-		height: 100vh;
-		background: #f8f9fa;
+		height: calc(100vh - 64px);
+		background-color: var(--color-bg-secondary);
 	}
 
 	.page-header {
-		background: white;
-		border-bottom: 1px solid #e0e0e0;
+		background-color: var(--color-nav-bg);
+		border-bottom: 1px solid var(--color-nav-border);
 		padding: 1rem 2rem;
 	}
 
@@ -151,41 +299,41 @@
 		margin: 0;
 		font-size: 1.5rem;
 		font-weight: 600;
-		color: #333;
+		color: var(--color-text-primary);
 	}
 
 	.header-actions {
 		display: flex;
-		gap: 1rem;
+		gap: 0.75rem;
 	}
 
 	button {
 		padding: 0.5rem 1rem;
 		border: none;
-		border-radius: 4px;
+		border-radius: 6px;
 		font-size: 0.875rem;
 		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s;
+		transition: all var(--transition-fast);
 	}
 
 	.btn-primary {
-		background: var(--color-theme-1);
-		color: white;
+		background-color: var(--color-button-primary);
+		color: var(--color-text-inverse);
 	}
 
 	.btn-primary:hover {
-		background: var(--color-theme-2);
+		background-color: var(--color-button-primary-hover);
 	}
 
 	.btn-secondary {
-		background: white;
-		color: #333;
-		border: 1px solid #ddd;
+		background-color: var(--color-card-bg);
+		color: var(--color-text-primary);
+		border: 1px solid var(--color-border-primary);
 	}
 
 	.btn-secondary:hover {
-		background: #f5f5f5;
+		background-color: var(--color-bg-hover);
 	}
 
 	.workflow-container {
@@ -197,5 +345,6 @@
 	.editor-container {
 		flex: 1;
 		position: relative;
+		background-color: var(--color-bg-tertiary);
 	}
 </style>

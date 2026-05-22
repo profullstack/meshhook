@@ -38,47 +38,61 @@
 	.container {
 		max-width: 1200px;
 		margin: 0 auto;
-		padding: 2rem;
+		padding: 3rem 2rem;
+		min-height: calc(100vh - 64px);
 	}
 
 	h1 {
 		font-size: 3rem;
-		margin-bottom: 2rem;
+		margin-bottom: 1.5rem;
+		color: var(--color-text-primary);
+		font-weight: 700;
 	}
 
 	.intro {
 		margin-bottom: 3rem;
-		font-size: 1.2rem;
-		line-height: 1.6;
+		font-size: 1.25rem;
+		line-height: 1.7;
+		color: var(--color-text-secondary);
+		max-width: 800px;
 	}
 
 	.user-info,
 	.auth {
 		padding: 2rem;
-		background: rgba(255, 255, 255, 0.8);
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+		background-color: var(--color-card-bg);
+		border-radius: 12px;
+		box-shadow: var(--shadow-md);
+		border: 1px solid var(--color-card-border);
+	}
+
+	.user-info p,
+	.auth p {
+		color: var(--color-text-primary);
+		margin-bottom: 1rem;
 	}
 
 	nav {
 		display: flex;
-		gap: 1rem;
+		gap: 0.75rem;
 		margin-top: 1rem;
+		flex-wrap: wrap;
 	}
 
 	nav a,
 	.button {
 		padding: 0.75rem 1.5rem;
-		background: var(--color-theme-1);
-		color: white;
-		border-radius: 4px;
+		background-color: var(--color-button-primary);
+		color: var(--color-text-inverse);
+		border-radius: 8px;
 		text-decoration: none;
-		transition: background 0.2s;
+		font-weight: 500;
+		transition: background-color var(--transition-fast);
 	}
 
 	nav a:hover,
 	.button:hover {
-		background: var(--color-theme-2);
+		background-color: var(--color-button-primary-hover);
 		text-decoration: none;
 	}
 </style>

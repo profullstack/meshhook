@@ -12,6 +12,11 @@ export async function POST({ request }) {
 	try {
 		const config = await request.json();
 
+		console.log('=== test-http API called ===');
+		console.log('Config:', config);
+		console.log('Input data (inputData):', config.inputData);
+		console.log('Input data type:', Array.isArray(config.inputData) ? 'ARRAY' : typeof config.inputData);
+
 		// Validate required fields
 		if (!config.url) {
 			throw error(400, 'URL is required');
@@ -78,7 +83,8 @@ export async function POST({ request }) {
 		let executionError = null;
 
 		try {
-			response = await httpNode.execute();
+			// Pass inputData to execute() for template interpolation
+			response = await httpNode.execute(config.inputData);
 		} catch (err) {
 			executionError = err;
 		}

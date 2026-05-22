@@ -8,6 +8,7 @@
     "postinstall": "echo \"✅ MeshHook workspace installed\"",
     "format": "prettier -w .",
     "setup": "node scripts/setup.js",
+    "dev": "cd apps/web && pnpm run dev",
     "build": "cd apps/web && pnpm run build",
     "db:migrate": "node scripts/db-migrate.js",
     "db:migrate:local": "pnpx supabase migrations up",
@@ -24,6 +25,7 @@
     "prettier": "^3.3.3"
   },
   "dependencies": {
+    "fast-xml-parser": "^5.3.0",
     "jmespath": "^0.16.0",
     "openai": "^6.3.0"
   }

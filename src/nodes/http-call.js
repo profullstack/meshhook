@@ -1,10 +1,13 @@
 /**
  * HTTP Call Node Implementation
- * 
+ *
  * Implements HTTP requests with comprehensive configuration,
- * retry policies, timeout handling, and response processing.
- * 
- * @example
+ * retry policies, response processing, and template variable substitution.
+ *
+ * Supports {{variable}} syntax in URL, headers, and body to reference
+ * data from previous nodes (similar to n8n).
+ *
+ * @example Basic usage
  * const node = new HttpCallNode({
  *   url: 'https://api.example.com/data',
  *   method: 'POST',
@@ -17,8 +20,18 @@
  *     backoffMultiplier: 2
  *   }
  * });
- * 
+ *
  * const result = await node.execute();
+ *
+ * @example With template variables
+ * const node = new HttpCallNode({
+ *   url: 'https://api.example.com/users/{{userId}}',
+ *   method: 'POST',
+ *   headers: { 'Authorization': 'Bearer {{token}}' },
+ *   body: { name: '{{name}}', email: '{{email}}' }
+ * });
+ *
+ * const result = await node.execute({ userId: 123, token: 'abc', name: 'John', email: 'john@example.com' });
  */
 
 /**
@@ -90,15 +103,20 @@ export class HttpCallNode {
 
   /**
    * Execute the HTTP request
-   * 
+   *
+   * @param {any} input - Optional input data from previous node to use as request body
    * @returns {Promise<Object>} Response object with status, data, and headers
    * @throws {HttpCallError} If request fails after all retries
-   * 
-   * @example
+   *
+   * @example Without input (uses configured body)
    * const result = await node.execute();
    * console.log(result.status, result.data);
+   *
+   * @example With input from previous node
+   * const result = await node.execute({ userId: 123, action: 'update' });
+   * console.log(result.status, result.data);
    */
-  async execute() {
+  async execute(input) {
     let lastError;
     let attempt = 0;
 
@@ -106,7 +124,7 @@ export class HttpCallNode {
       attempt++;
 
       try {
-        const response = await this._makeRequest();
+        const response = await this._makeRequest(input);
         return response;
       } catch (error) {
         lastError = error;
@@ -144,13 +162,14 @@ export class HttpCallNode {
   /**
    * Make the actual HTTP request
    * @private
+   * @param {any} input - Optional input data from previous node
    */
-  async _makeRequest() {
-    // Build URL with query parameters
-    const url = this._buildUrl();
+  async _makeRequest(input) {
+    // Build URL with query parameters and template substitution
+    const url = this._buildUrl(input);
 
-    // Build request options
-    const options = this._buildRequestOptions();
+    // Build request options, passing input data
+    const options = this._buildRequestOptions(input);
 
     // Create abort controller for timeout
     const controller = new AbortController();
@@ -182,40 +201,175 @@ export class HttpCallNode {
   }
 
   /**
-   * Build URL with query parameters
+   * Process template string with variable substitution
    * @private
+   * @param {string} template - Template string with {{variable}} syntax
+   * @param {any} data - Data object for variable substitution
+   * @returns {string} Processed template
    */
-  _buildUrl() {
+  _processTemplate(template, data) {
+    if (!template || typeof template !== 'string') {
+      return template;
+    }
+    
+    return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
+      const trimmedPath = path.trim();
+      const value = this._getValueByPath(data, trimmedPath);
+      
+      if (value === undefined || value === null) {
+        return match; // Keep original if not found
+      }
+      
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
+      
+      return String(value);
+    });
+  }
+
+  /**
+   * Get value from object by path string
+   * @private
+   * @param {any} obj - Source object
+   * @param {string} path - Dot-notation path (e.g., 'user.name' or 'items[0].id')
+   * @returns {any} Value at path or undefined
+   */
+  _getValueByPath(obj, path) {
+    const parts = path.split(/\.|\[|\]/).filter(Boolean);
+    let current = obj;
+    
+    for (const part of parts) {
+      if (current === null || current === undefined) {
+        return undefined;
+      }
+      current = current[part];
+    }
+    
+    return current;
+  }
+
+  /**
+   * Process object recursively for template substitution
+   * @private
+   * @param {any} obj - Object to process
+   * @param {any} data - Data for substitution
+   * @returns {any} Processed object
+   */
+  _processObjectTemplates(obj, data) {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+    
+    if (typeof obj === 'string') {
+      return this._processTemplate(obj, data);
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this._processObjectTemplates(item, data));
+    }
+    
+    if (typeof obj === 'object') {
+      const processed = {};
+      for (const [key, value] of Object.entries(obj)) {
+        processed[key] = this._processObjectTemplates(value, data);
+      }
+      return processed;
+    }
+    
+    return obj;
+  }
+
+  /**
+   * Build URL with query parameters and template substitution
+   * @private
+   * @param {any} input - Optional input data for template substitution
+   */
+  _buildUrl(input) {
+    // Process URL template if input is provided
+    let processedUrl = input ? this._processTemplate(this.url, input) : this.url;
+    
     if (!this.queryParams || Object.keys(this.queryParams).length === 0) {
-      return this.url;
+      return processedUrl;
     }
 
-    const url = new URL(this.url);
-    Object.entries(this.queryParams).forEach(([key, value]) => {
+    const url = new URL(processedUrl);
+    
+    // Process query parameters with template substitution
+    const processedParams = input
+      ? this._processObjectTemplates(this.queryParams, input)
+      : this.queryParams;
+    
+    Object.entries(processedParams).forEach(([key, value]) => {
       url.searchParams.append(key, String(value));
     });
+    
     return url.toString();
   }
 
   /**
    * Build request options
    * @private
+   * @param {any} input - Optional input data from previous node
    */
-  _buildRequestOptions() {
+  _buildRequestOptions(input) {
     const options = {
       method: this.method,
-      headers: { ...this.headers },
+      headers: {},
     };
 
+    // Process headers with template substitution if input is provided
+    if (input) {
+      for (const [key, value] of Object.entries(this.headers)) {
+        options.headers[key] = this._processTemplate(String(value), input);
+      }
+    } else {
+      options.headers = { ...this.headers };
+    }
+
+    // Determine which body to use and process templates
+    let bodyToUse;
+    
+    if (this.body && input) {
+      // If we have both configured body and input, process body templates with input data
+      bodyToUse = this._processObjectTemplates(this.body, input);
+    } else if (input !== undefined && input !== null) {
+      // Use input as body if no configured body
+      bodyToUse = input;
+    } else {
+      // Use configured body
+      bodyToUse = this.body;
+    }
+
     // Add body for methods that support it
-    if (this.body && ['POST', 'PUT', 'PATCH'].includes(this.method)) {
-      if (typeof this.body === 'object') {
-        options.body = JSON.stringify(this.body);
-        if (!options.headers['Content-Type']) {
+    if (bodyToUse && ['POST', 'PUT', 'PATCH'].includes(this.method)) {
+      // Check if user has explicitly set a Content-Type header
+      const contentType = options.headers['Content-Type'] || options.headers['content-type'] || '';
+      const hasContentType = contentType.length > 0;
+      
+      // Only JSON-stringify if the content type is JSON or not explicitly set
+      const isJsonContentType = !hasContentType || contentType.includes('application/json');
+      
+      if (typeof bodyToUse === 'object' && isJsonContentType) {
+        // Stringify objects only for JSON content type
+        options.body = JSON.stringify(bodyToUse);
+        if (!hasContentType) {
           options.headers['Content-Type'] = 'application/json';
         }
       } else {
-        options.body = this.body;
+        // Pass through as-is for non-JSON content types or string bodies
+        options.body = bodyToUse;
+      }
+    }
+    
+    // For GET requests, ensure no body or Content-Type is sent
+    // even if input data was provided
+    if (this.method === 'GET') {
+      delete options.body;
+      // Only keep Content-Type if explicitly configured by user
+      if (!this.headers['Content-Type'] && !this.headers['content-type']) {
+        delete options.headers['Content-Type'];
+        delete options.headers['content-type'];
       }
     }
 
@@ -227,13 +381,6 @@ export class HttpCallNode {
    * @private
    */
   async _handleResponse(response) {
-    const result = {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries()),
-    };
-
     // Handle error responses
     if (!response.ok) {
       const errorBody = await response.text();
@@ -250,21 +397,30 @@ export class HttpCallNode {
 
     // Parse response based on type
     try {
-      if (this.responseType === 'json') {
-        result.data = await response.json();
-      } else if (this.responseType === 'text') {
-        result.data = await response.text();
+      // Get the actual content-type from the response
+      const contentType = response.headers.get('content-type') || '';
+      
+      // Always return consistent structure: { headers, data }
+      const headers = Object.fromEntries(response.headers.entries());
+      let data;
+      
+      // For explicit responseType settings, use them directly
+      if (this.responseType === 'text') {
+        data = await response.text();
       } else if (this.responseType === 'blob') {
-        result.data = await response.blob();
+        data = await response.blob();
       } else {
-        // Auto-detect based on content-type
-        const contentType = response.headers.get('content-type') || '';
+        // For 'json' or auto-detect, check the actual content-type
         if (contentType.includes('application/json')) {
-          result.data = await response.json();
+          // Parse as JSON
+          data = await response.json();
         } else {
-          result.data = await response.text();
+          // Return raw text for everything else (XML, RSS, HTML, etc.)
+          data = await response.text();
         }
       }
+      
+      return { headers, data };
     } catch (error) {
       throw new HttpCallError(
         `Failed to parse response: ${error.message}`,
@@ -272,8 +428,6 @@ export class HttpCallNode {
         { url: this.url, method: this.method }
       );
     }
-
-    return result;
   }
 
   /**

@@ -1,0 +1,8 @@
+/* TEAM */
+Developer: Anthony Ettinger
+Contact: http://github.com/profullstack
+
+/* SITE */
+Last update: 2025/10/12
+Language: English
+Components: Node.js, Svelte5, Supabase

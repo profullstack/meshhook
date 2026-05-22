@@ -34,6 +34,12 @@
 					description: 'Transform data using JMESPath'
 				},
 				{
+					type: 'xmlJsonTransform',
+					label: 'XML ↔ JSON',
+					icon: '🔀',
+					description: 'Transform between XML and JSON formats'
+				},
+				{
 					type: 'delay',
 					label: 'Delay',
 					icon: '⏱️',
@@ -89,11 +95,18 @@
 	}
 
 	function onDragStart(event, nodeType, label) {
+		console.log('=== NodePalette Drag Start ===');
+		console.log('Node type:', nodeType);
+		console.log('Label:', label);
+		
 		event.dataTransfer.effectAllowed = 'move';
 		event.dataTransfer.setData(
 			'application/reactflow',
 			JSON.stringify({ type: nodeType, label })
 		);
+		
+		console.log('Drag data set');
+		console.log('==============================');
 	}
 </script>
 

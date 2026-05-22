@@ -49,12 +49,163 @@ const result = node.transform({
 'sum(items[*].price)'
 ```
 
+### XML/JSON Transform Node (`transform-xml-json.js`)
+
+Automatically detects and converts between XML and JSON formats. Perfect for parsing RSS/Atom feeds and converting them to JSON for webhook processing.
+
+**Features:**
+- Auto-detection of input format (XML or JSON)
+- Bidirectional conversion (XML ↔ JSON)
+- **Source Path Extraction** - Extract XML/JSON from nested object paths using JMESPath
+- RSS and Atom feed parsing support
+- Configurable attribute handling
+- CDATA section support
+- XML namespace handling
+- Preserves data types (numbers, booleans)
+
+**Usage:**
+```javascript
+import { XmlJsonTransformNode } from './transform-xml-json.js';
+
+// Auto-detect and convert
+const node = new XmlJsonTransformNode();
+
+// XML to JSON
+const xmlInput = '<user><name>Alice</name><age>30</age></user>';
+const jsonResult = node.transform(xmlInput);
+// Result: { user: { name: 'Alice', age: 30 } }
+
+// JSON to XML
+const jsonInput = { user: { name: 'Bob', age: 25 } };
+const xmlResult = node.transform(jsonInput);
+// Result: '<user><name>Bob</name><age>25</age></user>'
+```
+
+**RSS Feed Parsing:**
+```javascript
+const node = new XmlJsonTransformNode();
+
+const rssXml = `<?xml version="1.0"?>
+<rss version="2.0">
+  <channel>
+    <title>My Blog</title>
+    <item>
+      <title>First Post</title>
+      <link>https://example.com/post1</link>
+      <description>Post content</description>
+    </item>
+  </channel>
+</rss>`;
+
+const feed = node.transform(rssXml);
+console.log(feed.rss.channel.title); // "My Blog"
+console.log(feed.rss.channel.item.title); // "First Post"
+```
+
+**Using sourcePath to Extract from Nested Objects:**
+```javascript
+// When http-call returns { headers: {...}, data: "<?xml...>" }
+const node = new XmlJsonTransformNode({ sourcePath: 'data' });
+
+const httpResponse = {
+  status: 200,
+  headers: { 'content-type': 'application/xml' },
+  data: '<rss><channel><title>Feed</title></channel></rss>'
+};
+
+const result = node.transform(httpResponse);
+// Extracts httpResponse.data, then transforms the XML to JSON
+// Result: { rss: { channel: { title: 'Feed' } } }
+```
+
+**Deeply Nested Paths:**
+```javascript
+const node = new XmlJsonTransformNode({
+  sourcePath: 'response.body.content'
+});
+
+const input = {
+  response: {
+    body: {
+      content: '<user><name>Alice</name></user>'
+    }
+  }
+};
+
+const result = node.transform(input);
+// Result: { user: { name: 'Alice' } }
+```
+
+**Array Access in Paths:**
+```javascript
+const node = new XmlJsonTransformNode({ sourcePath: 'items[0].data' });
+
+const input = {
+  items: [
+    { data: '<item><id>1</id></item>' },
+    { data: '<item><id>2</id></item>' }
+  ]
+};
+
+const result = node.transform(input);
+// Result: { item: { id: 1 } }
+```
+
+**Configuration Options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `sourcePath` | string | null | JMESPath expression to extract data from input object |
+| `ignoreAttributes` | boolean | false | Ignore XML attributes |
+| `attributeNamePrefix` | string | '@_' | Prefix for attribute names |
+| `parseAttributeValue` | boolean | true | Parse attribute values to correct types |
+| `parseTagValue` | boolean | true | Parse tag values to correct types |
+| `trimValues` | boolean | true | Trim whitespace from values |
+| `isArray` | function | undefined | Function to determine if tag should be array |
+| `format` | string | 'compact' | XML output format ('compact' or 'pretty') |
+
+**Advanced Configuration:**
+```javascript
+// Custom attribute handling
+const node = new XmlJsonTransformNode({
+  ignoreAttributes: false,
+  attributeNamePrefix: '$',
+  parseAttributeValue: false // Keep as strings
+});
+
+const xml = '<user id="123"><name>Alice</name></user>';
+const result = node.transform(xml);
+// Result: { user: { $id: '123', name: 'Alice' } }
+```
+
+**Helper Functions:**
+```javascript
+import {
+  parseRssFeed,
+  parseAtomFeed,
+  xmlToJson,
+  jsonToXml
+} from './transform-xml-json.js';
+
+// Parse RSS feed
+const rssFeed = parseRssFeed(rssXmlString);
+
+// Parse Atom feed
+const atomFeed = parseAtomFeed(atomXmlString);
+
+// Direct conversion
+const json = xmlToJson('<root><item>value</item></root>');
+const xml = jsonToXml({ root: { item: 'value' } });
+```
+
 ### HTTP Call Node (`http-call.js`)
 
-Executes HTTP requests with comprehensive configuration, retry policies, and response handling.
+Executes HTTP requests with comprehensive configuration, retry policies, response handling, and **template variable substitution** (similar to n8n).
 
 **Features:**
 - Full HTTP method support (GET, POST, PUT, DELETE, etc.)
+- **Template Variables** - Use `{{variable}}` syntax in URL, headers, query params, and body
+- **Input from previous nodes** - Receive and process data from previous workflow steps
 - Custom headers and query parameters
 - Request body serialization
 - Configurable timeout
@@ -62,7 +213,13 @@ Executes HTTP requests with comprehensive configuration, retry policies, and res
 - Multiple response types (JSON, text, blob)
 - Request/response validation
 
-**Usage:**
+**Template Variable Syntax:**
+- Simple: `{{userId}}`, `{{token}}`
+- Nested: `{{user.profile.name}}`, `{{settings.theme}}`
+- Array access: `{{items[0]}}`, `{{users[1].name}}`
+- Fallback: Keeps `{{variable}}` if not found in input data
+
+**Usage with static configuration:**
 ```javascript
 import { HttpCallNode } from './http-call.js';
 
@@ -91,6 +248,70 @@ const result = await node.execute();
 console.log(result.status, result.data);
 ```
 
+**Usage with template variables (recommended):**
+```javascript
+// Configure node with template variables
+const node = new HttpCallNode({
+  url: 'https://api.example.com/users/{{userId}}/posts',
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer {{token}}',
+    'X-User-ID': '{{userId}}'
+  },
+  body: {
+    title: '{{post.title}}',
+    content: '{{post.content}}',
+    tags: '{{post.tags}}'
+  }
+});
+
+// Execute with input data from previous node
+const inputData = {
+  userId: 123,
+  token: 'abc123xyz',
+  post: {
+    title: 'My Blog Post',
+    content: 'This is the content...',
+    tags: ['tech', 'nodejs']
+  }
+};
+
+const result = await node.execute(inputData);
+// URL becomes: https://api.example.com/users/123/posts
+// Headers include: Authorization: Bearer abc123xyz
+// Body becomes: { title: 'My Blog Post', content: '...', tags: [...] }
+```
+
+**Usage with input as body (no configured body):**
+```javascript
+// Node receives data from previous workflow step
+const node = new HttpCallNode({
+  url: 'https://api.example.com/process',
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer token123'
+  }
+  // No body configured - will use input data directly
+});
+
+// Input data from previous node
+const inputData = {
+  userId: 123,
+  action: 'update',
+  metadata: { source: 'workflow' }
+};
+
+// Input data is used as request body
+const result = await node.execute(inputData);
+console.log(result.status, result.data);
+```
+
+**Template Processing Rules:**
+1. **With configured body + input**: Body templates are processed with input data
+2. **Without configured body + input**: Input is used directly as body
+3. **With configured body, no input**: Body is used as-is (templates remain unprocessed)
+4. **URL & Headers**: Always processed with input data when available
+
 **Configuration Options:**
 
 | Option | Type | Default | Description |
@@ -98,11 +319,17 @@ console.log(result.status, result.data);
 | `url` | string | required | Request URL |
 | `method` | string | 'GET' | HTTP method |
 | `headers` | object | {} | Request headers |
-| `body` | any | undefined | Request body |
+| `body` | any | undefined | Request body (optional if using input) |
 | `queryParams` | object | undefined | URL query parameters |
 | `timeout` | number | 30000 | Timeout in milliseconds |
 | `responseType` | string | 'json' | Response type (json/text/blob) |
 | `retryPolicy` | object | see below | Retry configuration |
+
+**Execute Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `input` | any | undefined | Optional input data from previous node to use as request body. Takes precedence over configured body. |
 
 **Retry Policy:**
 
@@ -125,32 +352,53 @@ node --test src/nodes/*.test.js
 
 # Test individual nodes
 node --test src/nodes/transform.test.js
+node --test src/nodes/transform-xml-json.test.js
 node --test src/nodes/http-call.test.js
 ```
 
 ## Integration with Workers
 
-These nodes are designed to be executed by the HTTP executor worker:
+These nodes are designed to be executed by the HTTP executor worker with data flowing between nodes:
 
 ```javascript
 import { TransformNode } from './nodes/transform.js';
 import { HttpCallNode } from './nodes/http-call.js';
 
-// In worker execution
-async function executeNode(nodeConfig) {
+// In worker execution with data flow
+async function executeNode(nodeConfig, inputFromPreviousNode) {
   switch (nodeConfig.type) {
     case 'transform':
       const transformNode = new TransformNode(nodeConfig);
-      return transformNode.transform(input);
+      return transformNode.transform(inputFromPreviousNode);
+      
+    case 'transform-xml-json':
+      const xmlJsonNode = new XmlJsonTransformNode(nodeConfig);
+      return xmlJsonNode.transform(inputFromPreviousNode);
       
     case 'http_call':
       const httpNode = new HttpCallNode(nodeConfig);
-      return await httpNode.execute();
+      // Pass input from previous node (if any)
+      return await httpNode.execute(inputFromPreviousNode);
       
     default:
       throw new Error(`Unknown node type: ${nodeConfig.type}`);
   }
 }
+
+// Example workflow: Transform → HTTP Call
+const transformNode = new TransformNode({
+  expression: 'users[*].{id: id, name: name}'
+});
+
+const httpNode = new HttpCallNode({
+  url: 'https://api.example.com/batch-update',
+  method: 'POST'
+});
+
+// Execute workflow
+const webhookData = { users: [/* ... */] };
+const transformedData = transformNode.transform(webhookData);
+const result = await httpNode.execute(transformedData);
 ```
 
 ## Node Interface
@@ -185,6 +433,7 @@ class Node {
 Each node type has its own error class for clear error identification:
 
 - `TransformError` - Transform operation errors
+- `TransformXmlJsonError` - XML/JSON conversion errors
 - `HttpCallError` - HTTP request errors
 
 All errors include relevant context for debugging:
@@ -198,6 +447,11 @@ try {
       status: error.statusCode,
       request: error.request,
       message: error.message
+    });
+  } else if (error instanceof TransformXmlJsonError) {
+    console.error('XML/JSON Transform Error:', {
+      message: error.message,
+      input: error.input
     });
   }
 }
@@ -226,7 +480,8 @@ Planned node types for future implementation:
 
 ## Dependencies
 
-- `jmespath` - JMESPath expression evaluation (Transform Node only)
+- `jmespath` - JMESPath expression evaluation (Transform Node)
+- `fast-xml-parser` - XML/JSON conversion (XML/JSON Transform Node)
 - Native `fetch` API - HTTP requests (Node.js 18+)
 
 ## Performance Considerations

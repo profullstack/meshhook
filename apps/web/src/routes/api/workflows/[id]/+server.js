@@ -17,7 +17,25 @@ export async function GET(event) {
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
-		const { data, error } = await supabase.from('workflows').select('*').eq('id', id).single();
+		// Get user's projects to verify ownership
+		const { data: projects, error: projectsError } = await supabase
+			.from('projects')
+			.select('id')
+			.eq('owner', session.user.id);
+
+		if (projectsError) {
+			throw projectsError;
+		}
+
+		const projectIds = projects?.map((p) => p.id) || [];
+
+		// Fetch workflow and verify it belongs to user's project
+		const { data, error } = await supabase
+			.from('workflows')
+			.select('*')
+			.eq('id', id)
+			.in('project_id', projectIds)
+			.single();
 
 		if (error) {
 			if (error.code === 'PGRST116') {
@@ -53,7 +71,19 @@ export async function PUT(event) {
 		const body = await event.request.json();
 		const { name, description, nodes, edges, status } = body;
 
-		// Get current workflow to check if we're publishing
+		// Get user's projects to verify ownership
+		const { data: projects, error: projectsError } = await supabase
+			.from('projects')
+			.select('id')
+			.eq('owner', session.user.id);
+
+		if (projectsError) {
+			throw projectsError;
+		}
+
+		const projectIds = projects?.map((p) => p.id) || [];
+
+		// Get current workflow to check if we're publishing and verify ownership
 		const { data: currentWorkflow, error: fetchError } = await supabase
 			.from('workflow_definitions')
 			.select('*')
@@ -65,6 +95,11 @@ export async function PUT(event) {
 				return json({ error: 'Workflow not found' }, { status: 404 });
 			}
 			throw fetchError;
+		}
+
+		// Verify ownership
+		if (!projectIds.includes(currentWorkflow.project_id)) {
+			return json({ error: 'Forbidden: You do not own this workflow' }, { status: 403 });
 		}
 
 		// Check if we're publishing a draft workflow
@@ -164,12 +199,41 @@ export async function DELETE(event) {
 			return json({ error: 'Unauthorized' }, { status: 401 });
 		}
 
+		// Get user's projects to verify ownership
+		const { data: projects, error: projectsError } = await supabase
+			.from('projects')
+			.select('id')
+			.eq('owner', session.user.id);
+
+		if (projectsError) {
+			throw projectsError;
+		}
+
+		const projectIds = projects?.map((p) => p.id) || [];
+
+		// First verify the workflow belongs to user's project
+		const { data: workflow, error: fetchError } = await supabase
+			.from('workflows')
+			.select('project_id')
+			.eq('id', id)
+			.single();
+
+		if (fetchError) {
+			if (fetchError.code === 'PGRST116') {
+				return json({ error: 'Workflow not found' }, { status: 404 });
+			}
+			throw fetchError;
+		}
+
+		// Verify ownership
+		if (!projectIds.includes(workflow.project_id)) {
+			return json({ error: 'Forbidden: You do not own this workflow' }, { status: 403 });
+		}
+
+		// Delete the workflow
 		const { error } = await supabase.from('workflows').delete().eq('id', id);
 
 		if (error) {
-			if (error.code === 'PGRST116') {
-				return json({ error: 'Workflow not found' }, { status: 404 });
-			}
 			throw error;
 		}
 

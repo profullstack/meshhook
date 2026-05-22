@@ -1,6 +1,7 @@
 <script>
 	import { SvelteFlow, Controls, MiniMap, Background, Panel } from '@xyflow/svelte';
 	import '@xyflow/svelte/dist/style.css';
+	import LoopContainerNode from './nodes/LoopContainerNode.svelte';
 
 	// Props
 	let { nodes = $bindable([]), edges = $bindable([]), onNodesChange, onEdgesChange, onNodeClick } = $props();
@@ -8,6 +9,12 @@
 	// State
 	let reactFlowWrapper = $state(null);
 	let selectedNodeId = $state(null);
+	let svelteFlowInstance = $state(null);
+	
+	// Register custom node types
+	const nodeTypes = {
+		loopContainer: LoopContainerNode
+	};
 
 	// Handle connection creation
 	function handleConnect(connection) {
@@ -75,30 +82,127 @@
 		try {
 			const nodeData = JSON.parse(nodeDataStr);
 			
-			// Get the bounds of the react flow wrapper
-			const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
+			// Try to use SvelteFlow's coordinate conversion
+			let position;
 			
-			// Calculate position relative to the wrapper
-			// Simple conversion without zoom/pan for now
-			const position = {
-				x: event.clientX - reactFlowBounds.left,
-				y: event.clientY - reactFlowBounds.top
-			};
+			// Check if we have access to the flow instance methods
+			if (svelteFlowInstance) {
+				console.log('SvelteFlow instance available, methods:', Object.keys(svelteFlowInstance || {}));
+				
+				// Try different possible method names
+				if (typeof svelteFlowInstance.screenToFlowPosition === 'function') {
+					position = svelteFlowInstance.screenToFlowPosition({x: event.clientX, y: event.clientY});
+					console.log('Using screenToFlowPosition');
+				} else if (typeof svelteFlowInstance.project === 'function') {
+					position = svelteFlowInstance.project({x: event.clientX, y: event.clientY});
+					console.log('Using project method');
+				} else {
+					console.log('No coordinate conversion method found, using fallback');
+					const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
+					position = {
+						x: event.clientX - reactFlowBounds.left,
+						y: event.clientY - reactFlowBounds.top
+					};
+				}
+			} else {
+				console.log('SvelteFlow instance not available, using fallback');
+				const reactFlowBounds = reactFlowWrapper.getBoundingClientRect();
+				position = {
+					x: event.clientX - reactFlowBounds.left,
+					y: event.clientY - reactFlowBounds.top
+				};
+			}
+			
+			console.log('Screen position:', event.clientX, event.clientY);
+			console.log('Flow position:', position);
 
+			// Check if dropping into a loop container
+			const targetContainer = findContainerAtPosition(position);
+			
+			console.log('=== Node Drop ===');
+			console.log('Position:', position);
+			console.log('Target container:', targetContainer?.id, targetContainer?.data?.label);
+			
+			// Determine if this should be a container node
+			const isLoopNode = nodeData.type === 'loop';
+			
 			// Create new node with unique ID
 			const newNode = {
 				id: `${nodeData.type}-${Date.now()}`,
-				type: 'default',
-				position,
+				// Use custom loopContainer type to get our styled component
+				type: isLoopNode ? 'loopContainer' : 'default',
+				// If dropped into container, position is relative to container
+				// Otherwise, position is absolute on canvas
+				position: targetContainer ? {
+					x: position.x - targetContainer.position.x,
+					y: position.y - targetContainer.position.y
+				} : position,
+				// IMPORTANT: Use parentId for SvelteFlow's parent-child rendering
+				...(targetContainer ? {
+					parentId: targetContainer.id,
+					extent: 'parent'
+				} : {}),
+				// Add style with dimensions for parent nodes
+				...(isLoopNode ? {
+					style: 'width: 600px; height: 400px;'
+				} : {}),
 				data: {
 					label: nodeData.label,
 					type: nodeData.type,
-					config: {}
+					config: isLoopNode ? { items: '', description: '' } : {},
+					// Add container-specific properties for loop nodes
+					...(isLoopNode ? {
+						isContainer: true,
+						childNodes: [],
+						dimensions: { width: 600, height: 400 }
+					} : {}),
+					// Add parent container reference if dropped inside a container
+					...(targetContainer ? {
+						parentContainer: targetContainer.id
+					} : {})
 				}
 			};
+			
+			console.log('New node created:', {
+				id: newNode.id,
+				type: newNode.type,
+				parentId: newNode.parentId,
+				isContainer: newNode.data.isContainer,
+				hasConfig: !!newNode.data.config
+			});
 
-			// Add node to the canvas
-			nodes = [...nodes, newNode];
+			// Per SvelteFlow example, children come AFTER parent in array
+			if (targetContainer) {
+				console.log('Adding node to container:', targetContainer.id);
+				console.log('New node will have parentId:', targetContainer.id);
+				
+				// Update container's childNodes array first
+				nodes = nodes.map(n =>
+					n.id === targetContainer.id
+						? {
+							...n,
+							data: {
+								...n.data,
+								childNodes: [...(n.data.childNodes || []), newNode.id]
+							}
+						}
+						: n
+				);
+				
+				console.log('Container childNodes updated:', nodes.find(n => n.id === targetContainer.id)?.data?.childNodes);
+				
+				// Add child node AFTER parent in array (per SvelteFlow example)
+				nodes = [...nodes, newNode];
+				
+				console.log('Child node added after parent');
+			} else {
+				// Add node to the end of the array
+				nodes = [...nodes, newNode];
+			}
+			
+			console.log('Node added to canvas:', newNode.id, newNode.type);
+			console.log('Total nodes:', nodes.length);
+			console.log('==================');
 
 			if (onNodesChange) {
 				onNodesChange(nodes);
@@ -106,6 +210,52 @@
 		} catch (error) {
 			console.error('Error adding node:', error);
 		}
+	}
+	
+	/**
+	 * Find container at a given position
+	 * Uses a tolerance margin to account for coordinate conversion issues
+	 */
+	function findContainerAtPosition(position) {
+		console.log('=== findContainerAtPosition ===');
+		console.log('Looking for container at position:', position);
+		console.log('Total nodes:', nodes.length);
+		
+		const containers = nodes.filter(n => n.data?.isContainer);
+		console.log('Containers found:', containers.length);
+		
+		// Add large tolerance for coordinate conversion issues
+		// The screen-to-flow coordinate conversion isn't perfect
+		const TOLERANCE = 200;
+		
+		for (const node of containers) {
+			const bounds = {
+				x: node.position.x - TOLERANCE,
+				y: node.position.y - TOLERANCE,
+				width: (node.data.dimensions?.width || 600) + (TOLERANCE * 2),
+				height: (node.data.dimensions?.height || 400) + (TOLERANCE * 2)
+			};
+			
+			console.log(`Container ${node.id}:`, bounds);
+			console.log('  Position check:', {
+				xInRange: position.x >= bounds.x && position.x <= bounds.x + bounds.width,
+				yInRange: position.y >= bounds.y && position.y <= bounds.y + bounds.height
+			});
+			
+			if (
+				position.x >= bounds.x &&
+				position.x <= bounds.x + bounds.width &&
+				position.y >= bounds.y &&
+				position.y <= bounds.y + bounds.height
+			) {
+				console.log('✅ Container found:', node.id);
+				return node;
+			}
+		}
+		
+		console.log('❌ No container found at position');
+		console.log('===============================');
+		return null;
 	}
 	
 	// Handle node click in the canvas
@@ -127,10 +277,21 @@
 	}
 </script>
 
-<div class="workflow-editor" bind:this={reactFlowWrapper} ondrop={handleDrop} ondragover={handleDragOver} onclick={handleCanvasNodeClick} role="application">
+<div
+	class="workflow-editor"
+	bind:this={reactFlowWrapper}
+	ondrop={handleDrop}
+	ondragover={handleDragOver}
+	onclick={handleCanvasNodeClick}
+	onkeydown={(e) => e.key === 'Enter' && handleCanvasNodeClick(e)}
+	role="button"
+	tabindex="0"
+>
 	<SvelteFlow
+		bind:this={svelteFlowInstance}
 		{nodes}
 		{edges}
+		{nodeTypes}
 		fitView
 		onconnect={handleConnect}
 		ondelete={(event) => {

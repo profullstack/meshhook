@@ -90,8 +90,8 @@
 <style>
 	.workflows-page {
 		position: relative;
-		min-height: 100vh;
-		background: #f8f9fa;
+		min-height: calc(100vh - 64px);
+		background-color: var(--color-bg-secondary);
 	}
 
 	.loading-overlay {
@@ -100,7 +100,7 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		background: rgba(0, 0, 0, 0.5);
+		background-color: rgba(0, 0, 0, 0.5);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -108,26 +108,27 @@
 	}
 
 	.loading-content {
-		background: white;
+		background-color: var(--color-card-bg);
 		padding: 2rem 3rem;
-		border-radius: 8px;
+		border-radius: 12px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 1rem;
-		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+		box-shadow: var(--shadow-xl);
+		border: 1px solid var(--color-card-border);
 	}
 
 	.loading-message {
 		margin: 0;
 		font-size: 1rem;
 		font-weight: 500;
-		color: #333;
+		color: var(--color-text-primary);
 	}
 
 	.page-header {
-		background: white;
-		border-bottom: 1px solid #e0e0e0;
+		background-color: var(--color-nav-bg);
+		border-bottom: 1px solid var(--color-nav-border);
 		padding: 2rem;
 		display: flex;
 		justify-content: space-between;
@@ -138,20 +139,21 @@
 		margin: 0;
 		font-size: 2rem;
 		font-weight: 600;
-		color: #333;
+		color: var(--color-text-primary);
 	}
 
 	.btn-primary {
 		padding: 0.75rem 1.5rem;
-		background: var(--color-theme-1);
-		color: white;
-		border-radius: 4px;
+		background-color: var(--color-button-primary);
+		color: var(--color-text-inverse);
+		border-radius: 6px;
 		text-decoration: none;
 		font-weight: 500;
-		transition: background 0.2s;
+		transition: background-color var(--transition-fast);
 	}
 
 	.btn-primary:hover {
-		background: var(--color-theme-2);
+		background-color: var(--color-button-primary-hover);
+		text-decoration: none;
 	}
 </style>
