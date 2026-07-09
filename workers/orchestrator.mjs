@@ -1,5 +1,7 @@
-import { db } from "./lib/db.js";
+import { db, pool } from "./lib/db.js";
 import { queue, enqueueStep } from "./lib/queue.js";
+import { createShutdown } from "./lib/graceful-shutdown.js";
+import { startMemoryWatcher, stopMemoryWatcher } from "./lib/resource-limits.js";
 
 async function replay(runId) {
   const events = await db.manyOrNone(
@@ -45,7 +47,12 @@ async function handleRun(job) {
 
 export async function startOrchestrator() {
   await queue.process("run:orchestrate", handleRun);
-  console.log("🧠 MeshHook Orchestrator running");
+  startMemoryWatcher();
+
+  const shutdown = createShutdown({ pool, label: "orchestrator", preStop: stopMemoryWatcher });
+  shutdown.register();
+
+  console.log("MeshHook Orchestrator running");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) startOrchestrator();

@@ -1,7 +1,9 @@
 import { setTimeout as delay } from "node:timers/promises";
-import { db } from "./lib/db.js";
+import { db, pool } from "./lib/db.js";
 import { queue } from "./lib/queue.js";
 import { request as undiciRequest } from "undici";
+import { createShutdown } from "./lib/graceful-shutdown.js";
+import { startMemoryWatcher, stopMemoryWatcher } from "./lib/resource-limits.js";
 
 async function execHttp(runId, node) {
   const req = {
@@ -67,7 +69,12 @@ async function handleStep(job) {
 
 export async function startHttpExec() {
   await queue.process("step:execute", handleStep);
-  console.log("🔧 MeshHook HTTP Executor running");
+  startMemoryWatcher();
+
+  const shutdown = createShutdown({ pool, label: "http-exec", preStop: stopMemoryWatcher });
+  shutdown.register();
+
+  console.log("MeshHook HTTP Executor running");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) startHttpExec();
