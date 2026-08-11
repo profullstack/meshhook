@@ -1,31 +1,31 @@
-import { createServerSupabaseClient } from '$lib/supabase.js';
-import { json } from '@sveltejs/kit';
-
 /**
- * GET /api/runs - List all runs
+ * GET /api/runs - List runs across the caller's projects.
+ *
+ * The old query selected from a `runs` table joined to `workflows`; the run
+ * table is workflow_runs. listRuns() joins the workflow for its name and slug
+ * and scopes rows by project ownership.
  */
+
+import { json } from '@sveltejs/kit';
+import { listRuns } from '@meshhook/shared/lib/authz.js';
+
 export async function GET(event) {
-	const supabase = createServerSupabaseClient(event);
+	const user = event.locals.user;
+
+	if (!user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	const url = event.url;
+	const limit = Math.min(Number(url.searchParams.get('limit') ?? 50) || 50, 200);
+	const offset = Math.max(Number(url.searchParams.get('offset') ?? 0) || 0, 0);
+	const status = url.searchParams.get('status') ?? undefined;
 
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-
-		if (!session) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
-		}
-
-		const { data: runs, error } = await supabase
-			.from('runs')
-			.select('*, workflow:workflows(name)')
-			.order('created_at', { ascending: false });
-
-		if (error) throw error;
-
-		return json({ runs: runs || [] });
+		const runs = await listRuns(user.id, { limit, offset, status });
+		return json({ runs });
 	} catch (error) {
 		console.error('Error fetching runs:', error);
-		return json({ error: error.message }, { status: 500 });
+		return json({ error: 'Failed to fetch runs' }, { status: 500 });
 	}
 }

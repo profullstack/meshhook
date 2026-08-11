@@ -1,61 +1,52 @@
 /**
  * SvelteKit Server Hooks
- * Handles server-side middleware including authentication and www to non-www redirects
+ *
+ * Resolves the session cookie to a user on every request, and handles the
+ * www -> non-www redirect.
+ *
+ * Previously this created a Supabase client per request and called
+ * supabase.auth.getUser(). Sessions are now MeshHook's own rows in Turso, so
+ * the cookie is looked up directly. event.locals.supabase is gone — routes take
+ * event.locals.user and query the database through @meshhook/shared.
  */
 
-import { createServerSupabaseClient } from '$lib/supabase.js';
+import { validateSession, SESSION_COOKIE, sessionCookieOptions } from '@meshhook/shared/lib/auth.js';
+import { dev } from '$app/environment';
 
 /**
- * Handle function runs on every server request
  * @param {Object} params
- * @param {Request} params.event - The request event
- * @param {Function} params.resolve - Function to resolve the request
+ * @param {import('@sveltejs/kit').RequestEvent} params.event
+ * @param {Function} params.resolve
  * @returns {Promise<Response>}
  */
 export async function handle({ event, resolve }) {
-	// Get the host from the request headers
 	const host = event.request.headers.get('host');
 
-	// Check if the host starts with 'www.'
 	if (host?.startsWith('www.')) {
-		// Extract the non-www domain
-		const nonWwwHost = host.slice(4); // Remove 'www.' prefix
-
-		// Get the full URL
+		const nonWwwHost = host.slice(4);
 		const url = new URL(event.request.url);
-
-		// Construct the redirect URL with the non-www host
 		const redirectUrl = `${url.protocol}//${nonWwwHost}${url.pathname}${url.search}${url.hash}`;
 
-		// Return a 301 permanent redirect
 		return new Response(null, {
 			status: 301,
-			headers: {
-				location: redirectUrl
-			}
+			headers: { location: redirectUrl }
 		});
 	}
 
-	// Create Supabase client for this request
-	const supabase = createServerSupabaseClient(event);
+	const token = event.cookies.get(SESSION_COOKIE);
+	const result = token ? await validateSession(token) : null;
 
-	// Get the session using getUser() for security (not getSession())
-	const {
-		data: { user },
-		error
-	} = await supabase.auth.getUser();
+	if (token && !result) {
+		// Expired or revoked: clear it so the browser stops sending it.
+		event.cookies.delete(SESSION_COOKIE, { path: '/' });
+	} else if (result) {
+		// validateSession slides the expiry forward; mirror that onto the cookie
+		// so an active session is not logged out by the cookie expiring first.
+		event.cookies.set(SESSION_COOKIE, token, sessionCookieOptions({ secure: !dev }));
+	}
 
-	// Make user available to all routes via event.locals
-	event.locals.supabase = supabase;
-	event.locals.user = user;
-	event.locals.getSession = async () => {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-		return session;
-	};
+	event.locals.user = result?.user ?? null;
+	event.locals.session = result?.session ?? null;
 
-	// Continue with normal request handling
-	const response = await resolve(event);
-	return response;
+	return resolve(event);
 }

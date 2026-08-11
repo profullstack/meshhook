@@ -1,41 +1,34 @@
-import { requireAuth, getSupabase } from '$lib/auth.js';
-
 /**
- * Load secrets and projects for the secrets vault
+ * Load the secrets vault.
+ *
+ * Ciphertext is deliberately not selected — the list view only needs the key
+ * names, and the encrypted value has no business being sent to the browser.
  */
+
+import { requireAuth } from '$lib/auth.js';
+import { db } from '@meshhook/shared/lib/db.js';
+import { listProjects, ownedProjectIdsSql } from '@meshhook/shared/lib/authz.js';
+
 export async function load(event) {
-	// Require authentication - will redirect to /login if not authenticated
 	const user = requireAuth(event);
-	const supabase = getSupabase(event);
 
 	try {
-		// Load secrets with project info
-		const { data: secrets, error: secretsError } = await supabase
-			.from('secrets')
-			.select('*, project:projects(name)')
-			.order('created_at', { ascending: false });
+		const [secrets, projects] = await Promise.all([
+			db.manyOrNone(
+				`select s.id, s.key, s.project_id, s.created_at, s.updated_at,
+				        p.name as project_name
+				   from secrets s
+				   join projects p on p.id = s.project_id
+				  where s.project_id in (${ownedProjectIdsSql()})
+				  order by s.created_at desc`,
+				[user.id]
+			),
+			listProjects(user.id)
+		]);
 
-		if (secretsError) {
-			console.error('Error loading secrets:', secretsError);
-		}
-
-		// Load projects for filtering
-		const { data: projects, error: projectsError } = await supabase
-			.from('projects')
-			.select('id, name')
-			.order('name');
-
-		if (projectsError) {
-			console.error('Error loading projects:', projectsError);
-		}
-
-		return {
-			secrets: secrets || [],
-			projects: projects || [],
-			user
-		};
+		return { secrets, projects, user };
 	} catch (error) {
 		console.error('Error in secrets load:', error);
-		return { secrets: [], projects: [], error: error.message };
+		return { secrets: [], projects: [], user, error: 'Failed to load secrets' };
 	}
 }

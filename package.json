@@ -3,31 +3,37 @@
   "private": true,
   "type": "module",
   "license": "MIT",
+  "packageManager": "pnpm@11.18.0",
   "scripts": {
     "mh": "node packages/cli/bin/mh.js",
-    "postinstall": "npx @socketsecurity/socket-patch apply --silent --ecosystems npm && echo \"✅ MeshHook workspace installed\"",
+    "postinstall": "node scripts/socket-patch.mjs",
     "format": "prettier -w .",
     "setup": "node scripts/setup.js",
     "dev": "cd apps/web && pnpm run dev",
     "build": "cd apps/web && pnpm run build",
     "db:migrate": "node scripts/db-migrate.js",
-    "db:migrate:local": "pnpx supabase migrations up",
-    "db:migrate:production": "pnpx supabase db push --linked --include-all",
     "db:verify": "node scripts/verify-migration.js",
     "issue:progress": "node scripts/gh-project-status.js",
     "issue:done": "node scripts/gh-project-status.js",
     "start": "node workers/orchestrator.mjs",
-    "dependencies": "npx @socketsecurity/socket-patch apply --silent --ecosystems npm"
+    "db:status": "node scripts/db-migrate.js --status",
+    "test": "pnpm run test:vitest && pnpm run test:node",
+    "test:watch": "vitest",
+    "test:node": "node --test src/nodes/*.test.js src/workers/*.test.js src/utils/*.test.js",
+    "test:vitest": "vitest run",
+    "security:patch": "SOCKET_API_TOKEN=${SOCKET_API_TOKEN} node scripts/socket-patch.mjs"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",
     "inquirer": "^12.9.6",
-    "pg": "^8.16.3",
-    "prettier": "^3.3.3"
+    "prettier": "^3.3.3",
+    "vitest": "^3.2.4",
+    "chai": "^5.1.2"
   },
   "dependencies": {
     "fast-xml-parser": "^5.3.0",
     "jmespath": "^0.16.0",
-    "openai": "^6.3.0"
+    "openai": "^6.3.0",
+    "@meshhook/shared": "workspace:*"
   }
 }

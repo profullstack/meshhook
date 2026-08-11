@@ -1,0 +1,14 @@
+{
+  "name": "@meshhook/workers",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "orchestrator.mjs",
+  "scripts": {
+    "start": "node orchestrator.mjs"
+  },
+  "dependencies": {
+    "@meshhook/shared": "workspace:*",
+    "undici": "^6.19.8"
+  }
+}

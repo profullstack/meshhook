@@ -2,3 +2,12 @@ packages:
   - apps/*
   - workers
   - packages/*
+
+# pnpm 10+ refuses to run a dependency's install/build scripts unless it is
+# approved here, and exits non-zero when any are ignored. That failure takes CI
+# and Railway builds with it, so every package needing a build script must be
+# listed explicitly.
+#
+# esbuild links the platform binary Vite uses to bundle the SvelteKit app.
+allowBuilds:
+  esbuild: true

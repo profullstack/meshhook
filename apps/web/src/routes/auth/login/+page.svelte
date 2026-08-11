@@ -1,63 +1,33 @@
 <script>
-	import { createClient } from '$lib/supabase.js';
-	import { goto } from '$app/navigation';
+	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
 	import { trackSignIn, trackSignUp, trackError } from '$lib/utils/analytics.js';
 
-	let email = $state('');
-	let password = $state('');
+	/** @type {{ form?: { error?: string, email?: string } }} */
+	let { form } = $props();
+
 	let loading = $state(false);
-	let error = $state('');
 
-	const supabase = createClient();
+	// Credentials are posted to a server action rather than to Supabase from the
+	// browser, so the page no longer holds an auth client or the session token.
+	const next = $derived($page.url.searchParams.get('next') ?? '/workflows');
 
-	async function handleLogin() {
-		try {
+	/** Report the outcome to analytics once the action responds. */
+	function submitHandler(kind) {
+		return () => {
 			loading = true;
-			error = '';
+			return async ({ result, update }) => {
+				loading = false;
 
-			const { data, error: signInError } = await supabase.auth.signInWithPassword({
-				email,
-				password
-			});
+				if (result.type === 'redirect') {
+					kind === 'login' ? trackSignIn({ method: 'email' }) : trackSignUp({ method: 'email' });
+				} else if (result.type === 'failure') {
+					trackError({ message: result.data?.error ?? 'unknown', context: `sign_${kind}` });
+				}
 
-			if (signInError) throw signInError;
-
-			// Track successful sign in
-			trackSignIn({ method: 'email' });
-
-			goto('/workflows');
-		} catch (err) {
-			error = err.message;
-			// Track sign in error
-			trackError({ message: err.message, context: 'sign_in' });
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function handleSignUp() {
-		try {
-			loading = true;
-			error = '';
-
-			const { data, error: signUpError } = await supabase.auth.signUp({
-				email,
-				password
-			});
-
-			if (signUpError) throw signUpError;
-
-			// Track successful sign up
-			trackSignUp({ method: 'email' });
-
-			error = 'Check your email for the confirmation link!';
-		} catch (err) {
-			error = err.message;
-			// Track sign up error
-			trackError({ message: err.message, context: 'sign_up' });
-		} finally {
-			loading = false;
-		}
+				await update();
+			};
+		};
 	}
 </script>
 
@@ -69,17 +39,20 @@
 	<div class="auth-card">
 		<h1>Sign In to MeshHook</h1>
 
-		{#if error}
-			<div class="error-message">{error}</div>
+		{#if form?.error}
+			<div class="error-message">{form.error}</div>
 		{/if}
 
-		<form onsubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+		<form method="POST" action="?/login" use:enhance={submitHandler('login')}>
+			<input type="hidden" name="next" value={next} />
+
 			<div class="form-group">
 				<label for="email">Email</label>
 				<input
 					id="email"
+					name="email"
 					type="email"
-					bind:value={email}
+					value={form?.email ?? ''}
 					placeholder="you@example.com"
 					required
 					disabled={loading}
@@ -90,10 +63,11 @@
 				<label for="password">Password</label>
 				<input
 					id="password"
+					name="password"
 					type="password"
-					bind:value={password}
 					placeholder="••••••••"
 					required
+					minlength="8"
 					disabled={loading}
 				/>
 			</div>
@@ -102,7 +76,12 @@
 				<button type="submit" class="primary" disabled={loading}>
 					{loading ? 'Signing in...' : 'Sign In'}
 				</button>
-				<button type="button" class="secondary" onclick={handleSignUp} disabled={loading}>
+				<button
+					type="submit"
+					class="secondary"
+					formaction="?/signup"
+					disabled={loading}
+				>
 					Sign Up
 				</button>
 			</div>

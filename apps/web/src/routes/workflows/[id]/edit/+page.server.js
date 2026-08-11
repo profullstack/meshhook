@@ -1,48 +1,38 @@
-import { requireAuth, getSupabase } from '$lib/auth.js';
-import { error } from '@sveltejs/kit';
-
 /**
- * Load workflow for editing
- * Requires authentication and verifies user has access to the workflow
+ * Load a workflow for editing.
+ *
+ * The Supabase version joined projects to compare `project.owner` against the
+ * user in JS. getWorkflow() puts that ownership test in the query, so a
+ * workflow belonging to someone else is simply not returned.
+ *
+ * It also reports 404 rather than the old 403: answering "forbidden" confirms
+ * the id exists, which is a small information leak on a guessable identifier.
  */
+
+import { error } from '@sveltejs/kit';
+import { requireAuth } from '$lib/auth.js';
+import { getWorkflow } from '@meshhook/shared/lib/authz.js';
+import { json as parseJson } from '@meshhook/shared/lib/db.js';
+
 export async function load(event) {
-	// Require authentication - will redirect to /auth/login if not authenticated
 	const user = requireAuth(event);
-	const supabase = getSupabase(event);
 	const { id } = event.params;
 
+	let workflow;
 	try {
-		// Fetch workflow with project information to verify access
-		const { data: workflow, error: fetchError } = await supabase
-			.from('workflows')
-			.select('*, project:projects!inner(id, owner)')
-			.eq('id', id)
-			.single();
-
-		if (fetchError) {
-			if (fetchError.code === 'PGRST116') {
-				throw error(404, 'Workflow not found');
-			}
-			console.error('Error fetching workflow:', fetchError);
-			throw error(500, 'Failed to load workflow');
-		}
-
-		// Verify user has access to this workflow through project ownership
-		// RLS policies should handle this, but we double-check for security
-		if (!workflow || workflow.project?.owner !== user.id) {
-			throw error(403, 'You do not have permission to access this workflow');
-		}
-
-		return {
-			workflow,
-			user
-		};
+		workflow = await getWorkflow(user.id, id);
 	} catch (err) {
-		// Re-throw SvelteKit errors (like redirects and error responses)
-		if (err?.status) {
-			throw err;
-		}
 		console.error('Error loading workflow:', err);
 		throw error(500, 'Failed to load workflow');
 	}
+
+	if (!workflow) {
+		throw error(404, 'Workflow not found');
+	}
+
+	return {
+		// definition is TEXT under SQLite; the builder expects an object.
+		workflow: { ...workflow, definition: parseJson(workflow.definition, { nodes: [], edges: [] }) },
+		user
+	};
 }

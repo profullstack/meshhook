@@ -1,51 +1,28 @@
-import { requireAuth, getSupabase } from '$lib/auth.js';
-
 /**
- * Load workflows for the list view
+ * Load workflows for the list view.
+ *
+ * The Supabase version fetched the user's project ids, then queried workflows
+ * with an `in` filter, relying on RLS as a second layer. listWorkflows() does
+ * both in one statement — there is no second layer any more, so the scoping
+ * predicate has to be part of the query.
  */
+
+import { requireAuth } from '$lib/auth.js';
+import { listWorkflows } from '@meshhook/shared/lib/authz.js';
+import { json as parseJson } from '@meshhook/shared/lib/db.js';
+
 export async function load(event) {
-	// Require authentication - will redirect to /login if not authenticated
 	const user = requireAuth(event);
-	const supabase = getSupabase(event);
 
 	try {
-		// Get user's projects first
-		const { data: projects, error: projectsError } = await supabase
-			.from('projects')
-			.select('id')
-			.eq('owner', user.id);
-
-		if (projectsError) {
-			console.error('Error loading projects:', projectsError);
-			return { workflows: [], error: projectsError.message };
-		}
-
-		// If user has no projects, return empty list
-		if (!projects || projects.length === 0) {
-			return { workflows: [], user };
-		}
-
-		const projectIds = projects.map((p) => p.id);
-
-		// Fetch workflows only from user's projects
-		// RLS policies will also enforce this, but we add explicit filter for defense-in-depth
-		const { data: workflows, error } = await supabase
-			.from('workflows')
-			.select('*')
-			.in('project_id', projectIds)
-			.order('updated_at', { ascending: false });
-
-		if (error) {
-			console.error('Error loading workflows:', error);
-			return { workflows: [], error: error.message };
-		}
+		const workflows = await listWorkflows(user.id, { limit: 200 });
 
 		return {
-			workflows: workflows || [],
+			workflows: workflows.map((w) => ({ ...w, definition: parseJson(w.definition, {}) })),
 			user
 		};
 	} catch (error) {
-		console.error('Error in workflows load:', error);
-		return { workflows: [], error: error.message };
+		console.error('Error loading workflows:', error);
+		return { workflows: [], user, error: 'Failed to load workflows' };
 	}
 }

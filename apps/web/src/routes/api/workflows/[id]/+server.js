@@ -1,245 +1,184 @@
-import { createServerSupabaseClient } from '$lib/supabase.js';
+/**
+ * GET/PUT/DELETE /api/workflows/[id]
+ *
+ * Ownership was previously established by fetching the caller's project ids and
+ * comparing them in JS. That check is now part of each statement, via the
+ * `project_id in (owned projects)` predicate — with RLS gone it is the only
+ * thing standing between a guessed id and another tenant's workflow.
+ *
+ * Publishing creates a new version row and archives the draft. Those were two
+ * independent requests before, so a failure between them left the workflow both
+ * published and un-archived; they now share a transaction.
+ */
+
 import { json } from '@sveltejs/kit';
+import { db, json as parseJson } from '@meshhook/shared/lib/db.js';
+import { getWorkflow, ownedProjectIdsSql } from '@meshhook/shared/lib/authz.js';
+
+/** Decode the stored JSON definition for the response. */
+const present = (workflow) => ({ ...workflow, definition: parseJson(workflow.definition, {}) });
 
 /**
- * GET /api/workflows/[id] - Get a specific workflow
+ * GET /api/workflows/[id]
  */
 export async function GET(event) {
-	const supabase = createServerSupabaseClient(event);
-	const { id } = event.params;
+	const user = event.locals.user;
+
+	if (!user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
 
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
+		const workflow = await getWorkflow(user.id, event.params.id);
 
-		if (!session) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
+		if (!workflow) {
+			return json({ error: 'Workflow not found' }, { status: 404 });
 		}
 
-		// Get user's projects to verify ownership
-		const { data: projects, error: projectsError } = await supabase
-			.from('projects')
-			.select('id')
-			.eq('owner', session.user.id);
-
-		if (projectsError) {
-			throw projectsError;
-		}
-
-		const projectIds = projects?.map((p) => p.id) || [];
-
-		// Fetch workflow and verify it belongs to user's project
-		const { data, error } = await supabase
-			.from('workflows')
-			.select('*')
-			.eq('id', id)
-			.in('project_id', projectIds)
-			.single();
-
-		if (error) {
-			if (error.code === 'PGRST116') {
-				return json({ error: 'Workflow not found' }, { status: 404 });
-			}
-			throw error;
-		}
-
-		return json({ workflow: data });
+		return json({ workflow: present(workflow) });
 	} catch (error) {
 		console.error('Error fetching workflow:', error);
-		return json({ error: error.message }, { status: 500 });
+		return json({ error: 'Failed to fetch workflow' }, { status: 500 });
 	}
 }
 
 /**
- * PUT /api/workflows/[id] - Update a workflow
- * When publishing (status='published'), creates a new version
+ * PUT /api/workflows/[id] - Update, or publish as a new version.
  */
 export async function PUT(event) {
-	const supabase = createServerSupabaseClient(event);
+	const user = event.locals.user;
+
+	if (!user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
 	const { id } = event.params;
 
+	let body;
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
+		body = await event.request.json();
+	} catch {
+		return json({ error: 'Invalid JSON body' }, { status: 400 });
+	}
 
-		if (!session) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
+	const { name, description, nodes, edges, status } = body;
+
+	try {
+		const current = await getWorkflow(user.id, id);
+
+		if (!current) {
+			return json({ error: 'Workflow not found' }, { status: 404 });
 		}
 
-		const body = await event.request.json();
-		const { name, description, nodes, edges, status } = body;
+		const definition =
+			nodes !== undefined || edges !== undefined
+				? JSON.stringify({ nodes, edges })
+				: current.definition;
 
-		// Get user's projects to verify ownership
-		const { data: projects, error: projectsError } = await supabase
-			.from('projects')
-			.select('id')
-			.eq('owner', session.user.id);
-
-		if (projectsError) {
-			throw projectsError;
-		}
-
-		const projectIds = projects?.map((p) => p.id) || [];
-
-		// Get current workflow to check if we're publishing and verify ownership
-		const { data: currentWorkflow, error: fetchError } = await supabase
-			.from('workflow_definitions')
-			.select('*')
-			.eq('id', id)
-			.single();
-
-		if (fetchError) {
-			if (fetchError.code === 'PGRST116') {
-				return json({ error: 'Workflow not found' }, { status: 404 });
-			}
-			throw fetchError;
-		}
-
-		// Verify ownership
-		if (!projectIds.includes(currentWorkflow.project_id)) {
-			return json({ error: 'Forbidden: You do not own this workflow' }, { status: 403 });
-		}
-
-		// Check if we're publishing a draft workflow
-		const isPublishing = status === 'published' && currentWorkflow.status === 'draft';
+		const isPublishing = status === 'published' && current.status === 'draft';
 
 		if (isPublishing) {
-			// When publishing, create a new version
-			// Get the max version for this workflow slug
-			const { data: maxVersionData } = await supabase
-				.from('workflow_definitions')
-				.select('version')
-				.eq('project_id', currentWorkflow.project_id)
-				.eq('slug', currentWorkflow.slug)
-				.order('version', { ascending: false })
-				.limit(1)
-				.single();
+			const workflow = await db.tx(async (t) => {
+				const { max_version: maxVersion } = await t.one(
+					`select coalesce(max(version), 0) as max_version
+					   from workflow_definitions where project_id = ? and slug = ?`,
+					[current.project_id, current.slug]
+				);
 
-			const newVersion = (maxVersionData?.version || 0) + 1;
+				const created = await t.one(
+					`insert into workflow_definitions
+					   (project_id, slug, name, description, version, definition, status, user_id)
+					 values (?, ?, ?, ?, ?, ?, 'published', ?)
+					 returning *`,
+					[
+						current.project_id,
+						current.slug,
+						name ?? current.name,
+						description ?? current.description,
+						maxVersion + 1,
+						definition,
+						current.user_id
+					]
+				);
 
-			// Create new version entry
-			const { data: newVersionData, error: insertError } = await supabase
-				.from('workflow_definitions')
-				.insert({
-					project_id: currentWorkflow.project_id,
-					slug: currentWorkflow.slug,
-					name: name ?? currentWorkflow.name,
-					description: description ?? currentWorkflow.description,
-					version: newVersion,
-					definition: nodes !== undefined || edges !== undefined
-						? { nodes, edges }
-						: currentWorkflow.definition,
-					status: 'published',
-					user_id: currentWorkflow.user_id
-				})
-				.select()
-				.single();
+				await t.none(`update workflow_definitions set status = 'archived' where id = ?`, [id]);
 
-			if (insertError) {
-				throw insertError;
-			}
+				return created;
+			});
 
-			// Archive the old draft version
-			await supabase
-				.from('workflow_definitions')
-				.update({ status: 'archived' })
-				.eq('id', id);
-
-			return json({ workflow: newVersionData });
-		} else {
-			// For non-publishing updates (draft edits), update in place
-			const updates = {
-				updated_at: new Date().toISOString()
-			};
-
-			if (name !== undefined) updates.name = name;
-			if (description !== undefined) updates.description = description;
-			if (nodes !== undefined || edges !== undefined) {
-				updates.definition = { nodes, edges };
-			}
-			if (status !== undefined) updates.status = status;
-
-			const { data, error } = await supabase
-				.from('workflow_definitions')
-				.update(updates)
-				.eq('id', id)
-				.select()
-				.single();
-
-			if (error) {
-				if (error.code === 'PGRST116') {
-					return json({ error: 'Workflow not found' }, { status: 404 });
-				}
-				throw error;
-			}
-
-			return json({ workflow: data });
+			return json({ workflow: present(workflow) });
 		}
+
+		// In-place edit. Only the fields actually supplied are touched; the
+		// column list is fixed, so this cannot be turned into arbitrary SQL.
+		const updates = [];
+		const params = [];
+
+		if (name !== undefined) {
+			updates.push('name = ?');
+			params.push(name);
+		}
+		if (description !== undefined) {
+			updates.push('description = ?');
+			params.push(description);
+		}
+		if (nodes !== undefined || edges !== undefined) {
+			updates.push('definition = ?');
+			params.push(definition);
+		}
+		if (status !== undefined) {
+			updates.push('status = ?');
+			params.push(status);
+		}
+
+		if (updates.length === 0) {
+			return json({ workflow: present(current) });
+		}
+
+		params.push(id, user.id);
+
+		const workflow = await db.oneOrNone(
+			`update workflow_definitions set ${updates.join(', ')}
+			  where id = ? and project_id in (${ownedProjectIdsSql()})
+			 returning *`,
+			params
+		);
+
+		if (!workflow) {
+			return json({ error: 'Workflow not found' }, { status: 404 });
+		}
+
+		return json({ workflow: present(workflow) });
 	} catch (error) {
 		console.error('Error updating workflow:', error);
-		return json({ error: error.message }, { status: 500 });
+		return json({ error: 'Failed to update workflow' }, { status: 500 });
 	}
 }
 
 /**
- * DELETE /api/workflows/[id] - Delete a workflow
+ * DELETE /api/workflows/[id]
  */
 export async function DELETE(event) {
-	const supabase = createServerSupabaseClient(event);
-	const { id } = event.params;
+	const user = event.locals.user;
+
+	if (!user) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
 
 	try {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
+		const { rowsAffected } = await db.none(
+			`delete from workflow_definitions
+			  where id = ? and project_id in (${ownedProjectIdsSql()})`,
+			[event.params.id, user.id]
+		);
 
-		if (!session) {
-			return json({ error: 'Unauthorized' }, { status: 401 });
-		}
-
-		// Get user's projects to verify ownership
-		const { data: projects, error: projectsError } = await supabase
-			.from('projects')
-			.select('id')
-			.eq('owner', session.user.id);
-
-		if (projectsError) {
-			throw projectsError;
-		}
-
-		const projectIds = projects?.map((p) => p.id) || [];
-
-		// First verify the workflow belongs to user's project
-		const { data: workflow, error: fetchError } = await supabase
-			.from('workflows')
-			.select('project_id')
-			.eq('id', id)
-			.single();
-
-		if (fetchError) {
-			if (fetchError.code === 'PGRST116') {
-				return json({ error: 'Workflow not found' }, { status: 404 });
-			}
-			throw fetchError;
-		}
-
-		// Verify ownership
-		if (!projectIds.includes(workflow.project_id)) {
-			return json({ error: 'Forbidden: You do not own this workflow' }, { status: 403 });
-		}
-
-		// Delete the workflow
-		const { error } = await supabase.from('workflows').delete().eq('id', id);
-
-		if (error) {
-			throw error;
+		if (rowsAffected === 0) {
+			return json({ error: 'Workflow not found' }, { status: 404 });
 		}
 
 		return json({ success: true });
 	} catch (error) {
 		console.error('Error deleting workflow:', error);
-		return json({ error: error.message }, { status: 500 });
+		return json({ error: 'Failed to delete workflow' }, { status: 500 });
 	}
 }

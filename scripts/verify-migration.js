@@ -1,120 +1,108 @@
 #!/usr/bin/env node
 
 /**
- * Verify Migration Script
- * Tests that the core tables migration was applied successfully
+ * Verify that the database schema matches what the application expects.
+ *
+ * The Postgres version checked for RLS policies, partitions and pgmq queues.
+ * None of those exist on SQLite, so this checks the things that do: every
+ * table, view and index the migrations create, plus the seeded queue config.
+ *
+ * Usage: node scripts/verify-migration.js
+ * Exits non-zero when anything is missing.
  */
 
-import pg from 'pg';
-const { Client } = pg;
+import { db } from "@meshhook/shared/lib/db.js";
 
-async function verifyMigration() {
-  console.log('🔍 Verifying core tables migration...\n');
+const EXPECTED_TABLES = [
+  "audit_log",
+  "job_tracking",
+  "projects",
+  "queue_archive",
+  "queue_config",
+  "queue_messages",
+  "schema_migrations",
+  "secrets",
+  "sessions",
+  "user_settings",
+  "users",
+  "workflow_definitions",
+  "workflow_events",
+  "workflow_runs",
+];
 
-  const client = new Client({
-    host: 'localhost',
-    port: 54322,
-    database: 'postgres',
-    user: 'postgres',
-    password: 'postgres',
-  });
+const EXPECTED_VIEWS = ["workflows"];
 
-  try {
-    await client.connect();
-    console.log('✅ Connected to database\n');
+/** Indexes that carry a hot path; a missing one is a performance regression. */
+const EXPECTED_INDEXES = [
+  "idx_workflow_events_run_ts",
+  "idx_workflow_runs_project_started",
+  "idx_queue_messages_claim",
+  "idx_sessions_expires_at",
+  "idx_users_email",
+];
 
-    // Check if all tables exist
-    const tables = [
-      'projects',
-      'secrets',
-      'workflow_definitions',
-      'workflow_runs',
-      'workflow_events',
-      'audit_log',
-    ];
+const EXPECTED_QUEUES = ["workflow_jobs", "workflow_jobs_dlq"];
 
-    console.log('📋 Checking tables...');
-    for (const table of tables) {
-      const result = await client.query(
-        `SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = $1
-        )`,
-        [table]
-      );
-
-      if (result.rows[0].exists) {
-        console.log(`  ✅ ${table}`);
-      } else {
-        console.log(`  ❌ ${table} - NOT FOUND`);
-      }
-    }
-
-    // Check indexes
-    console.log('\n📊 Checking key indexes...');
-    const indexes = [
-      'idx_projects_owner',
-      'idx_secrets_project_id',
-      'idx_workflow_definitions_project_id',
-      'idx_workflow_runs_project_started',
-      'idx_workflow_events_run_ts',
-      'idx_audit_log_project_id',
-    ];
-
-    for (const index of indexes) {
-      const result = await client.query(
-        `SELECT EXISTS (
-          SELECT FROM pg_indexes 
-          WHERE schemaname = 'public' 
-          AND indexname = $1
-        )`,
-        [index]
-      );
-
-      if (result.rows[0].exists) {
-        console.log(`  ✅ ${index}`);
-      } else {
-        console.log(`  ❌ ${index} - NOT FOUND`);
-      }
-    }
-
-    // Check triggers
-    console.log('\n⚡ Checking triggers...');
-    const triggers = [
-      'update_projects_updated_at',
-      'update_secrets_updated_at',
-      'update_workflow_definitions_updated_at',
-      'update_workflow_runs_updated_at',
-    ];
-
-    for (const trigger of triggers) {
-      const result = await client.query(
-        `SELECT EXISTS (
-          SELECT FROM information_schema.triggers 
-          WHERE trigger_schema = 'public' 
-          AND trigger_name = $1
-        )`,
-        [trigger]
-      );
-
-      if (result.rows[0].exists) {
-        console.log(`  ✅ ${trigger}`);
-      } else {
-        console.log(`  ❌ ${trigger} - NOT FOUND`);
-      }
-    }
-
-    console.log('\n✅ Migration verification complete!');
-  } catch (error) {
-    console.error('\n❌ Verification failed:', error.message);
-    process.exit(1);
-  } finally {
-    await client.end();
-  }
+async function namesOfType(type) {
+  const rows = await db.manyOrNone(
+    "select name from sqlite_master where type = ? and name not like 'sqlite_%'",
+    [type],
+  );
+  return new Set(rows.map((r) => r.name));
 }
 
-verifyMigration().catch((error) => {
-  console.error('❌ Script failed:', error);
+function report(label, expected, actual) {
+  const missing = expected.filter((name) => !actual.has(name));
+
+  if (missing.length === 0) {
+    console.log(`✅ ${label}: all ${expected.length} present`);
+    return true;
+  }
+
+  console.error(`❌ ${label}: missing ${missing.join(", ")}`);
+  return false;
+}
+
+async function main() {
+  console.log("🔍 Verifying MeshHook schema\n");
+
+  let ok = true;
+
+  ok = report("Tables", EXPECTED_TABLES, await namesOfType("table")) && ok;
+  ok = report("Views", EXPECTED_VIEWS, await namesOfType("view")) && ok;
+  ok = report("Indexes", EXPECTED_INDEXES, await namesOfType("index")) && ok;
+
+  const queues = await db.manyOrNone("select queue_name from queue_config");
+  ok = report("Queue config", EXPECTED_QUEUES, new Set(queues.map((q) => q.queue_name))) && ok;
+
+  const applied = await db.manyOrNone(
+    "select version from schema_migrations order by version",
+  );
+  console.log(
+    `\n📦 ${applied.length} migration(s) applied: ${applied.map((m) => m.version).join(", ") || "none"}`,
+  );
+
+  // Foreign keys are off by default in SQLite; the app relies on cascades, so
+  // flag it rather than let deletes silently orphan rows.
+  const [{ foreign_keys: fkEnabled }] = await db.manyOrNone("pragma foreign_keys");
+  if (!fkEnabled) {
+    console.log(
+      "\nℹ️  foreign_keys pragma is OFF for this connection. libSQL enables it " +
+        "per-connection; cascade deletes will not fire while it is off.",
+    );
+  }
+
+  await db.close();
+
+  if (!ok) {
+    console.error("\n❌ Schema verification failed. Run: pnpm run db:migrate");
+    process.exit(1);
+  }
+
+  console.log("\n✅ Schema verification passed.");
+}
+
+main().catch(async (error) => {
+  console.error(`\n❌ Verification failed: ${error.message}`);
   process.exit(1);
 });

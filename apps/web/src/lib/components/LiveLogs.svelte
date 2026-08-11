@@ -1,11 +1,18 @@
 <script>
-	import { createClient } from '$lib/supabase.js';
 	import { onMount } from 'svelte';
 	import LoadingSpinner from './LoadingSpinner.svelte';
 
 	/**
-	 * Live logs component with Supabase Realtime
-	 * Streams logs in real-time for a specific run
+	 * Live logs for a run.
+	 *
+	 * Supabase Realtime is gone, so this consumes the SSE stream at
+	 * /api/runs/[id]/events instead of a websocket channel. EventSource handles
+	 * reconnection itself and replays from Last-Event-ID, so no backfill request
+	 * is needed — the stream opens by sending the whole history.
+	 *
+	 * It also read a `logs` table that no schema ever defined. The real records
+	 * are workflow_events, which have a `type` and a JSON `payload` rather than
+	 * a level and a message, so they are mapped to the shape this view renders.
 	 */
 
 	let { runId } = $props();
@@ -18,81 +25,94 @@
 	let loading = $state(true);
 	let error = $state(null);
 
-	const supabase = createClient();
+	/** Map an event type onto the severity levels the filter offers. */
+	function levelFor(type) {
+		if (type.endsWith('_failed') || type === 'run_failed') return 'error';
+		if (type.startsWith('http_') || type.endsWith('_retried')) return 'warn';
+		if (type.startsWith('step_')) return 'info';
+		return 'debug';
+	}
 
-	const filteredLogs = $derived(() => {
-		let result = logs;
+	/** Render an event payload as a single readable line. */
+	function messageFor(type, payload) {
+		const node = payload?.node?.id ? ` ${payload.node.id}` : '';
 
-		if (filterLevel !== 'all') {
-			result = result.filter((log) => log.level === filterLevel);
-		}
+		if (payload?.error) return `${type}${node}: ${payload.error}`;
+		if (payload?.status) return `${type}${node} → HTTP ${payload.status}`;
+		if (payload?.reason) return `${type}: ${payload.reason}`;
 
-		if (searchQuery) {
-			const query = searchQuery.toLowerCase();
-			result = result.filter((log) => log.message.toLowerCase().includes(query));
-		}
+		return `${type}${node}`;
+	}
 
-		return result;
-	});
+	function toLogEntry(row) {
+		const payload = typeof row.payload === 'string' ? safeParse(row.payload) : (row.payload ?? {});
 
-	const filtered = filteredLogs();
-
-	onMount(() => {
-		// Subscribe to real-time log updates
-		const channel = supabase
-			.channel(`run-logs-${runId}`)
-			.on(
-				'postgres_changes',
-				{
-					event: 'INSERT',
-					schema: 'public',
-					table: 'logs',
-					filter: `run_id=eq.${runId}`
-				},
-				(payload) => {
-					logs = [...logs, payload.new];
-					if (autoScroll && logsContainer) {
-						setTimeout(() => {
-							logsContainer.scrollTop = logsContainer.scrollHeight;
-						}, 100);
-					}
-				}
-			)
-			.subscribe();
-
-		// Load existing logs
-		loadLogs();
-
-		return () => {
-			supabase.removeChannel(channel);
+		return {
+			id: row.id,
+			created_at: row.ts ?? row.created_at,
+			level: levelFor(row.type),
+			message: messageFor(row.type, payload)
 		};
-	});
+	}
 
-	async function loadLogs() {
+	function safeParse(text) {
 		try {
-			loading = true;
-			error = null;
-			const { data, error: fetchError } = await supabase
-				.from('logs')
-				.select('*')
-				.eq('run_id', runId)
-				.order('created_at', { ascending: true });
-
-			if (fetchError) {
-				console.error('Error loading logs:', fetchError);
-				error = fetchError.message;
-			} else {
-				logs = data || [];
-				if (autoScroll && logsContainer) {
-					setTimeout(() => {
-						logsContainer.scrollTop = logsContainer.scrollHeight;
-					}, 100);
-				}
-			}
-		} finally {
-			loading = false;
+			return JSON.parse(text);
+		} catch {
+			return {};
 		}
 	}
+
+	const filtered = $derived(
+		logs.filter((log) => {
+			if (filterLevel !== 'all' && log.level !== filterLevel) return false;
+			if (searchQuery && !log.message.toLowerCase().includes(searchQuery.toLowerCase())) {
+				return false;
+			}
+			return true;
+		})
+	);
+
+	function scrollToBottom() {
+		if (!autoScroll || !logsContainer) return;
+		// Wait for the DOM to reflect the new entries before scrolling.
+		requestAnimationFrame(() => {
+			logsContainer.scrollTop = logsContainer.scrollHeight;
+		});
+	}
+
+	onMount(() => {
+		const source = new EventSource(`/api/runs/${runId}/events`);
+
+		source.addEventListener('run_event', (message) => {
+			// The first frames arrive before the stream goes quiet; clearing the
+			// spinner on the first one avoids a flash for runs with no events.
+			loading = false;
+			logs = [...logs, toLogEntry(JSON.parse(message.data))];
+			scrollToBottom();
+		});
+
+		source.addEventListener('done', () => {
+			loading = false;
+			// The run finished; no reconnect needed.
+			source.close();
+		});
+
+		source.onopen = () => {
+			loading = false;
+			error = null;
+		};
+
+		source.onerror = () => {
+			// EventSource retries on its own unless it is already closed.
+			if (source.readyState === EventSource.CLOSED) {
+				error = 'Connection to the log stream was lost.';
+				loading = false;
+			}
+		};
+
+		return () => source.close();
+	});
 
 	function formatTime(timestamp) {
 		return new Date(timestamp).toLocaleTimeString('en-US', {

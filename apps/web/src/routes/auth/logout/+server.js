@@ -1,22 +1,25 @@
-import { createServerSupabaseClient } from '$lib/supabase.js';
+/**
+ * POST /auth/logout - Sign out the current user.
+ *
+ * Deleting the session row revokes it server-side immediately, which the old
+ * Supabase JWTs could not do — they stayed valid until they expired.
+ */
+
 import { redirect } from '@sveltejs/kit';
+import { destroySession, SESSION_COOKIE } from '@meshhook/shared/lib/auth.js';
 
 /**
- * POST /auth/logout - Sign out the current user
  * @param {import('@sveltejs/kit').RequestEvent} event
  */
 export async function POST(event) {
-	const supabase = createServerSupabaseClient(event);
+	const token = event.cookies.get(SESSION_COOKIE);
 
-	const { error } = await supabase.auth.signOut();
-
-	if (error) {
-		console.error('Error signing out:', error);
-		return new Response(JSON.stringify({ error: error.message }), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+	if (token) {
+		await destroySession(token);
 	}
+
+	// Clear the cookie even if there was no session, so a stale one cannot linger.
+	event.cookies.delete(SESSION_COOKIE, { path: '/' });
 
 	throw redirect(303, '/auth/login');
 }

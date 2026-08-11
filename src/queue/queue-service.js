@@ -1,45 +1,50 @@
-// QueueService - PGMQ Queue Management
+// QueueService - job queue management on Turso/libSQL
 // Issue #91: Implement job enqueue/dequeue
-// Provides interface for enqueuing, dequeuing, and managing workflow jobs
+//
+// Previously this drove pgmq through Supabase RPC calls. It now sits on the
+// SQLite-backed Queue in @meshhook/shared/lib/queue.js. The public methods and
+// their return shapes are unchanged; the constructor takes a database handle
+// where it used to take a Supabase client.
+
+import { db as sharedDb } from "@meshhook/shared/lib/db.js";
+import { Queue } from "@meshhook/shared/lib/queue.js";
 
 /**
- * QueueService class for managing PGMQ queues
- * Handles job enqueue, dequeue, acknowledgment, and monitoring
+ * QueueService manages enqueue, dequeue, acknowledgment and monitoring of
+ * workflow jobs, and mirrors each job's lifecycle into job_tracking.
  */
 export class QueueService {
   /**
-   * Create a QueueService instance
-   * @param {Object} supabaseClient - Supabase client instance
-   * @param {string} queueName - Name of the queue (default: 'workflow_jobs')
+   * @param {object} [db] Database handle (defaults to the shared connection).
+   * @param {string} [queueName] Queue to operate on.
    */
-  constructor(supabaseClient, queueName = 'workflow_jobs') {
-    if (!supabaseClient) {
-      throw new Error('Supabase client is required');
+  constructor(db = sharedDb, queueName = "workflow_jobs") {
+    if (!db) {
+      throw new Error("Database handle is required");
     }
-    this.client = supabaseClient;
+    this.db = db;
     this.queueName = queueName;
+    this.queue = new Queue({ name: queueName, db });
   }
 
   /**
-   * Enqueue a job to the queue
-   * @param {Object} jobData - Job data containing run_id, workflow_id, project_id, etc.
-   * @param {number} delaySeconds - Optional delay in seconds before job becomes visible
-   * @returns {Promise<Object>} Result containing msg_id
+   * Enqueue a job.
+   * @param {Object} jobData Must include run_id, workflow_id and project_id.
+   * @param {number} delaySeconds Delay before the job becomes visible.
+   * @returns {Promise<{msg_id: number}>}
    */
   async enqueue(jobData, delaySeconds = 0) {
-    // Validate required fields
     if (!jobData.run_id) {
-      throw new Error('Job data must include run_id');
+      throw new Error("Job data must include run_id");
     }
     if (!jobData.workflow_id) {
-      throw new Error('Job data must include workflow_id');
+      throw new Error("Job data must include workflow_id");
     }
     if (!jobData.project_id) {
-      throw new Error('Job data must include project_id');
+      throw new Error("Job data must include project_id");
     }
 
     try {
-      // Prepare job payload
       const payload = {
         run_id: jobData.run_id,
         workflow_id: jobData.workflow_id,
@@ -50,57 +55,36 @@ export class QueueService {
         metadata: jobData.metadata || {},
       };
 
-      // Use PGMQ send function
-      const { data, error } = await this.client.rpc('pgmq_send', {
-        queue_name: this.queueName,
-        msg: payload,
-        delay: delaySeconds,
-      });
+      const msgId = await this.queue.send(payload, delaySeconds);
 
-      if (error) {
-        throw new Error(`Failed to enqueue job: ${error.message}`);
-      }
-
-      // Track job in job_tracking table
       await this._trackJob({
-        msg_id: data,
+        msg_id: msgId,
         run_id: jobData.run_id,
         queue_name: this.queueName,
         attempt: payload.attempt,
         max_attempts: payload.max_attempts,
       });
 
-      return { msg_id: data };
+      return { msg_id: msgId };
     } catch (error) {
       throw new Error(`Enqueue failed: ${error.message}`);
     }
   }
 
   /**
-   * Dequeue a job from the queue
-   * @param {number} vtSeconds - Visibility timeout in seconds (default: 30)
-   * @returns {Promise<Object|null>} Job object or null if queue is empty
+   * Lease the next available job.
+   * @param {number} vtSeconds Visibility timeout.
+   * @returns {Promise<Object|null>} The job, or null when the queue is empty.
    */
   async dequeue(vtSeconds = 30) {
     try {
-      const { data, error } = await this.client.rpc('pgmq_read', {
-        queue_name: this.queueName,
-        vt: vtSeconds,
-        qty: 1,
-      });
-
-      if (error) {
-        throw new Error(`Failed to dequeue job: ${error.message}`);
-      }
-
-      // PGMQ returns array, get first item
-      if (!data || data.length === 0) {
+      const messages = await this.queue.read(vtSeconds, 1);
+      if (messages.length === 0) {
         return null;
       }
 
-      const job = data[0];
+      const job = messages[0];
 
-      // Update job tracking with started_at timestamp
       await this._updateJobTracking(job.msg_id, {
         started_at: new Date().toISOString(),
       });
@@ -118,151 +102,135 @@ export class QueueService {
   }
 
   /**
-   * Acknowledge and delete a processed job
-   * @param {number} msgId - Message ID to acknowledge
-   * @returns {Promise<boolean>} True if acknowledged, false otherwise
+   * Acknowledge a processed job, removing it from the queue.
+   * @returns {Promise<boolean>}
    */
   async acknowledge(msgId) {
     try {
-      const { data, error } = await this.client.rpc('pgmq_delete', {
-        queue_name: this.queueName,
-        msg_id: msgId,
-      });
+      const deleted = await this.queue.deleteMessage(msgId);
 
-      if (error) {
-        throw new Error(`Failed to acknowledge job: ${error.message}`);
-      }
-
-      // Update job tracking with completed_at timestamp
       await this._updateJobTracking(msgId, {
         completed_at: new Date().toISOString(),
       });
 
-      return data === true;
+      return deleted;
     } catch (error) {
       throw new Error(`Acknowledge failed: ${error.message}`);
     }
   }
 
   /**
-   * Archive a job (move to archive table)
-   * @param {number} msgId - Message ID to archive
-   * @returns {Promise<boolean>} True if archived, false otherwise
+   * Move a job to the archive table.
+   * @returns {Promise<boolean>}
    */
   async archiveJob(msgId) {
     try {
-      const { data, error } = await this.client.rpc('pgmq_archive', {
-        queue_name: this.queueName,
-        msg_id: msgId,
-      });
-
-      if (error) {
-        throw new Error(`Failed to archive job: ${error.message}`);
-      }
-
-      return data === true;
+      return await this.queue.archive(msgId);
     } catch (error) {
       throw new Error(`Archive failed: ${error.message}`);
     }
   }
 
   /**
-   * Get queue metrics
-   * @returns {Promise<Object>} Queue metrics including length and age
+   * Return a leased job to the queue after `delaySeconds`, so a retry does not
+   * have to wait out the full visibility timeout.
+   * @returns {Promise<boolean>}
+   */
+  async requeue(msgId, delaySeconds = 0) {
+    try {
+      return await this.queue.setVisibilityTimeout(msgId, delaySeconds);
+    } catch (error) {
+      throw new Error(`Requeue failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Queue depth and message age.
+   * @returns {Promise<Object>}
    */
   async getQueueMetrics() {
     try {
-      const { data, error } = await this.client.rpc('get_queue_metrics', {
-        p_queue_name: this.queueName,
-      });
-
-      if (error) {
-        throw new Error(`Failed to get queue metrics: ${error.message}`);
-      }
-
-      return data[0] || {
-        queue_name: this.queueName,
-        queue_length: 0,
-        oldest_msg_age_seconds: null,
-        newest_msg_age_seconds: null,
-      };
+      return await this.queue.metrics();
     } catch (error) {
       throw new Error(`Get metrics failed: ${error.message}`);
     }
   }
 
   /**
-   * Purge all messages from the queue
-   * @returns {Promise<number>} Number of messages purged
+   * Remove every message from the queue.
+   * @returns {Promise<number>} Number of messages purged.
    */
   async purgeQueue() {
     try {
-      const { data, error } = await this.client.rpc('pgmq_purge_queue', {
-        queue_name: this.queueName,
-      });
-
-      if (error) {
-        throw new Error(`Failed to purge queue: ${error.message}`);
-      }
-
-      return data || 0;
+      return await this.queue.purge();
     } catch (error) {
       throw new Error(`Purge failed: ${error.message}`);
     }
   }
 
   /**
-   * Track job in job_tracking table
+   * Insert the job_tracking row for a newly enqueued job.
+   *
+   * Tracking is observability, not correctness: a failure here is logged and
+   * swallowed so it cannot fail the enqueue that already succeeded.
    * @private
-   * @param {Object} trackingData - Job tracking data
    */
   async _trackJob(trackingData) {
     try {
-      const { error } = await this.client.from('job_tracking').insert({
-        msg_id: trackingData.msg_id,
-        run_id: trackingData.run_id,
-        queue_name: trackingData.queue_name,
-        attempt: trackingData.attempt,
-        max_attempts: trackingData.max_attempts,
-      });
-
-      if (error) {
-        // Log error but don't fail the enqueue operation
-        console.error('Failed to track job:', error.message);
-      }
+      await this.db.none(
+        `insert into job_tracking (msg_id, run_id, queue_name, attempt, max_attempts)
+         values (?, ?, ?, ?, ?)`,
+        [
+          trackingData.msg_id,
+          trackingData.run_id,
+          trackingData.queue_name,
+          trackingData.attempt,
+          trackingData.max_attempts,
+        ],
+      );
     } catch (error) {
-      console.error('Failed to track job:', error.message);
+      console.error("Failed to track job:", error.message);
     }
   }
 
   /**
-   * Update job tracking record
+   * Patch the job_tracking row for a message.
+   *
+   * Column names come from a fixed allow-list rather than straight from the
+   * caller, so this cannot be turned into arbitrary SQL.
    * @private
-   * @param {number} msgId - Message ID
-   * @param {Object} updates - Fields to update
    */
   async _updateJobTracking(msgId, updates) {
-    try {
-      const { error } = await this.client
-        .from('job_tracking')
-        .update(updates)
-        .eq('msg_id', msgId);
+    const ALLOWED = new Set([
+      "started_at",
+      "completed_at",
+      "failed_at",
+      "moved_to_dlq_at",
+      "error_message",
+      "error_stack",
+      "attempt",
+    ]);
 
-      if (error) {
-        console.error('Failed to update job tracking:', error.message);
-      }
+    const columns = Object.keys(updates).filter((k) => ALLOWED.has(k));
+    if (columns.length === 0) return;
+
+    try {
+      await this.db.none(
+        `update job_tracking set ${columns.map((c) => `${c} = ?`).join(", ")}
+          where msg_id = ?`,
+        [...columns.map((c) => updates[c]), msgId],
+      );
     } catch (error) {
-      console.error('Failed to update job tracking:', error.message);
+      console.error("Failed to update job tracking:", error.message);
     }
   }
 }
 
 /**
- * Create a QueueService instance
- * @param {Object} supabaseClient - Supabase client instance
- * @param {string} queueName - Optional queue name
- * @returns {QueueService} QueueService instance
+ * @param {object} [db] Database handle.
+ * @param {string} [queueName] Queue name.
+ * @returns {QueueService}
  */
-export function createQueueService(supabaseClient, queueName) {
-  return new QueueService(supabaseClient, queueName);
+export function createQueueService(db, queueName) {
+  return new QueueService(db, queueName);
 }
