@@ -9,7 +9,12 @@ export default defineConfig({
     // Only the suites that are actually written for vitest. src/nodes,
     // src/workers and src/utils use the node:test runner instead and are run by
     // `pnpm run test:node`; collecting them here just reports "no test suite".
-    include: ["src/queue/**/*.test.js", "packages/**/*.test.js", "scripts/**/*.test.js"],
+    include: [
+      "src/queue/**/*.test.js",
+      "packages/**/*.test.js",
+      "scripts/**/*.test.js",
+      "workers/**/*.test.js",
+    ],
     exclude: ["**/node_modules/**", "apps/**"],
     // Queue tests exercise visibility timeouts and a polling worker.
     testTimeout: 15000,

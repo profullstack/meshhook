@@ -1,6 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { db } from "./lib/db.js";
-import { queue } from "./lib/queue.js";
 import { request as undiciRequest } from "undici";
 
 async function execHttp(runId, node) {
@@ -47,27 +46,41 @@ async function execHttp(runId, node) {
   }
 }
 
-async function handleStep(job) {
-  const { run_id: runId, node } = job.data;
+/**
+ * Execute one workflow node.
+ *
+ * This used to subscribe to an in-process EventEmitter. The orchestrator now
+ * owns the polling loop and calls this directly, so execution is driven by the
+ * durable workflow_steps queue instead — a step survives a restart, and a
+ * failure propagates to the worker, which retries or dead-letters it rather
+ * than logging into the void.
+ *
+ * @param {string} runId
+ * @param {{id: string, type: string}} node
+ */
+export async function executeStep(runId, node) {
   if (node.type === "http_call") {
     await execHttp(runId, node);
-  } else if (node.type === "transform") {
+    return;
+  }
+
+  if (node.type === "transform") {
     await db.none(
-      "insert into workflow_events (run_id, type, payload) values ($1,'step_succeeded',$2)",
+      "insert into workflow_events (run_id, type, payload) values (?, 'step_succeeded', ?)",
       [runId, JSON.stringify({ node, next: "createContact", output: { ok: true } })]
     );
-  } else if (node.type === "terminate") {
-    await db.none(
-      "insert into workflow_events (run_id, type, payload) values ($1,'run_completed',$2)",
-      [runId, JSON.stringify({ reason: "terminated" })]
-    );
-    await db.none("update workflow_runs set status='succeeded', finished_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') where id=$1", [runId]);
+    return;
   }
-}
 
-export async function startHttpExec() {
-  await queue.process("step:execute", handleStep);
-  console.log("🔧 MeshHook HTTP Executor running");
-}
+  if (node.type === "terminate") {
+    await db.none(
+      "insert into workflow_events (run_id, type, payload) values (?, 'step_succeeded', ?)",
+      [runId, JSON.stringify({ node, next: null, reason: "terminated" })]
+    );
+    return;
+  }
 
-if (import.meta.url === `file://${process.argv[1]}`) startHttpExec();
+  // An unknown node type must not look like success: leaving the run to be
+  // marked completed would hide a definition the engine cannot execute.
+  throw new Error(`Unknown node type "${node.type}" for node ${node.id}`);
+}
