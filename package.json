@@ -6,7 +6,7 @@
   "packageManager": "pnpm@11.18.0",
   "scripts": {
     "mh": "node packages/cli/bin/mh.js",
-    "postinstall": "npx @socketsecurity/socket-patch apply --silent --ecosystems npm && echo \"✅ MeshHook workspace installed\"",
+    "postinstall": "node scripts/socket-patch.mjs",
     "format": "prettier -w .",
     "setup": "node scripts/setup.js",
     "dev": "cd apps/web && pnpm run dev",
@@ -16,12 +16,12 @@
     "issue:progress": "node scripts/gh-project-status.js",
     "issue:done": "node scripts/gh-project-status.js",
     "start": "node workers/orchestrator.mjs",
-    "dependencies": "npx @socketsecurity/socket-patch apply --silent --ecosystems npm",
     "db:status": "node scripts/db-migrate.js --status",
     "test": "pnpm run test:vitest && pnpm run test:node",
     "test:watch": "vitest",
     "test:node": "node --test src/nodes/*.test.js src/workers/*.test.js src/utils/*.test.js",
-    "test:vitest": "vitest run"
+    "test:vitest": "vitest run",
+    "security:patch": "SOCKET_API_TOKEN=${SOCKET_API_TOKEN} node scripts/socket-patch.mjs"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",
