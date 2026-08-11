@@ -24,12 +24,12 @@ async function execHttp(runId, node) {
       });
       const text = await res.body.text();
       await db.none(
-        "insert into workflow_events (run_id, type, payload) values ($1,'http_attempted',$2::jsonb)",
+        "insert into workflow_events (run_id, type, payload) values ($1,'http_attempted',$2)",
         [runId, JSON.stringify({ node, status: res.statusCode })]
       );
       if (res.statusCode >= 200 && res.statusCode < 300) {
         await db.none(
-          "insert into workflow_events (run_id, type, payload) values ($1,'step_succeeded',$2::jsonb)",
+          "insert into workflow_events (run_id, type, payload) values ($1,'step_succeeded',$2)",
           [runId, JSON.stringify({ node, next: node.id === 'createContact' ? 'terminate' : null, response: text.slice(0,2048) })]
         );
         return;
@@ -38,7 +38,7 @@ async function execHttp(runId, node) {
     } catch (err) {
       const backoff = Math.min(8000, base * 2 ** (attempt - 1)) + Math.floor(Math.random() * 250);
       await db.none(
-        "insert into workflow_events (run_id, type, payload) values ($1,'step_failed',$2::jsonb)",
+        "insert into workflow_events (run_id, type, payload) values ($1,'step_failed',$2)",
         [runId, JSON.stringify({ node, attempt, error: String(err) })]
       );
       if (attempt >= max) throw err;
@@ -53,15 +53,15 @@ async function handleStep(job) {
     await execHttp(runId, node);
   } else if (node.type === "transform") {
     await db.none(
-      "insert into workflow_events (run_id, type, payload) values ($1,'step_succeeded',$2::jsonb)",
+      "insert into workflow_events (run_id, type, payload) values ($1,'step_succeeded',$2)",
       [runId, JSON.stringify({ node, next: "createContact", output: { ok: true } })]
     );
   } else if (node.type === "terminate") {
     await db.none(
-      "insert into workflow_events (run_id, type, payload) values ($1,'run_completed',$2::jsonb)",
+      "insert into workflow_events (run_id, type, payload) values ($1,'run_completed',$2)",
       [runId, JSON.stringify({ reason: "terminated" })]
     );
-    await db.none("update workflow_runs set status='succeeded', finished_at=now() where id=$1", [runId]);
+    await db.none("update workflow_runs set status='succeeded', finished_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') where id=$1", [runId]);
   }
 }
 

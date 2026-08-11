@@ -1,61 +1,59 @@
 /**
- * Authentication utilities for server-side route protection
- * Provides helpers for checking authentication and redirecting unauthorized users
+ * Authentication utilities for server-side route protection.
+ *
+ * getSupabase() is gone along with Supabase itself. Routes that need data now
+ * import the query helpers from @meshhook/shared/lib/authz.js, which apply the
+ * per-user scoping that RLS used to enforce in the database.
  */
 
 import { redirect } from '@sveltejs/kit';
 
 /**
- * Require authentication for a route
- * Redirects to login if user is not authenticated
- * @param {object} event - SvelteKit event object
- * @returns {object} user object if authenticated
- * @throws {redirect} Redirects to /auth/login if not authenticated
+ * Require authentication for a page route.
+ * @param {import('@sveltejs/kit').RequestEvent} event
+ * @returns {object} the authenticated user
+ * @throws {redirect} to /auth/login when not authenticated
  */
 export function requireAuth(event) {
 	const user = event.locals.user;
 
 	if (!user) {
-		throw redirect(303, '/auth/login');
+		// Preserve where the user was headed so login can send them back.
+		const next = encodeURIComponent(event.url.pathname + event.url.search);
+		throw redirect(303, `/auth/login?next=${next}`);
 	}
 
 	return user;
 }
 
 /**
- * Get authenticated user from event.locals
- * Returns null if not authenticated (does not redirect)
- * @param {object} event - SvelteKit event object
- * @returns {object|null} user object or null
+ * Get the authenticated user, or null.
+ * @param {import('@sveltejs/kit').RequestEvent} event
+ * @returns {object|null}
  */
 export function getUser(event) {
 	return event.locals.user ?? null;
 }
 
 /**
- * Check if user is authenticated
- * @param {object} event - SvelteKit event object
- * @returns {boolean} true if authenticated
+ * @param {import('@sveltejs/kit').RequestEvent} event
+ * @returns {boolean}
  */
 export function isAuthenticated(event) {
 	return !!event.locals.user;
 }
 
 /**
- * Get Supabase client from event.locals
- * @param {object} event - SvelteKit event object
- * @returns {object} Supabase client
- */
-export function getSupabase(event) {
-	return event.locals.supabase;
-}
-
-/**
- * Require authentication for API routes
- * Returns 401 Unauthorized if user is not authenticated
- * @param {object} event - SvelteKit event object
- * @returns {object} user object if authenticated
- * @throws {Response} Returns 401 if not authenticated
+ * Require authentication for an API route.
+ *
+ * Returns the user when authenticated, or a 401 Response otherwise. Callers
+ * must check with `instanceof Response` before using the result:
+ *
+ *     const user = requireApiAuth(event);
+ *     if (user instanceof Response) return user;
+ *
+ * @param {import('@sveltejs/kit').RequestEvent} event
+ * @returns {object|Response}
  */
 export function requireApiAuth(event) {
 	const user = event.locals.user;
@@ -68,30 +66,10 @@ export function requireApiAuth(event) {
 			}),
 			{
 				status: 401,
-				headers: {
-					'Content-Type': 'application/json'
-				}
+				headers: { 'Content-Type': 'application/json' }
 			}
 		);
 	}
 
 	return user;
-}
-
-/**
- * Verify user has access to a project
- * @param {object} supabase - Supabase client
- * @param {string} userId - User ID
- * @param {string} projectId - Project ID
- * @returns {Promise<boolean>} true if user has access
- */
-export async function verifyProjectAccess(supabase, userId, projectId) {
-	const { data, error } = await supabase
-		.from('projects')
-		.select('id')
-		.eq('id', projectId)
-		.eq('owner', userId)
-		.single();
-
-	return !error && !!data;
 }

@@ -1,8 +1,12 @@
 /**
  * Loop Node Tests
- * Testing Framework: Mocha with Chai
+ *
+ * Runner: node:test, with chai assertions. The describe/it imports were missing,
+ * so this file threw "describe is not defined" and its suite never ran — the
+ * sibling tests in this directory import them explicitly.
  */
 
+import { describe, it } from 'node:test';
 import { expect } from 'chai';
 import { LoopNode, LoopError, createLoopNode } from './loop.js';
 

@@ -1,30 +1,21 @@
-import { requireAuth, getSupabase } from '$lib/auth.js';
-
 /**
- * Load runs for the list view
+ * Load runs for the list view.
+ *
+ * The Supabase version relied on RLS to limit rows to the caller's projects;
+ * listRuns() applies that scoping in the query instead.
  */
+
+import { requireAuth } from '$lib/auth.js';
+import { listRuns } from '@meshhook/shared/lib/authz.js';
+
 export async function load(event) {
-	// Require authentication - will redirect to /login if not authenticated
 	const user = requireAuth(event);
-	const supabase = getSupabase(event);
 
 	try {
-		const { data: runs, error } = await supabase
-			.from('workflow_runs')
-			.select('*, workflow:workflow_definitions(slug)')
-			.order('created_at', { ascending: false });
-
-		if (error) {
-			console.error('Error loading runs:', error);
-			return { runs: [], error: error.message };
-		}
-
-		return {
-			runs: runs || [],
-			user
-		};
+		const runs = await listRuns(user.id, { limit: 100 });
+		return { runs, user };
 	} catch (error) {
-		console.error('Error in runs load:', error);
-		return { runs: [], error: error.message };
+		console.error('Error loading runs:', error);
+		return { runs: [], user, error: 'Failed to load runs' };
 	}
 }

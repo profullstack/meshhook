@@ -1,23 +1,17 @@
-import { createServerSupabaseClient } from '$lib/supabase.js';
+/**
+ * Root layout load — exposes the authenticated user to every page.
+ *
+ * hooks.server.js has already resolved the session cookie, so this just passes
+ * the result down. The old `session` object came from the Supabase SDK and
+ * carried access/refresh tokens; nothing in the UI used them, and a session
+ * token has no business reaching the client, so only the user is returned.
+ */
 
 /**
- * Load function for root layout - handles authentication state
  * @param {import('@sveltejs/kit').ServerLoadEvent} event
  */
 export async function load(event) {
-	const supabase = createServerSupabaseClient(event);
-
-	// Get the current session
-	const {
-		data: { session },
-		error
-	} = await supabase.auth.getSession();
-
-	if (error) {
-		console.error('Error fetching session:', error);
-	}
-
 	return {
-		session
+		user: event.locals.user
 	};
 }

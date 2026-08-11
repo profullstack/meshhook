@@ -4,10 +4,13 @@
   "type": "module",
   "exports": {
     "./lib/db.js": "./lib/db.js",
-    "./lib/queue.js": "./lib/queue.js"
+    "./lib/queue.js": "./lib/queue.js",
+    "./lib/auth.js": "./lib/auth.js",
+    "./lib/authz.js": "./lib/authz.js",
+    "./lib/crypto.js": "./lib/crypto.js"
   },
   "dependencies": {
-    "dotenv": "^17.2.3",
-    "pg": "^8.16.3"
+    "@libsql/client": "^0.15.7",
+    "dotenv": "^17.2.3"
   }
 }

@@ -1,6 +1,7 @@
 // Worker - Queue Job Processor
-// Processes workflow jobs from PGMQ queue with retry and DLQ support
+// Processes workflow jobs from the Turso/libSQL queue with retry and DLQ support
 
+import { db as sharedDb } from '@meshhook/shared/lib/db.js';
 import { QueueService } from './queue-service.js';
 import { DLQService } from './dlq-service.js';
 import { RetryStrategy } from './retry-strategy.js';
@@ -13,7 +14,7 @@ export class Worker {
   /**
    * Create a Worker instance
    * @param {Object} config - Worker configuration
-   * @param {Object} config.supabaseClient - Supabase client instance
+   * @param {Object} [config.db] - Database handle (defaults to the shared connection)
    * @param {Function} config.jobHandler - Function to process jobs
    * @param {string} config.queueName - Queue name (default: 'workflow_jobs')
    * @param {number} config.pollIntervalMs - Polling interval in ms (default: 1000)
@@ -21,22 +22,19 @@ export class Worker {
    * @param {Object} config.retryConfig - Retry configuration
    */
   constructor(config) {
-    if (!config.supabaseClient) {
-      throw new Error('Supabase client is required');
-    }
     if (!config.jobHandler || typeof config.jobHandler !== 'function') {
       throw new Error('Job handler function is required');
     }
 
-    this.client = config.supabaseClient;
+    this.db = config.db || sharedDb;
     this.jobHandler = config.jobHandler;
     this.queueName = config.queueName || 'workflow_jobs';
     this.pollIntervalMs = config.pollIntervalMs || 1000;
     this.visibilityTimeoutSeconds = config.visibilityTimeoutSeconds || 30;
 
     // Initialize services
-    this.queueService = new QueueService(this.client, this.queueName);
-    this.dlqService = new DLQService(this.client);
+    this.queueService = new QueueService(this.db, this.queueName);
+    this.dlqService = new DLQService(this.db);
     this.retryStrategy = new RetryStrategy(config.retryConfig);
 
     // Worker state

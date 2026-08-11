@@ -1,4 +1,4 @@
-import { db } from "./lib/db.js";
+import { db, json } from "./lib/db.js";
 import { queue, enqueueStep } from "./lib/queue.js";
 
 async function replay(runId) {
@@ -8,7 +8,8 @@ async function replay(runId) {
   );
   let ctx = { current: null };
   for (const ev of events) {
-    if (ev.type === "step_succeeded") ctx.current = ev.payload.next ?? null;
+    // payload is TEXT under SQLite, not a decoded jsonb value.
+    if (ev.type === "step_succeeded") ctx.current = json(ev.payload, {}).next ?? null;
   }
   return ctx;
 }
@@ -30,13 +31,13 @@ async function handleRun(job) {
         "insert into workflow_events (run_id, type, payload) values ($1,'run_completed','{}')",
         [runId]
       );
-      await t.none("update workflow_runs set status='succeeded', finished_at=now() where id=$1", [runId]);
+      await t.none("update workflow_runs set status='succeeded', finished_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') where id=$1", [runId]);
     });
     return;
   }
   for (const node of nodes) {
     await db.none(
-      "insert into workflow_events (run_id, type, payload) values ($1,'step_started',$2::jsonb)",
+      "insert into workflow_events (run_id, type, payload) values ($1,'step_started',$2)",
       [runId, JSON.stringify({ node })]
     );
     await enqueueStep(runId, node);

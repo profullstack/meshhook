@@ -1,330 +1,171 @@
-// Integration Tests for Queue System
-// Testing Framework: Mocha with Chai
-// Tests the complete queue system including retry and DLQ functionality
+// Queue system integration tests.
+//
+// Exercises QueueService, DLQService, RetryStrategy and Worker together against
+// a real in-memory libSQL database. The previous version of this file required
+// a running Supabase stack on localhost:54321 and was skipped in practice.
 
-import { expect } from 'chai';
-import { createClient } from '@supabase/supabase-js';
-import {
-  QueueService,
-  DLQService,
-  RetryStrategy,
-  Worker,
-  createJobHandler,
-} from './index.js';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { QueueService, DLQService, RetryStrategy, Worker } from "./index.js";
+import { createTestDb, seedRun, jobFor } from "./test-helpers.js";
 
-describe('Queue System Integration Tests', () => {
-  let supabaseClient;
+describe("Queue system integration", () => {
+  let db;
   let queueService;
   let dlqService;
-  let retryStrategy;
+  let seed;
 
-  before(() => {
-    const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321';
-    const supabaseKey = process.env.SUPABASE_ANON_KEY || 'test-key';
-    supabaseClient = createClient(supabaseUrl, supabaseKey);
+  beforeEach(async () => {
+    db = await createTestDb();
+    queueService = new QueueService(db);
+    dlqService = new DLQService(db);
+    seed = await seedRun(db);
+  });
 
-    queueService = new QueueService(supabaseClient);
-    dlqService = new DLQService(supabaseClient);
-    retryStrategy = new RetryStrategy({
-      baseDelayMs: 100,
-      maxDelayMs: 1000,
-      maxAttempts: 3,
+  afterEach(async () => {
+    await db.close();
+  });
+
+  describe("happy path", () => {
+    it("carries a job from enqueue through acknowledgement", async () => {
+      const { msg_id } = await queueService.enqueue(jobFor(seed));
+
+      const job = await queueService.dequeue();
+      expect(job.msg_id).toBe(msg_id);
+
+      expect(await queueService.acknowledge(msg_id)).toBe(true);
+      expect(await queueService.queue.size()).toBe(0);
+
+      const tracking = await db.one("select * from job_tracking where msg_id = ?", [msg_id]);
+      expect(tracking.started_at).toBeTruthy();
+      expect(tracking.completed_at).toBeTruthy();
     });
   });
 
-  describe('End-to-End Job Processing', () => {
-    it('should successfully process a job from enqueue to completion', async () => {
-      const runId = '123e4567-e89b-12d3-a456-426614174100';
-      let jobProcessed = false;
+  describe("retry then dead-letter", () => {
+    it("retries up to the limit, then moves the job to the DLQ", async () => {
+      const retryStrategy = new RetryStrategy({ baseDelayMs: 1, maxDelayMs: 5, maxAttempts: 3 });
 
-      // Enqueue a job
-      const enqueueResult = await queueService.enqueue({
-        run_id: runId,
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-      });
+      await queueService.enqueue(jobFor(seed, { max_attempts: 3 }));
 
-      expect(enqueueResult).to.have.property('msg_id');
+      let attempts = 0;
+      let lastJob = null;
 
-      // Create a worker to process the job
-      const jobHandler = createJobHandler(async (message) => {
-        expect(message.run_id).to.equal(runId);
-        jobProcessed = true;
-      });
-
-      const worker = new Worker({
-        supabaseClient,
-        jobHandler,
-        pollIntervalMs: 100,
-        retryConfig: {
-          baseDelayMs: 100,
-          maxDelayMs: 1000,
-          maxAttempts: 3,
-        },
-      });
-
-      await worker.start();
-
-      // Wait for job to be processed
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      await worker.stop();
-
-      expect(jobProcessed).to.be.true;
-      expect(worker.getStats().succeeded).to.be.at.least(1);
-    });
-
-    it('should retry failed jobs with exponential backoff', async () => {
-      const runId = '123e4567-e89b-12d3-a456-426614174101';
-      let attemptCount = 0;
-
-      // Enqueue a job
-      await queueService.enqueue({
-        run_id: runId,
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-      });
-
-      // Create a worker that fails twice then succeeds
-      const jobHandler = createJobHandler(async (message) => {
-        attemptCount++;
-        if (attemptCount < 3) {
-          throw new Error('Simulated failure');
-        }
-        // Success on third attempt
-      });
-
-      const worker = new Worker({
-        supabaseClient,
-        jobHandler,
-        pollIntervalMs: 100,
-        retryConfig: {
-          baseDelayMs: 100,
-          maxDelayMs: 1000,
-          maxAttempts: 3,
-        },
-      });
-
-      await worker.start();
-
-      // Wait for retries to complete
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      await worker.stop();
-
-      expect(attemptCount).to.equal(3);
-      expect(worker.getStats().retried).to.be.at.least(2);
-      expect(worker.getStats().succeeded).to.be.at.least(1);
-    });
-
-    it('should move job to DLQ after max retry attempts', async () => {
-      const runId = '123e4567-e89b-12d3-a456-426614174102';
-
-      // Enqueue a job
-      await queueService.enqueue({
-        run_id: runId,
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-      });
-
-      // Create a worker that always fails
-      const jobHandler = createJobHandler(async () => {
-        throw new Error('Permanent failure');
-      });
-
-      const worker = new Worker({
-        supabaseClient,
-        jobHandler,
-        pollIntervalMs: 100,
-        retryConfig: {
-          baseDelayMs: 100,
-          maxDelayMs: 1000,
-          maxAttempts: 3,
-        },
-      });
-
-      await worker.start();
-
-      // Wait for all retries and DLQ move
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      await worker.stop();
-
-      expect(worker.getStats().movedToDLQ).to.be.at.least(1);
-
-      // Verify job is in DLQ
-      const dlqJobs = await dlqService.listDeadLetterJobs();
-      const movedJob = dlqJobs.find((j) => j.message.run_id === runId);
-      expect(movedJob).to.exist;
-      expect(movedJob.message).to.have.property('error_message');
-    });
-  });
-
-  describe('DLQ Replay Functionality', () => {
-    it('should replay job from DLQ back to main queue', async () => {
-      const runId = '123e4567-e89b-12d3-a456-426614174103';
-
-      // Create a job that will fail and move to DLQ
-      await queueService.enqueue({
-        run_id: runId,
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-      });
-
-      const jobHandler = createJobHandler(async () => {
-        throw new Error('Initial failure');
-      });
-
-      const worker = new Worker({
-        supabaseClient,
-        jobHandler,
-        pollIntervalMs: 100,
-        retryConfig: {
-          baseDelayMs: 100,
-          maxDelayMs: 1000,
-          maxAttempts: 2,
-        },
-      });
-
-      await worker.start();
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      await worker.stop();
-
-      // Find the job in DLQ
-      const dlqJobs = await dlqService.listDeadLetterJobs();
-      const dlqJob = dlqJobs.find((j) => j.message.run_id === runId);
-
-      if (dlqJob) {
-        // Replay the job
-        const replayResult = await dlqService.replayDeadLetterJob(
-          dlqJob.msg_id
-        );
-        expect(replayResult).to.have.property('new_msg_id');
-
-        // Verify job is back in main queue
-        const metrics = await queueService.getQueueMetrics();
-        expect(metrics.queue_length).to.be.at.least(0);
-      }
-    });
-  });
-
-  describe('Retry Strategy Integration', () => {
-    it('should calculate correct delays for retry attempts', () => {
-      const delays = [];
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        const delay = retryStrategy.getNextDelay(attempt);
-        delays.push(delay);
-      }
-
-      // Verify delays are increasing (with jitter tolerance)
-      expect(delays[1]).to.be.greaterThan(delays[0] * 0.5);
-      expect(delays[2]).to.be.greaterThan(delays[1] * 0.5);
-    });
-
-    it('should respect max delay limit', () => {
-      const strategy = new RetryStrategy({
-        baseDelayMs: 1000,
-        maxDelayMs: 5000,
-        maxAttempts: 10,
-      });
-
-      const delay = strategy.getNextDelay(10);
-      expect(delay).to.be.at.most(5000);
-    });
-  });
-
-  describe('Queue Metrics and Monitoring', () => {
-    it('should provide accurate queue metrics', async () => {
-      // Enqueue some test jobs
+      // Each pass leases the job, "fails", and requeues it immediately.
       for (let i = 0; i < 3; i++) {
-        await queueService.enqueue({
-          run_id: `123e4567-e89b-12d3-a456-42661417410${i}`,
-          workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-          project_id: '123e4567-e89b-12d3-a456-426614174002',
-        });
+        const job = await queueService.dequeue(30);
+        expect(job).not.toBeNull();
+        attempts++;
+        lastJob = job;
+
+        if (retryStrategy.canRetry(attempts)) {
+          await queueService.requeue(job.msg_id, 0);
+        }
       }
 
-      const metrics = await queueService.getQueueMetrics();
+      expect(attempts).toBe(3);
+      expect(retryStrategy.canRetry(attempts)).toBe(false);
 
-      expect(metrics).to.have.property('queue_name');
-      expect(metrics).to.have.property('queue_length');
-      expect(metrics.queue_length).to.be.at.least(0);
+      const { dlq_msg_id } = await dlqService.moveToDeadLetter(lastJob, "exhausted retries");
+
+      expect(await queueService.queue.size()).toBe(0);
+      const dead = await dlqService.getDeadLetterJob(dlq_msg_id);
+      expect(dead.message.error_message).toBe("exhausted retries");
+      expect(dead.message.read_count).toBe(3);
     });
 
-    it('should provide DLQ metrics', async () => {
-      const metrics = await dlqService.getDLQMetrics();
+    it("replays a dead-lettered job back onto the main queue", async () => {
+      await queueService.enqueue(jobFor(seed));
+      const job = await queueService.dequeue();
+      const { dlq_msg_id } = await dlqService.moveToDeadLetter(job, "downstream 500");
 
-      expect(metrics).to.have.property('dlq_name');
-      expect(metrics).to.have.property('total_jobs');
+      await dlqService.replayDeadLetterJob(dlq_msg_id);
+
+      const replayed = await queueService.dequeue();
+      expect(replayed.message.run_id).toBe(seed.runId);
+      expect(replayed.message.attempt).toBe(1);
     });
   });
 
-  describe('Concurrent Job Processing', () => {
-    it('should handle multiple jobs concurrently', async () => {
-      const jobCount = 5;
-      const processedJobs = new Set();
-
-      // Enqueue multiple jobs
-      for (let i = 0; i < jobCount; i++) {
-        await queueService.enqueue({
-          run_id: `concurrent-${i}`,
-          workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-          project_id: '123e4567-e89b-12d3-a456-426614174002',
-        });
+  describe("concurrent consumers", () => {
+    it("never hands the same message to two readers", async () => {
+      for (let i = 0; i < 10; i++) {
+        await queueService.enqueue(jobFor(seed, { metadata: { n: i } }));
       }
 
-      const jobHandler = createJobHandler(async (message) => {
-        processedJobs.add(message.run_id);
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      });
+      const consumers = Array.from({ length: 4 }, () => new QueueService(db));
+      const claimed = [];
 
-      const worker = new Worker({
-        supabaseClient,
-        jobHandler,
-        pollIntervalMs: 50,
-      });
+      // Drain the queue from several consumers; a lease must be exclusive.
+      let job;
+      do {
+        const results = await Promise.all(consumers.map((c) => c.dequeue(30)));
+        const found = results.filter(Boolean);
+        claimed.push(...found.map((j) => j.msg_id));
+        job = found.length > 0 ? found[0] : null;
+      } while (job);
 
-      await worker.start();
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await worker.stop();
-
-      expect(processedJobs.size).to.be.at.least(1);
+      expect(claimed).toHaveLength(10);
+      expect(new Set(claimed).size).toBe(10);
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle malformed job data gracefully', async () => {
-      try {
-        await queueService.enqueue({
-          // Missing required fields
-          workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        });
-        expect.fail('Should have thrown an error');
-      } catch (error) {
-        expect(error.message).to.include('run_id');
-      }
+  describe("Worker", () => {
+    it("requires a job handler", () => {
+      expect(() => new Worker({ db })).toThrow(/Job handler function is required/);
     });
 
-    it('should handle worker errors without crashing', async () => {
-      const jobHandler = createJobHandler(async () => {
-        throw new Error('Critical error');
-      });
+    it("processes a job and acknowledges it", async () => {
+      const handled = [];
 
       const worker = new Worker({
-        supabaseClient,
-        jobHandler,
-        pollIntervalMs: 100,
-        retryConfig: {
-          maxAttempts: 1,
+        db,
+        pollIntervalMs: 5,
+        jobHandler: async (message) => {
+          handled.push(message);
         },
       });
 
+      await queueService.enqueue(jobFor(seed));
       await worker.start();
-      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Give the poll loop room to pick the job up.
+      await waitFor(() => handled.length === 1);
       await worker.stop();
 
-      // Worker should still be functional
-      expect(worker.getStats().processed).to.be.at.least(0);
+      expect(handled[0].run_id).toBe(seed.runId);
+      expect(await queueService.queue.size()).toBe(0);
+      expect(worker.stats.succeeded).toBe(1);
+    });
+
+    it("does not acknowledge a job whose handler throws", async () => {
+      const worker = new Worker({
+        db,
+        pollIntervalMs: 5,
+        retryConfig: { baseDelayMs: 1, maxDelayMs: 2 },
+        jobHandler: async () => {
+          throw new Error("handler exploded");
+        },
+      });
+
+      await queueService.enqueue(jobFor(seed));
+      await worker.start();
+
+      await waitFor(() => worker.stats.failed > 0 || worker.stats.retried > 0);
+      await worker.stop();
+
+      // The message must survive for redelivery rather than being dropped.
+      const tracking = await db.one("select * from job_tracking where run_id = ?", [seed.runId]);
+      expect(tracking.completed_at).toBeNull();
     });
   });
 });
+
+/** Poll `predicate` until it holds or the timeout lapses. */
+async function waitFor(predicate, timeoutMs = 3000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await predicate()) return;
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  throw new Error("Timed out waiting for condition");
+}

@@ -1,6 +1,12 @@
 # Railway configuration for the Orchestrator Worker
+#
+# Railpack picks the package manager from the `packageManager` field in
+# package.json and from the committed pnpm-lock.yaml. Without those it fell back
+# to npm and ran `npm install` during its own install step — before this
+# buildCommand ever executed — which fails because the workspace uses pnpm's
+# `workspace:*` protocol. Keep both in place or the build breaks again.
 [build]
-buildCommand = "npm install -g pnpm && pnpm install"
+buildCommand = "pnpm install --frozen-lockfile"
 
 [deploy]
 startCommand = "node workers/orchestrator.mjs"

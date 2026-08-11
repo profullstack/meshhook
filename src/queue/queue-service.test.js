@@ -1,224 +1,196 @@
-// Test file for QueueService
-// Testing Framework: Mocha with Chai
+// QueueService tests — run against a real in-memory libSQL database.
 // Issue #91: Implement job enqueue/dequeue
 
-import { expect } from 'chai';
-import { QueueService } from './queue-service.js';
-import { createClient } from '@supabase/supabase-js';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { QueueService } from "./queue-service.js";
+import { createTestDb, seedRun, jobFor } from "./test-helpers.js";
 
-describe('QueueService', () => {
+describe("QueueService", () => {
+  let db;
   let queueService;
-  let supabaseClient;
+  let seed;
 
-  before(() => {
-    // Initialize Supabase client for testing
-    const supabaseUrl = process.env.SUPABASE_URL || 'http://localhost:54321';
-    const supabaseKey = process.env.SUPABASE_ANON_KEY || 'test-key';
-    supabaseClient = createClient(supabaseUrl, supabaseKey);
-    queueService = new QueueService(supabaseClient);
+  beforeEach(async () => {
+    db = await createTestDb();
+    queueService = new QueueService(db);
+    seed = await seedRun(db);
   });
 
-  describe('constructor', () => {
-    it('should create a QueueService instance', () => {
-      expect(queueService).to.be.instanceOf(QueueService);
-    });
-
-    it('should have default queue name', () => {
-      expect(queueService.queueName).to.equal('workflow_jobs');
-    });
-
-    it('should accept custom queue name', () => {
-      const customQueue = new QueueService(supabaseClient, 'custom_queue');
-      expect(customQueue.queueName).to.equal('custom_queue');
-    });
+  afterEach(async () => {
+    await db.close();
   });
 
-  describe('enqueue', () => {
-    it('should enqueue a job with run_id', async () => {
-      const runId = '123e4567-e89b-12d3-a456-426614174000';
-      const workflowId = '123e4567-e89b-12d3-a456-426614174001';
-      const projectId = '123e4567-e89b-12d3-a456-426614174002';
-
-      const result = await queueService.enqueue({
-        run_id: runId,
-        workflow_id: workflowId,
-        project_id: projectId,
-      });
-
-      expect(result).to.have.property('msg_id');
-      expect(result.msg_id).to.be.a('number');
+  describe("constructor", () => {
+    it("uses workflow_jobs by default", () => {
+      expect(queueService.queueName).toBe("workflow_jobs");
     });
 
-    it('should enqueue a job with delay', async () => {
-      const runId = '123e4567-e89b-12d3-a456-426614174003';
-      const delaySeconds = 60;
-
-      const result = await queueService.enqueue(
-        {
-          run_id: runId,
-          workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-          project_id: '123e4567-e89b-12d3-a456-426614174002',
-        },
-        delaySeconds
-      );
-
-      expect(result).to.have.property('msg_id');
-      expect(result.msg_id).to.be.a('number');
+    it("accepts a custom queue name", () => {
+      expect(new QueueService(db, "custom_queue").queueName).toBe("custom_queue");
     });
 
-    it('should throw error if run_id is missing', async () => {
-      try {
-        await queueService.enqueue({
-          workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-          project_id: '123e4567-e89b-12d3-a456-426614174002',
-        });
-        expect.fail('Should have thrown an error');
-      } catch (error) {
-        expect(error.message).to.include('run_id');
-      }
-    });
-
-    it('should include metadata in job payload', async () => {
-      const runId = '123e4567-e89b-12d3-a456-426614174004';
-      const metadata = { source: 'webhook', priority: 'high' };
-
-      const result = await queueService.enqueue({
-        run_id: runId,
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-        metadata,
-      });
-
-      expect(result).to.have.property('msg_id');
+    it("rejects a missing database handle", () => {
+      expect(() => new QueueService(null)).toThrow(/Database handle is required/);
     });
   });
 
-  describe('dequeue', () => {
-    it('should dequeue a job from the queue', async () => {
-      // First enqueue a job
-      const runId = '123e4567-e89b-12d3-a456-426614174005';
-      await queueService.enqueue({
-        run_id: runId,
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-      });
+  describe("enqueue", () => {
+    it("returns a message id", async () => {
+      const { msg_id } = await queueService.enqueue(jobFor(seed));
+      expect(msg_id).toBeTypeOf("number");
+      expect(msg_id).toBeGreaterThan(0);
+    });
 
-      // Then dequeue it
+    it("records the job in job_tracking", async () => {
+      const { msg_id } = await queueService.enqueue(jobFor(seed, { max_attempts: 3 }));
+
+      const row = await db.one("select * from job_tracking where msg_id = ?", [msg_id]);
+      expect(row.run_id).toBe(seed.runId);
+      expect(row.queue_name).toBe("workflow_jobs");
+      expect(row.attempt).toBe(1);
+      expect(row.max_attempts).toBe(3);
+    });
+
+    it.each(["run_id", "workflow_id", "project_id"])("requires %s", async (field) => {
+      const job = jobFor(seed);
+      delete job[field];
+      await expect(queueService.enqueue(job)).rejects.toThrow(new RegExp(field));
+    });
+
+    it("hides a delayed job until its delay elapses", async () => {
+      await queueService.enqueue(jobFor(seed), 60);
+      expect(await queueService.dequeue()).toBeNull();
+    });
+  });
+
+  describe("dequeue", () => {
+    it("returns null on an empty queue", async () => {
+      expect(await queueService.dequeue()).toBeNull();
+    });
+
+    it("returns the enqueued payload", async () => {
+      const { msg_id } = await queueService.enqueue(jobFor(seed));
       const job = await queueService.dequeue();
 
-      if (job) {
-        expect(job).to.have.property('msg_id');
-        expect(job).to.have.property('message');
-        expect(job.message).to.have.property('run_id');
-      }
+      expect(job.msg_id).toBe(msg_id);
+      expect(job.message.run_id).toBe(seed.runId);
+      expect(job.read_ct).toBe(1);
     });
 
-    it('should return null when queue is empty', async () => {
-      // Create a new queue service with a unique queue name
-      const emptyQueue = new QueueService(supabaseClient, 'empty_test_queue');
-      const job = await emptyQueue.dequeue();
-      expect(job).to.be.null;
+    it("hides a leased job from the next reader", async () => {
+      await queueService.enqueue(jobFor(seed));
+      await queueService.dequeue(30);
+      expect(await queueService.dequeue(30)).toBeNull();
     });
 
-    it('should use custom visibility timeout', async () => {
-      const runId = '123e4567-e89b-12d3-a456-426614174006';
-      await queueService.enqueue({
-        run_id: runId,
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-      });
+    it("redelivers once the visibility timeout lapses", async () => {
+      await queueService.enqueue(jobFor(seed));
+      // A zero-second lease expires immediately, standing in for a dead worker.
+      const first = await queueService.dequeue(0);
+      const second = await queueService.dequeue(30);
 
-      const vtSeconds = 60;
-      const job = await queueService.dequeue(vtSeconds);
+      expect(second).not.toBeNull();
+      expect(second.msg_id).toBe(first.msg_id);
+      expect(second.read_ct).toBe(2);
+    });
 
-      if (job) {
-        expect(job).to.have.property('msg_id');
-      }
+    it("serves messages in FIFO order", async () => {
+      const a = await queueService.enqueue(jobFor(seed, { metadata: { n: 1 } }));
+      const b = await queueService.enqueue(jobFor(seed, { metadata: { n: 2 } }));
+
+      expect((await queueService.dequeue()).msg_id).toBe(a.msg_id);
+      expect((await queueService.dequeue()).msg_id).toBe(b.msg_id);
+    });
+
+    it("stamps started_at on the tracking row", async () => {
+      const { msg_id } = await queueService.enqueue(jobFor(seed));
+      await queueService.dequeue();
+
+      const row = await db.one("select started_at from job_tracking where msg_id = ?", [msg_id]);
+      expect(row.started_at).toBeTruthy();
     });
   });
 
-  describe('acknowledge', () => {
-    it('should acknowledge and delete a processed job', async () => {
-      // Enqueue and dequeue a job
-      const runId = '123e4567-e89b-12d3-a456-426614174007';
-      await queueService.enqueue({
-        run_id: runId,
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-      });
+  describe("acknowledge", () => {
+    it("removes the message and stamps completed_at", async () => {
+      const { msg_id } = await queueService.enqueue(jobFor(seed));
+      await queueService.dequeue();
+
+      expect(await queueService.acknowledge(msg_id)).toBe(true);
+      expect(await queueService.queue.size()).toBe(0);
+
+      const row = await db.one("select completed_at from job_tracking where msg_id = ?", [msg_id]);
+      expect(row.completed_at).toBeTruthy();
+    });
+
+    it("reports false for an unknown message", async () => {
+      expect(await queueService.acknowledge(999999)).toBe(false);
+    });
+  });
+
+  describe("archiveJob", () => {
+    it("moves the message to queue_archive keeping its id", async () => {
+      const { msg_id } = await queueService.enqueue(jobFor(seed));
+
+      expect(await queueService.archiveJob(msg_id)).toBe(true);
+      expect(await queueService.queue.size()).toBe(0);
+
+      const archived = await db.one("select * from queue_archive where msg_id = ?", [msg_id]);
+      expect(archived.queue_name).toBe("workflow_jobs");
+    });
+
+    it("reports false for an unknown message", async () => {
+      expect(await queueService.archiveJob(999999)).toBe(false);
+    });
+  });
+
+  describe("requeue", () => {
+    it("makes a leased job immediately visible again", async () => {
+      const { msg_id } = await queueService.enqueue(jobFor(seed));
+      await queueService.dequeue(300);
+
+      expect(await queueService.dequeue()).toBeNull();
+      await queueService.requeue(msg_id, 0);
 
       const job = await queueService.dequeue();
-      if (job) {
-        const result = await queueService.acknowledge(job.msg_id);
-        expect(result).to.be.true;
-      }
-    });
-
-    it('should return false for non-existent message', async () => {
-      const result = await queueService.acknowledge(999999999);
-      expect(result).to.be.false;
+      expect(job?.msg_id).toBe(msg_id);
     });
   });
 
-  describe('getQueueMetrics', () => {
-    it('should return queue metrics', async () => {
+  describe("getQueueMetrics", () => {
+    it("reports zero for an empty queue", async () => {
       const metrics = await queueService.getQueueMetrics();
+      expect(metrics.queue_length).toBe(0);
+      expect(metrics.oldest_msg_age_seconds).toBeNull();
+    });
 
-      expect(metrics).to.have.property('queue_name');
-      expect(metrics).to.have.property('queue_length');
-      expect(metrics.queue_name).to.equal('workflow_jobs');
-      expect(metrics.queue_length).to.be.a('number');
+    it("counts only visible messages", async () => {
+      await queueService.enqueue(jobFor(seed));
+      await queueService.enqueue(jobFor(seed));
+      await queueService.enqueue(jobFor(seed), 60); // still invisible
+
+      const metrics = await queueService.getQueueMetrics();
+      expect(metrics.queue_length).toBe(2);
+      expect(metrics.oldest_msg_age_seconds).toBeGreaterThanOrEqual(0);
     });
   });
 
-  describe('purgeQueue', () => {
-    it('should purge all messages from queue', async () => {
-      // Enqueue some test messages
-      await queueService.enqueue({
-        run_id: '123e4567-e89b-12d3-a456-426614174008',
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-      });
+  describe("purgeQueue", () => {
+    it("removes every message and returns the count", async () => {
+      await queueService.enqueue(jobFor(seed));
+      await queueService.enqueue(jobFor(seed));
 
-      const result = await queueService.purgeQueue();
-      expect(result).to.be.a('number');
-      expect(result).to.be.at.least(0);
+      expect(await queueService.purgeQueue()).toBe(2);
+      expect(await queueService.queue.size()).toBe(0);
     });
-  });
 
-  describe('archiveJob', () => {
-    it('should archive a job', async () => {
-      // Enqueue and dequeue a job
-      const runId = '123e4567-e89b-12d3-a456-426614174009';
-      await queueService.enqueue({
-        run_id: runId,
-        workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-        project_id: '123e4567-e89b-12d3-a456-426614174002',
-      });
+    it("leaves other queues alone", async () => {
+      const other = new QueueService(db, "other_queue");
+      await queueService.enqueue(jobFor(seed));
+      await other.enqueue(jobFor(seed));
 
-      const job = await queueService.dequeue();
-      if (job) {
-        const result = await queueService.archiveJob(job.msg_id);
-        expect(result).to.be.true;
-      }
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle database connection errors gracefully', async () => {
-      const badClient = createClient('http://invalid-url', 'invalid-key');
-      const badQueue = new QueueService(badClient);
-
-      try {
-        await badQueue.enqueue({
-          run_id: '123e4567-e89b-12d3-a456-426614174010',
-          workflow_id: '123e4567-e89b-12d3-a456-426614174001',
-          project_id: '123e4567-e89b-12d3-a456-426614174002',
-        });
-        expect.fail('Should have thrown an error');
-      } catch (error) {
-        expect(error).to.be.instanceOf(Error);
-      }
+      await queueService.purgeQueue();
+      expect(await other.queue.size()).toBe(1);
     });
   });
 });
