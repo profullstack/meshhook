@@ -1,5 +1,6 @@
 // Auth tests: password hashing, session lifecycle, and tenant scoping.
 
+import { randomBytes } from "node:crypto";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   hashPassword,
@@ -23,34 +24,45 @@ import {
 } from "./authz.js";
 import { createTestDb } from "../../../src/queue/test-helpers.js";
 
+/**
+ * Passwords used by these tests, generated per run.
+ *
+ * They were literals ("password123"), which secret scanners flag as hardcoded
+ * credentials — seven findings on this file alone, burying anything real in
+ * noise. Generating them keeps the fixtures out of the scanner's way and means
+ * no test can accidentally depend on a specific secret value.
+ */
+const VALID_PASSWORD = `pw-${randomBytes(12).toString("hex")}`;
+const WRONG_PASSWORD = `wrong-${randomBytes(12).toString("hex")}`;
+
 describe("password hashing", () => {
   it("verifies a correct password", async () => {
-    const hash = await hashPassword("correct horse battery staple");
-    expect(await verifyPassword("correct horse battery staple", hash)).toBe(true);
+    const hash = await hashPassword(VALID_PASSWORD);
+    expect(await verifyPassword(VALID_PASSWORD, hash)).toBe(true);
   });
 
   it("rejects an incorrect password", async () => {
-    const hash = await hashPassword("correct horse battery staple");
-    expect(await verifyPassword("wrong password", hash)).toBe(false);
+    const hash = await hashPassword(VALID_PASSWORD);
+    expect(await verifyPassword(WRONG_PASSWORD, hash)).toBe(false);
   });
 
   it("salts each hash, so equal passwords differ", async () => {
-    expect(await hashPassword("same")).not.toBe(await hashPassword("same"));
+    expect(await hashPassword(VALID_PASSWORD)).not.toBe(await hashPassword(VALID_PASSWORD));
   });
 
   it("encodes its parameters so they can be raised later", async () => {
-    const hash = await hashPassword("pw");
+    const hash = await hashPassword(VALID_PASSWORD);
     expect(hash.split("$").slice(0, 4)).toEqual(["scrypt", "16384", "8", "1"]);
   });
 
   it("never stores the password itself", async () => {
-    const hash = await hashPassword("hunter2");
-    expect(hash).not.toContain("hunter2");
+    const hash = await hashPassword(VALID_PASSWORD);
+    expect(hash).not.toContain(VALID_PASSWORD);
   });
 
   it("returns false rather than throwing on a malformed hash", async () => {
     for (const bad of ["", "garbage", "scrypt$1$2", "bcrypt$16384$8$1$aa$bb"]) {
-      expect(await verifyPassword("pw", bad)).toBe(false);
+      expect(await verifyPassword(VALID_PASSWORD, bad)).toBe(false);
     }
   });
 
@@ -76,7 +88,7 @@ describe("users and sessions", () => {
     await db.close();
   });
 
-  const signup = (email = "user@example.com", password = "password123") =>
+  const signup = (email = "user@example.com", password = VALID_PASSWORD) =>
     createUser({ email, password }, db);
 
   describe("createUser", () => {
@@ -108,23 +120,23 @@ describe("users and sessions", () => {
   describe("authenticate", () => {
     it("accepts correct credentials", async () => {
       const created = await signup();
-      const user = await authenticate({ email: "user@example.com", password: "password123" }, db);
+      const user = await authenticate({ email: "user@example.com", password: VALID_PASSWORD }, db);
       expect(user?.id).toBe(created.id);
     });
 
     it("is case-insensitive on the email", async () => {
       await signup("user@example.com");
-      const user = await authenticate({ email: "USER@EXAMPLE.COM", password: "password123" }, db);
+      const user = await authenticate({ email: "USER@EXAMPLE.COM", password: VALID_PASSWORD }, db);
       expect(user).not.toBeNull();
     });
 
     it("rejects a wrong password", async () => {
       await signup();
-      expect(await authenticate({ email: "user@example.com", password: "nope12345" }, db)).toBeNull();
+      expect(await authenticate({ email: "user@example.com", password: WRONG_PASSWORD }, db)).toBeNull();
     });
 
     it("returns null for an unknown user instead of throwing", async () => {
-      expect(await authenticate({ email: "ghost@example.com", password: "whatever1" }, db)).toBeNull();
+      expect(await authenticate({ email: "ghost@example.com", password: WRONG_PASSWORD }, db)).toBeNull();
     });
   });
 
@@ -221,8 +233,8 @@ describe("authz tenant scoping", () => {
 
   beforeEach(async () => {
     db = await createTestDb();
-    alice = await createUser({ email: "alice@example.com", password: "password123" }, db);
-    bob = await createUser({ email: "bob@example.com", password: "password123" }, db);
+    alice = await createUser({ email: "alice@example.com", password: VALID_PASSWORD }, db);
+    bob = await createUser({ email: "bob@example.com", password: VALID_PASSWORD }, db);
 
     aliceProject = await ensureDefaultProject(alice.id, "Alice", db);
     aliceWorkflow = await db.one(
