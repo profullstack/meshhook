@@ -10,6 +10,7 @@ export default defineConfig({
     // src/workers and src/utils use the node:test runner instead and are run by
     // `pnpm run test:node`; collecting them here just reports "no test suite".
     include: [
+      "*.test.js",
       "src/queue/**/*.test.js",
       "packages/**/*.test.js",
       "scripts/**/*.test.js",

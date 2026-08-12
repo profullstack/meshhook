@@ -12,14 +12,14 @@
 
 	<section class="intro">
 		<p>
-			A webhook-first, deterministic, Postgres-native workflow engine that delivers n8n's visual
+			A webhook-first, deterministic, SQLite-native workflow engine that delivers n8n's visual
 			simplicity and Temporal's durability without restrictive licensing.
 		</p>
 	</section>
 
-	{#if data.session}
+	{#if data.user}
 		<section class="user-info">
-			<p>Logged in as: {data.session.user.email}</p>
+			<p>Logged in as: {data.user.email}</p>
 			<nav>
 				<a href="/workflows">Workflows</a>
 				<a href="/runs">Runs</a>
