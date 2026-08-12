@@ -1,4 +1,9 @@
-# Railway configuration for the Orchestrator Worker
+# Railway configuration for MeshHook.
+#
+# One service runs both halves of the product via server.mjs: the SvelteKit web
+# app (UI, auth, and the /api/hooks/[slug] webhook endpoint) and the queue
+# orchestrator. See server.mjs for why they are two child processes rather than
+# one Node process.
 #
 # Railpack picks the package manager from the `packageManager` field in
 # package.json and from the committed pnpm-lock.yaml. Without those it fell back
@@ -6,9 +11,11 @@
 # buildCommand ever executed — which fails because the workspace uses pnpm's
 # `workspace:*` protocol. Keep both in place or the build breaks again.
 [build]
-buildCommand = "pnpm install --frozen-lockfile"
+buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @meshhook/web run build"
 
 [deploy]
-startCommand = "node workers/orchestrator.mjs"
+startCommand = "node server.mjs"
+healthcheckPath = "/"
+healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
