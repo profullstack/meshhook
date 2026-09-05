@@ -24,16 +24,17 @@
     "security:patch": "SOCKET_API_TOKEN=${SOCKET_API_TOKEN} node scripts/socket-patch.mjs"
   },
   "devDependencies": {
+    "chai": "^5.1.2",
     "dotenv": "^17.2.3",
     "inquirer": "^12.9.6",
     "prettier": "^3.3.3",
-    "vitest": "^3.2.4",
-    "chai": "^5.1.2"
+    "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@meshhook/shared": "workspace:*",
+    "@profullstack/x402-client": "0.2.0",
     "fast-xml-parser": "^5.3.0",
     "jmespath": "^0.16.0",
-    "openai": "^6.3.0",
-    "@meshhook/shared": "workspace:*"
+    "openai": "^6.3.0"
   }
 }

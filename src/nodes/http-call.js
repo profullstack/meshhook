@@ -34,6 +34,8 @@
  * const result = await node.execute({ userId: 123, token: 'abc', name: 'John', email: 'john@example.com' });
  */
 
+import { paidFetch } from '../lib/paid-fetch.js';
+
 /**
  * Custom error class for HTTP call errors
  */
@@ -176,7 +178,7 @@ export class HttpCallNode {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      const response = await fetch(url, {
+      const response = await paidFetch(url, {
         ...options,
         signal: controller.signal,
       });

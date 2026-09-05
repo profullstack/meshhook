@@ -11,3 +11,8 @@ packages:
 # esbuild links the platform binary Vite uses to bundle the SvelteKit app.
 allowBuilds:
   esbuild: true
+
+# The x402 client was published today; pnpm 11 refuses packages younger than a day
+# unless they are listed here.
+minimumReleaseAgeExclude:
+  - '@profullstack/x402-client@0.2.0'
