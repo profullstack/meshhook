@@ -11,6 +11,9 @@ importers:
       '@meshhook/shared':
         specifier: workspace:*
         version: link:packages/shared
+      '@profullstack/x402-client':
+        specifier: 0.2.0
+        version: 0.2.0
       fast-xml-parser:
         specifier: ^5.3.0
         version: 5.10.1
@@ -35,7 +38,7 @@ importers:
         version: 3.9.6
       vitest:
         specifier: ^3.2.4
-        version: 3.2.7(@types/node@26.2.0)(@vitest/ui@3.2.7)(jsdom@27.4.0(supports-color@7.2.0))(supports-color@7.2.0)
+        version: 3.2.7(@types/node@26.2.0)(@vitest/ui@3.2.7)(jsdom@27.4.0(@noble/hashes@2.4.0)(supports-color@7.2.0))(supports-color@7.2.0)
 
   apps/web:
     dependencies:
@@ -87,7 +90,7 @@ importers:
         version: 15.15.0
       jsdom:
         specifier: ^27.0.0
-        version: 27.4.0(supports-color@7.2.0)
+        version: 27.4.0(@noble/hashes@2.4.0)(supports-color@7.2.0)
       prettier:
         specifier: ^3.3.3
         version: 3.9.6
@@ -105,7 +108,7 @@ importers:
         version: 5.4.21(@types/node@26.2.0)
       vitest:
         specifier: ^3.2.4
-        version: 3.2.7(@types/node@26.2.0)(@vitest/ui@3.2.7)(jsdom@27.4.0(supports-color@7.2.0))(supports-color@7.2.0)
+        version: 3.2.7(@types/node@26.2.0)(@vitest/ui@3.2.7)(jsdom@27.4.0(@noble/hashes@2.4.0)(supports-color@7.2.0))(supports-color@7.2.0)
 
   packages/cli:
     dependencies:
@@ -610,11 +613,24 @@ packages:
   '@neon-rs/load@0.0.4':
     resolution: {integrity: sha512-kTPhdZyTQxB+2wpiRcFWrDcejc4JI6tkPuS7UZCG4l6Zvc5kU/gGQ/ozvHTh1XR5tS+UlfAfGuPajjzQjCiHCw==}
 
+  '@noble/curves@2.4.0':
+    resolution: {integrity: sha512-P4/62zrgfH33CneE3Dn4WhJVA22YUU0eR51wKIan4NVRvwsA0YnPTwWGpNbpuacSujmSFLvyzpyuR30+fbq2Ew==}
+    engines: {node: '>= 20.19.0'}
+
+  '@noble/hashes@2.4.0':
+    resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
+    engines: {node: '>= 20.19.0'}
+
   '@nodable/entities@3.0.0':
     resolution: {integrity: sha512-8L9xFeTYKhm49xfIypoe2W5wV1m/3Z58kT+7kR9A8OyFxcPduI4VmxaUMQyKYrRjUoLLSXv6EKKID5Tvj9cUVw==}
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
+
+  '@profullstack/x402-client@0.2.0':
+    resolution: {integrity: sha512-kJGAomE9Tf/ruhsCStaKVXpjklCbOh2UFcMGTIfTqcWaSsW2NFWQRaTxJBLvc6r7Iy2+fpAWzfJnerolI6IrRQ==}
+    engines: {node: '>=20.19'}
+    hasBin: true
 
   '@rollup/plugin-commonjs@29.0.3':
     resolution: {integrity: sha512-ZaOxZceP7SOUW7Lqw5IRVweSQYWaeIPnXIGLiB690EBA3FGJTO40EEr2L5yZplJWsgTCogILRSpcAe7+U0Otdg==}
@@ -1209,6 +1225,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -2158,7 +2175,9 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@exodus/bytes@1.15.1': {}
+  '@exodus/bytes@1.15.1(@noble/hashes@2.4.0)':
+    optionalDependencies:
+      '@noble/hashes': 2.4.0
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -2387,9 +2406,20 @@ snapshots:
 
   '@neon-rs/load@0.0.4': {}
 
+  '@noble/curves@2.4.0':
+    dependencies:
+      '@noble/hashes': 2.4.0
+
+  '@noble/hashes@2.4.0': {}
+
   '@nodable/entities@3.0.0': {}
 
   '@polka/url@1.0.0-next.29': {}
+
+  '@profullstack/x402-client@0.2.0':
+    dependencies:
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
 
   '@rollup/plugin-commonjs@29.0.3(rollup@4.62.4)':
     dependencies:
@@ -2668,7 +2698,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.17
       tinyrainbow: 2.0.0
-      vitest: 3.2.7(@types/node@26.2.0)(@vitest/ui@3.2.7)(jsdom@27.4.0(supports-color@7.2.0))(supports-color@7.2.0)
+      vitest: 3.2.7(@types/node@26.2.0)(@vitest/ui@3.2.7)(jsdom@27.4.0(@noble/hashes@2.4.0)(supports-color@7.2.0))(supports-color@7.2.0)
 
   '@vitest/utils@3.2.7':
     dependencies:
@@ -3085,9 +3115,9 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  html-encoding-sniffer@6.0.0:
+  html-encoding-sniffer@6.0.0(@noble/hashes@2.4.0):
     dependencies:
-      '@exodus/bytes': 1.15.1
+      '@exodus/bytes': 1.15.1(@noble/hashes@2.4.0)
     transitivePeerDependencies:
       - '@noble/hashes'
 
@@ -3170,15 +3200,15 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsdom@27.4.0(supports-color@7.2.0):
+  jsdom@27.4.0(@noble/hashes@2.4.0)(supports-color@7.2.0):
     dependencies:
       '@acemir/cssom': 0.9.31
       '@asamuzakjp/dom-selector': 6.8.1
-      '@exodus/bytes': 1.15.1
+      '@exodus/bytes': 1.15.1(@noble/hashes@2.4.0)
       cssstyle: 5.3.7
       data-urls: 6.0.1
       decimal.js: 10.6.0
-      html-encoding-sniffer: 6.0.0
+      html-encoding-sniffer: 6.0.0(@noble/hashes@2.4.0)
       http-proxy-agent: 7.0.2(supports-color@7.2.0)
       https-proxy-agent: 7.0.6(supports-color@7.2.0)
       is-potential-custom-element-name: 1.0.1
@@ -3601,7 +3631,7 @@ snapshots:
     optionalDependencies:
       vite: 5.4.21(@types/node@26.2.0)
 
-  vitest@3.2.7(@types/node@26.2.0)(@vitest/ui@3.2.7)(jsdom@27.4.0(supports-color@7.2.0))(supports-color@7.2.0):
+  vitest@3.2.7(@types/node@26.2.0)(@vitest/ui@3.2.7)(jsdom@27.4.0(@noble/hashes@2.4.0)(supports-color@7.2.0))(supports-color@7.2.0):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.7
@@ -3629,7 +3659,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 26.2.0
       '@vitest/ui': 3.2.7(vitest@3.2.7)
-      jsdom: 27.4.0(supports-color@7.2.0)
+      jsdom: 27.4.0(@noble/hashes@2.4.0)(supports-color@7.2.0)
     transitivePeerDependencies:
       - less
       - lightningcss
