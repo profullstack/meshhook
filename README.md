@@ -1,10 +1,10 @@
 # MeshHook — Mesh your webhooks. Orchestrate everything.
 
-**MeshHook** is an MIT-licensed, webhook-first workflow engine with a visual builder (SvelteKit/Svelte 5) and Temporal-like durability via **event sourcing on SQLite (Turso)**.
+**MeshHook** is an MIT-licensed, webhook-first workflow engine with a visual builder (SvelteKit/Svelte 5) and Temporal-like durability via **event sourcing on Postgres**.
 
 ## Stack
 - **UI/API**: SvelteKit (Svelte 5)
-- **Database**: Turso (libSQL/SQLite) — embeddable locally, replicated in production
+- **Database**: Postgres, through [`@profullstack/libsql-pg`](https://github.com/profullstack/libsql-pg) (the queries kept their libSQL shape)
 - **Workers**: Node.js (or Bun), stateless
 - **Queue**: SQLite-backed, with visibility timeouts and a dead-letter queue
 - **Auth**: self-hosted sessions (scrypt password hashing, opaque session tokens)
@@ -20,7 +20,7 @@
 | **Visual Builder** | ✅ Drag-and-drop | ❌ Code-first | ❌ Code-first | **✅ Visual + Code** |
 | **Webhook-Native** | ⚠️ Supported | ⚠️ Supported | ❌ Not primary | **✅ Built-in** |
 | **Self-Hosted** | ✅ Yes | ✅ Yes | ✅ Yes | **✅ Yes** |
-| **Database** | MySQL/Postgres | Postgres | Custom | **SQLite (Turso)** |
+| **Database** | MySQL/Postgres | Postgres | Custom | **Postgres** |
 | **Transforms** | JavaScript | TypeScript/Python | Any language | **JMESPath** |
 | **Realtime Logs** | ❌ Polling | ❌ Polling | ❌ Polling | **✅ Server-Sent Events** |
 | **Deployment** | Complex (multiple services) | Complex (workers + API) | Complex (server + workers) | **Simple (single service)** |
@@ -75,13 +75,9 @@
    ```bash
    pnpm run setup
    ```
-   Select "Production" or "Staging" and enter your Turso database URL and auth token.
-   Create them first with the Turso CLI:
-   ```bash
-   turso db create meshhook
-   turso db show meshhook --url
-   turso db tokens create meshhook
-   ```
+   Select "Production" or "Staging" and enter your Postgres URL
+   (`postgres://user:pass@host:5432/meshhook`). Anything else is refused.
+
 
 3. **Run migrations**
    ```bash
@@ -116,7 +112,7 @@
 ## Documentation
 
 - [`./docs/Environment-Setup.md`](./docs/Environment-Setup.md) - Detailed environment setup guide
-- [`./docs/Turso-Migration.md`](./docs/Turso-Migration.md) - What changed in the move off Supabase
+- [`./docs/Turso-Migration.md`](./docs/Turso-Migration.md) - What changed in the move off Supabase (to Turso, since superseded by Postgres: see `migrations-pg/`)
 - [`./docs/PRD.md`](./docs/PRD.md) - Product requirements
 - [`./docs/Architecture.md`](./docs/Architecture.md) - System architecture
 - [`./docs/diagrams/*.puml`](./docs/diagrams/) - PlantUML diagrams
@@ -129,4 +125,4 @@ MeshHook runs as a single service on port 8080 that handles:
 - Background job execution
 - HTTP request execution with retries
 
-All components communicate through the Turso database - no inter-service HTTP calls needed.
+All components communicate through the Postgres database - no inter-service HTTP calls needed.

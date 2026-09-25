@@ -3,9 +3,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { QueueService } from "./queue-service.js";
-import { createTestDb, seedRun, jobFor } from "./test-helpers.js";
+import { createTestDb, seedRun, jobFor, hasTestDb } from "./test-helpers.js";
 
-describe("QueueService", () => {
+describe.skipIf(!hasTestDb)("QueueService", () => {
   let db;
   let queueService;
   let seed;

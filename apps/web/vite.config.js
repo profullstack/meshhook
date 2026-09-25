@@ -1,15 +1,12 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 
 /**
- * @libsql/client loads a platform-specific native binding (e.g.
- * @libsql/linux-x64-gnu) with a dynamic require. Rollup cannot follow that, so
- * bundling it fails the build with "Could not dynamically require". Marking it
+ * @profullstack/libsql-pg sits on `pg`, which tries an optional native binding
+ * (pg-native) with a dynamic require that Rollup cannot follow. Marking both
  * external leaves the import in place for Node to resolve from node_modules at
  * runtime, which is what adapter-node expects anyway.
- *
- * Keep `libsql` alongside it — that is the package holding the bindings.
  */
-const NATIVE_DEPS = ['@libsql/client', 'libsql'];
+const NATIVE_DEPS = ['@profullstack/libsql-pg', 'pg', 'pg-native'];
 
 export default {
 	plugins: [sveltekit()],
@@ -24,7 +21,7 @@ export default {
 	},
 	build: {
 		rollupOptions: {
-			external: [/^\.\.\/\.\.\/workers\//, ...NATIVE_DEPS, /^@libsql\//]
+			external: [/^\.\.\/\.\.\/workers\//, ...NATIVE_DEPS, /^pg-/]
 		}
 	}
 };

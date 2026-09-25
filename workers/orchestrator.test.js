@@ -6,38 +6,41 @@
  * run stops instead of restarting from its first node, and that completing a
  * run is idempotent under redelivery.
  *
- * The orchestrator uses the shared db singleton, so TURSO_DATABASE_URL is set
- * to a temp file before it is imported. No network: the http_call branch is
- * never exercised here.
+ * The orchestrator uses the shared db singleton, so DATABASE_URL is pointed at
+ * a throwaway schema on TEST_DATABASE_URL before it is imported; without that
+ * variable the suites skip. No network: the http_call branch is never
+ * exercised here.
  */
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
-import { mkdtempSync, rmSync, readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), "..");
+const hasTestDb = Boolean(process.env.TEST_DATABASE_URL);
 
-let dir;
+let schema;
 let db;
+let getClient;
 let orchestrator;
 let stepQueue;
 let runQueue;
 
 beforeAll(async () => {
-  dir = mkdtempSync(join(tmpdir(), "meshhook-orch-"));
-  process.env.TURSO_DATABASE_URL = `file:${join(dir, `${randomUUID()}.db`)}`;
+  if (!hasTestDb) return;
+  schema = `test_${randomUUID().replace(/-/g, "")}`;
+  const url = new URL(process.env.TEST_DATABASE_URL);
+  url.searchParams.set("options", `-c search_path=${schema}`);
+  process.env.DATABASE_URL = url.toString();
+  delete process.env.TURSO_DATABASE_URL;
 
-  const { splitStatements } = await import("../scripts/db-migrate.js");
-  ({ db } = await import("@meshhook/shared/lib/db.js"));
-
-  for (const file of readdirSync(join(rootDir, "migrations")).filter((f) => f.endsWith(".sql")).sort()) {
-    const sql = readFileSync(join(rootDir, "migrations", file), "utf8");
-    for (const statement of splitStatements(sql)) {
-      await db.none(statement);
-    }
+  ({ db, getClient } = await import("@meshhook/shared/lib/db.js"));
+  const pool = getClient().pool;
+  await pool.query(`create schema "${schema}"`);
+  for (const file of readdirSync(join(rootDir, "migrations-pg")).filter((f) => f.endsWith(".sql")).sort()) {
+    await pool.query(readFileSync(join(rootDir, "migrations-pg", file), "utf8"));
   }
 
   orchestrator = await import("./orchestrator.mjs");
@@ -45,8 +48,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  if (!hasTestDb) return;
+  await getClient().pool.query(`drop schema "${schema}" cascade`).catch(() => {});
   await db?.close();
-  rmSync(dir, { recursive: true, force: true });
 });
 
 /** A fresh project/workflow/run, plus helpers to drive its event log. */
@@ -82,7 +86,7 @@ const eventTypes = async (runId) =>
     (e) => e.type,
   );
 
-describe("nextNodesFor", () => {
+describe.skipIf(!hasTestDb)("nextNodesFor", () => {
   let runId;
   beforeEach(async () => {
     runId = await seedRun();
@@ -119,7 +123,7 @@ describe("nextNodesFor", () => {
   });
 });
 
-describe("handleRun", () => {
+describe.skipIf(!hasTestDb)("handleRun", () => {
   let runId;
   beforeEach(async () => {
     runId = await seedRun();
@@ -167,7 +171,7 @@ describe("handleRun", () => {
   });
 });
 
-describe("handleStep", () => {
+describe.skipIf(!hasTestDb)("handleStep", () => {
   let runId;
   beforeEach(async () => {
     runId = await seedRun();

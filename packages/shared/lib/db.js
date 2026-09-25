@@ -1,17 +1,23 @@
 /**
- * MeshHook database layer — libSQL / Turso.
+ * MeshHook database layer — Postgres, through @profullstack/libsql-pg.
  *
- * Replaces the previous node-postgres pool. The exported `db` object keeps the
- * same shape it had under Postgres (one / oneOrNone / manyOrNone / none / tx)
- * so call sites did not have to change, but two things differ underneath:
+ * The exported `db` object keeps the shape it has had since the Postgres days
+ * (one / oneOrNone / manyOrNone / none / tx / batch), so call sites did not
+ * change across either migration. Underneath, the libSQL client that replaced
+ * node-postgres in the Turso era is now @profullstack/libsql-pg: the same
+ * execute / batch / transaction surface over a pg pool, with the SQLite idioms
+ * the queries picked up on Turso (strftime('%Y-%m-%dT%H:%M:%fZ','now'), `?`
+ * placeholders, INSERT OR IGNORE) rewritten per statement.
  *
- *  - Placeholders are `?`, not `$1`. `$n` style is still accepted and rewritten
- *    so migrated SQL keeps working; see toLibsqlSql().
- *  - SQLite has no jsonb/uuid/timestamptz. JSON columns come back as TEXT, so
- *    use the json() helper when reading them.
+ *  - Placeholders are `?`. `$n` style is still accepted and rewritten so SQL
+ *    carried over from the first Postgres implementation keeps working; see
+ *    toLibsqlSql().
+ *  - Timestamp columns are TEXT holding ISO-8601 UTC and JSON columns are TEXT,
+ *    exactly as on Turso, so the copied rows and the app's string comparisons
+ *    line up. Use the json() helper when reading JSON.
  */
 
-import { createClient } from "@libsql/client";
+import { createClient } from "@profullstack/libsql-pg";
 import { config } from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -26,43 +32,36 @@ const rootDir = join(__dirname, "../../..");
 config({ path: join(rootDir, ".env") });
 config({ path: join(rootDir, ".env.local") });
 
+const POSTGRES_URL = /^postgres(ql)?:\/\//i;
+
 /**
- * Resolve the libSQL connection settings from the environment.
+ * Resolve the Postgres connection string from the environment.
  *
- * TURSO_DATABASE_URL + TURSO_AUTH_TOKEN is the production path. DATABASE_URL is
- * accepted as an alias so existing deploys can be repointed by changing one
- * value, but a `postgres://` URL is rejected outright rather than failing later
- * with an opaque protocol error.
+ * DATABASE_URL must be postgres:// or postgresql://. There is deliberately no
+ * fallback to a file or libsql:// database: a misconfigured deploy fails here
+ * with the reason, rather than writing to the wrong place. The retired Turso
+ * setting is recognised only so the error can say what to do about it.
  */
 export function resolveConnection(env = process.env) {
-  const url = env.TURSO_DATABASE_URL ?? env.DATABASE_URL ?? env.LIBSQL_URL;
+  const url = env.DATABASE_URL;
+  const legacy = env.TURSO_DATABASE_URL ?? env.LIBSQL_URL;
 
   if (!url) {
+    const hint = legacy
+      ? " TURSO_DATABASE_URL is set but no longer read: MeshHook moved from Turso to Postgres. " +
+        'Copy the data with `npx libsql-pg copy --from "$TURSO_DATABASE_URL" --token "$TURSO_AUTH_TOKEN" --to "$DATABASE_URL" --verify` and set DATABASE_URL.'
+      : " See .env.example.";
+    throw new Error(`DATABASE_URL is not set (expected postgres://user:pass@host:5432/meshhook).${hint}`);
+  }
+
+  if (!POSTGRES_URL.test(url)) {
     throw new Error(
-      "TURSO_DATABASE_URL is not set. Set it to a libsql:// URL (Turso), " +
-        "or a file: URL for local development. See .env.example.",
+      `DATABASE_URL must be a postgres:// or postgresql:// URL, got "${url.split(":")[0]}:". ` +
+        "MeshHook runs on Postgres only; libsql:// and file: databases are not supported.",
     );
   }
 
-  if (/^postgres(ql)?:\/\//i.test(url)) {
-    throw new Error(
-      `Refusing to connect: "${url.split("@").pop()}" looks like a Postgres URL. ` +
-        "MeshHook migrated from Supabase/Postgres to Turso (libSQL). " +
-        "Set TURSO_DATABASE_URL to a libsql:// or file: URL.",
-    );
-  }
-
-  const authToken = env.TURSO_AUTH_TOKEN ?? env.LIBSQL_AUTH_TOKEN;
-
-  // Remote libsql:// and https:// databases require a token; file: does not.
-  if (/^(libsql|https?):\/\//i.test(url) && !authToken) {
-    throw new Error(
-      "TURSO_AUTH_TOKEN is required for remote libSQL URLs. " +
-        "Generate one with: turso db tokens create <database>",
-    );
-  }
-
-  return { url, authToken };
+  return { url };
 }
 
 /**
@@ -188,67 +187,31 @@ export function json(value, fallback = null) {
 /** ISO-8601 UTC timestamp — the stored representation for every former timestamptz column. */
 export const now = () => new Date().toISOString();
 
-/** Row objects from libSQL are null-prototype; give call sites a plain object. */
+/** Row objects carry non-enumerable index keys; give call sites a plain object. */
 const plain = (row) => (row ? { ...row } : row);
 
 /**
- * SQLite allows a single writer at a time. When a second writer arrives it gets
- * SQLITE_BUSY immediately rather than queueing, which matters here because
- * several workers poll the same queue concurrently and each dequeue is a write
- * transaction.
- *
- * Postgres solved this with row-level locks; the equivalent is to wait and try
- * again. Retries use exponential backoff with jitter so competing writers do
- * not resynchronise on the same retry instant.
+ * Postgres codes worth one more attempt: a serialization failure or a deadlock
+ * victim. Each is safe to retry because the statement or transaction it
+ * interrupted was rolled back whole. (The SQLite_BUSY handling and the
+ * in-process write lock this replaced were for libSQL's single connection; the
+ * pg pool needs neither.)
  */
-const BUSY_CODES = new Set(["SQLITE_BUSY", "SQLITE_LOCKED", "SQLITE_BUSY_SNAPSHOT"]);
+const RETRY_CODES = new Set(["40001", "40P01"]);
 
-function isBusy(error) {
+function isRetryable(error) {
   const code = error?.code ?? error?.cause?.code;
-  if (code && BUSY_CODES.has(code)) return true;
-  // Remote libSQL surfaces contention as a message rather than a code.
-  return /database is locked|SQLITE_BUSY/i.test(error?.message ?? "");
+  return Boolean(code && RETRY_CODES.has(code));
 }
 
-/**
- * Serialise write transactions within this process.
- *
- * @libsql/client multiplexes every statement over a single underlying
- * connection. Two overlapping `transaction("write")` calls therefore interleave
- * on that one connection: the loser gets SQLITE_BUSY on BEGIN, and — worse —
- * the winner then fails its COMMIT with "cannot commit transaction - SQL
- * statements in progress". Retrying alone livelocks, because each retry
- * re-creates the interleaving that breaks the in-flight commit.
- *
- * SQLite permits one writer at a time regardless, so queueing write
- * transactions behind one another costs no real concurrency. Contention with
- * *other processes* is still handled by withBusyRetry.
- *
- * Returns a function that runs `fn` once the previous caller has settled.
- */
-function createWriteLock() {
-  let tail = Promise.resolve();
-
-  return (fn) => {
-    // Chain on settlement, not success, so one failed transaction does not
-    // wedge every later one.
-    const result = tail.then(fn, fn);
-    tail = result.then(
-      () => {},
-      () => {},
-    );
-    return result;
-  };
-}
-
-async function withBusyRetry(fn, { attempts = 8, baseDelayMs = 5, maxDelayMs = 250 } = {}) {
+async function withRetry(fn, { attempts = 5, baseDelayMs = 5, maxDelayMs = 250 } = {}) {
   let lastError;
 
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       return await fn();
     } catch (error) {
-      if (!isBusy(error)) throw error;
+      if (!isRetryable(error)) throw error;
       lastError = error;
       const backoff = Math.min(maxDelayMs, baseDelayMs * 2 ** attempt);
       await new Promise((r) => setTimeout(r, backoff / 2 + Math.random() * (backoff / 2)));
@@ -291,46 +254,24 @@ function wrap(executor) {
 
 let client;
 
-/** Lazily create the shared libSQL client so importing this module never connects. */
+/** Lazily create the shared client so importing this module never connects. */
 export function getClient() {
   if (!client) {
-    const { url, authToken } = resolveConnection();
-    client = createClient({ url, authToken });
+    const { url } = resolveConnection();
+    client = createClient({ url });
   }
   return client;
 }
 
-/** Guards every top-level statement and transaction on the shared client. */
-const sharedWriteLock = createWriteLock();
-
-// Standalone statements take the lock too, not just transactions. They share
-// the one connection, so an unlocked INSERT issued while a transaction is open
-// interleaves with it and makes that transaction's COMMIT fail with "SQL
-// statements in progress". Statements *inside* a transaction bypass the lock —
-// they run on the transaction handle, whose caller already holds it, so there
-// is no re-entrancy deadlock.
-const execute = (sql, params) =>
-  sharedWriteLock(() =>
-    withBusyRetry(() => getClient().execute({ sql: toLibsqlSql(sql), args: bindAll(params) })),
-  );
-
-export const db = {
-  ...wrap(execute),
-
-  /**
-   * Run `fn` inside a transaction, committing on success and rolling back on
-   * throw. The handle passed to `fn` exposes the full query API — the Postgres
-   * version only offered one/none, which forced awkward workarounds at a few
-   * call sites.
-   */
-  tx: (fn) =>
-    // Serialised against other writers in this process, then retried on
-    // cross-process contention. The whole transaction is retried, not just the
-    // failing statement — a partial transaction is rolled back first, so `fn`
-    // must be safe to run more than once.
-    sharedWriteLock(() =>
-    withBusyRetry(async () => {
-      const trx = await getClient().transaction("write");
+/**
+ * Run `fn` inside a transaction on one pooled connection, committing on
+ * success and rolling back on throw. The whole transaction is retried on a
+ * serialization failure or deadlock, so `fn` must be safe to run more than once.
+ */
+function transactional(getter) {
+  return (fn) =>
+    withRetry(async () => {
+      const trx = await getter().transaction("write");
       try {
         const tdb = wrap((sql, params) =>
           trx.execute({ sql: toLibsqlSql(sql), args: bindAll(params) }),
@@ -339,7 +280,6 @@ export const db = {
         await trx.commit();
         return res;
       } catch (e) {
-        // A transaction already closed by a failed commit cannot be rolled back.
         try {
           await trx.rollback();
         } catch {
@@ -347,12 +287,24 @@ export const db = {
         }
         throw e;
       }
-    }),
-    ),
+    });
+}
+
+const execute = (sql, params) =>
+  withRetry(() => getClient().execute({ sql: toLibsqlSql(sql), args: bindAll(params) }));
+
+export const db = {
+  ...wrap(execute),
 
   /**
-   * Execute several statements atomically. Thin wrapper over the libSQL batch
-   * API, used by the migration runner.
+   * Run `fn` inside a transaction. The handle passed to `fn` exposes the full
+   * query API (one / oneOrNone / manyOrNone / none).
+   */
+  tx: transactional(getClient),
+
+  /**
+   * Execute several statements atomically, one result per statement. Thin
+   * wrapper over the libSQL-style batch API.
    */
   batch: async (statements) =>
     getClient().batch(
@@ -364,70 +316,36 @@ export const db = {
       "write",
     ),
 
-  /** Close the underlying connection. Mainly for tests and one-shot scripts. */
+  /** Close the pool. Mainly for tests and one-shot scripts. */
   close: async () => {
     if (client) {
-      client.close();
+      await client.close();
       client = undefined;
     }
   },
 };
 
 /**
- * Build an isolated db handle against an explicit URL, bypassing the shared
- * client. Tests use this for throwaway databases.
- *
- * Do not pass a bare ":memory:" — @libsql/client opens a fresh, empty in-memory
- * database for each connection it makes, so a table created by one statement is
- * invisible to the next and every transaction starts blank. Use a temporary
- * file (see createTestDb in src/queue/test-helpers.js), or
- * "file::memory:?cache=shared" if a single process-wide database is genuinely
- * what you want.
+ * Build an isolated db handle against an explicit Postgres URL, bypassing the
+ * shared client. Tests use this for throwaway schemas (see createTestDb in
+ * src/queue/test-helpers.js). `pool` exposes the underlying pg pool for DDL
+ * that should run as written rather than through the SQLite rewriter.
  */
-export function createDb({ url, authToken } = {}) {
+export function createDb({ url } = {}) {
   if (!url) {
-    throw new Error("createDb requires a url (e.g. file:/tmp/test.db)");
+    throw new Error("createDb requires a postgres:// url");
   }
-  if (url === ":memory:") {
-    throw new Error(
-      'createDb cannot use ":memory:" — @libsql/client gives each connection its own ' +
-        'empty database. Use a temp file, or "file::memory:?cache=shared".',
-    );
+  if (!POSTGRES_URL.test(url)) {
+    throw new Error(`createDb: url must be postgres:// or postgresql://, got "${url.split(":")[0]}:"`);
   }
 
-  const local = createClient({ url, authToken });
-  // Each handle gets its own lock, matching its own connection.
-  const writeLock = createWriteLock();
-
+  const local = createClient({ url });
   const exec = (sql, params) =>
-    writeLock(() =>
-      withBusyRetry(() => local.execute({ sql: toLibsqlSql(sql), args: bindAll(params) })),
-    );
+    withRetry(() => local.execute({ sql: toLibsqlSql(sql), args: bindAll(params) }));
 
   return {
     ...wrap(exec),
-    tx: (fn) =>
-      writeLock(() =>
-        withBusyRetry(async () => {
-          const trx = await local.transaction("write");
-          try {
-            const res = await fn(
-              wrap((sql, params) =>
-                trx.execute({ sql: toLibsqlSql(sql), args: bindAll(params) }),
-              ),
-            );
-            await trx.commit();
-            return res;
-          } catch (e) {
-            try {
-              await trx.rollback();
-            } catch {
-              /* already closed */
-            }
-            throw e;
-          }
-        }),
-      ),
+    tx: transactional(() => local),
     batch: async (statements) =>
       local.batch(
         statements.map((s) =>
@@ -437,6 +355,7 @@ export function createDb({ url, authToken } = {}) {
         ),
         "write",
       ),
+    pool: local.pool,
     close: async () => local.close(),
   };
 }
