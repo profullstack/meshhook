@@ -6,4 +6,4 @@
  * libSQL client is re-exported from the shared package instead.
  */
 
-export { db, json, now, createDb } from "@meshhook/shared/lib/db.js";
+export { db, json, now, createDb, resolveConnection } from "@meshhook/shared/lib/db.js";

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * MeshHook migration runner (libSQL / Turso).
+ * MeshHook migration runner (Postgres).
  *
- * The previous version shelled out to `supabase db push` / `supabase db reset`,
- * which required the Supabase CLI, a linked project and Docker. This applies
- * the SQL in migrations/ directly over the libSQL client instead, so the same
- * command works against a local file, an embedded replica or Turso.
+ * Applies the SQL in migrations-pg/ over the shared client's pg pool, each file
+ * in one transaction. DATABASE_URL must be postgres:// (the app accepts nothing
+ * else). The SQLite files in migrations/ stay in the tree until the Turso
+ * cutover is proven; they are not applied by this script.
  *
  * Applied migrations are recorded in schema_migrations along with a checksum,
  * so re-running is a no-op and editing an already-applied file is reported as
@@ -23,11 +23,11 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { db } from "@meshhook/shared/lib/db.js";
+import { db, getClient, resolveConnection } from "@meshhook/shared/lib/db.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, "..");
-const migrationsDir = join(rootDir, "migrations");
+const migrationsDir = join(rootDir, "migrations-pg");
 
 const args = new Set(process.argv.slice(2));
 const statusOnly = args.has("--status");
@@ -39,11 +39,10 @@ const checksum = (sql) => createHash("sha256").update(sql).digest("hex").slice(0
 /**
  * Split a migration file into individual statements.
  *
- * libSQL executes one statement per call, so the file has to be split. A naive
- * split on ";" breaks CREATE TRIGGER, whose body contains statement
- * terminators, so BEGIN…END blocks are tracked and kept intact. String
- * literals and comments are skipped so a ";" inside either is not treated as a
- * boundary.
+ * Used for the statement count in the log (the file itself is sent to Postgres
+ * whole). A naive split on ";" breaks CREATE TRIGGER / CREATE FUNCTION bodies,
+ * so BEGIN…END blocks and $$-quoted bodies are kept intact, and string literals
+ * and comments are skipped so a ";" inside either is not treated as a boundary.
  */
 export function splitStatements(sql) {
   const statements = [];
@@ -52,6 +51,15 @@ export function splitStatements(sql) {
 
   for (let i = 0; i < sql.length; i++) {
     const ch = sql[i];
+
+    // A $$-quoted function body is one token.
+    if (ch === "$" && sql[i + 1] === "$") {
+      const end = sql.indexOf("$$", i + 2);
+      const stop = end === -1 ? sql.length : end + 2;
+      current += sql.slice(i, stop);
+      i = stop - 1;
+      continue;
+    }
 
     if (ch === "'" || ch === '"') {
       let j = i + 1;
@@ -110,11 +118,12 @@ export function splitStatements(sql) {
 }
 
 async function ensureLedger() {
-  await db.none(`
+  // Plain Postgres DDL through the pool, not the SQLite rewriter.
+  await getClient().pool.query(`
     create table if not exists schema_migrations (
       version text primary key,
       checksum text not null,
-      applied_at text not null default (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+      applied_at timestamptz not null default now()
     )
   `);
 }
@@ -133,11 +142,12 @@ function loadMigrations() {
 }
 
 async function main() {
-  console.log("🔄 MeshHook database migration (Turso/libSQL)\n");
+  console.log("🔄 MeshHook database migration (Postgres)\n");
 
-  const target = process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL ?? "(unset)";
-  // Never print the token; the URL alone identifies the target.
-  console.log(`📍 Target: ${target}\n`);
+  // Fails fast with the reason when DATABASE_URL is missing or not Postgres.
+  const { url } = resolveConnection();
+  // Never print credentials; host and database identify the target.
+  console.log(`📍 Target: ${url.replace(/\/\/[^@/]*@/, "//")}\n`);
 
   await ensureLedger();
 
@@ -199,22 +209,26 @@ async function main() {
 
     if (dryRun) continue;
 
-    // Each migration is atomic. libSQL has no transactional DDL limitation the
-    // way some engines do, so a failure part-way leaves nothing behind.
+    // Each migration is atomic: Postgres DDL is transactional, so a failure
+    // part-way leaves nothing behind. The file runs as written (it is already
+    // Postgres SQL) on one connection, not through the SQLite rewriter.
+    const conn = await getClient().pool.connect();
     try {
-      await db.batch([
-        ...statements,
-        {
-          sql: `insert into schema_migrations (version, checksum) values (?, ?)
-                on conflict (version) do update set checksum = excluded.checksum,
-                applied_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')`,
-          args: [m.version, m.checksum],
-        },
-      ]);
+      await conn.query("begin");
+      await conn.query(m.sql);
+      await conn.query(
+        `insert into schema_migrations (version, checksum) values ($1, $2)
+         on conflict (version) do update set checksum = excluded.checksum, applied_at = now()`,
+        [m.version, m.checksum],
+      );
+      await conn.query("commit");
       console.log(`   ✅ applied`);
     } catch (error) {
+      await conn.query("rollback").catch(() => {});
       console.error(`   ❌ failed: ${error.message}`);
       throw error;
+    } finally {
+      conn.release();
     }
   }
 

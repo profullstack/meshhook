@@ -22,7 +22,7 @@ import {
   ensureDefaultProject,
   NotFoundError,
 } from "./authz.js";
-import { createTestDb } from "../../../src/queue/test-helpers.js";
+import { createTestDb, hasTestDb } from "../../../src/queue/test-helpers.js";
 
 /**
  * Passwords used by these tests, generated per run.
@@ -77,7 +77,7 @@ describe("normalizeEmail", () => {
   });
 });
 
-describe("users and sessions", () => {
+describe.skipIf(!hasTestDb)("users and sessions", () => {
   let db;
 
   beforeEach(async () => {
@@ -224,7 +224,7 @@ describe("users and sessions", () => {
   });
 });
 
-describe("authz tenant scoping", () => {
+describe.skipIf(!hasTestDb)("authz tenant scoping", () => {
   let db;
   let alice;
   let bob;

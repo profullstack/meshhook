@@ -15,7 +15,7 @@
  * as it is running and lets several instances share the work safely.
  */
 
-import { db, json } from "./lib/db.js";
+import { db, json, resolveConnection } from "./lib/db.js";
 import { RUN_QUEUE, STEP_QUEUE, enqueueRun, enqueueStep } from "./lib/queue.js";
 import { Worker } from "../src/queue/index.js";
 import { executeStep } from "./http-exec.mjs";
@@ -139,23 +139,12 @@ export async function handleStep(message) {
 
 /** Fail fast and legibly rather than crash-looping on the first query. */
 function assertConfigured() {
-  const url =
-    process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL ?? process.env.LIBSQL_URL;
-
-  if (!url) {
-    console.error(
-      "✗ TURSO_DATABASE_URL is not set.\n" +
-        "  Set it to a libsql:// URL (Turso) or a file: path for local runs.\n" +
-        "  Create one with: turso db create meshhook && turso db show meshhook --url",
-    );
-    process.exit(1);
-  }
-
-  if (/^postgres(ql)?:\/\//i.test(url)) {
-    console.error(
-      "✗ TURSO_DATABASE_URL looks like a Postgres URL.\n" +
-        "  MeshHook migrated from Supabase to Turso; expected libsql:// or file:.",
-    );
+  // resolveConnection throws with the reason: unset, not postgres://, or a
+  // leftover TURSO_DATABASE_URL with the copy recipe.
+  try {
+    resolveConnection();
+  } catch (error) {
+    console.error(`✗ ${error.message}`);
     process.exit(1);
   }
 }

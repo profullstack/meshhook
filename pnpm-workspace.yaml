@@ -16,3 +16,5 @@ allowBuilds:
 # unless they are listed here.
 minimumReleaseAgeExclude:
   - '@profullstack/x402-client@0.2.0'
+  # Published 2026-09-25; the Postgres client the app moved to.
+  - '@profullstack/libsql-pg'

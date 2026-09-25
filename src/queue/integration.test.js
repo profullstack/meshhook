@@ -6,9 +6,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { QueueService, DLQService, RetryStrategy, Worker } from "./index.js";
-import { createTestDb, seedRun, jobFor } from "./test-helpers.js";
+import { createTestDb, seedRun, jobFor, hasTestDb } from "./test-helpers.js";
 
-describe("Queue system integration", () => {
+describe.skipIf(!hasTestDb)("Queue system integration", () => {
   let db;
   let queueService;
   let dlqService;

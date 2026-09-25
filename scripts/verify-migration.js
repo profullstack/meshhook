@@ -3,9 +3,8 @@
 /**
  * Verify that the database schema matches what the application expects.
  *
- * The Postgres version checked for RLS policies, partitions and pgmq queues.
- * None of those exist on SQLite, so this checks the things that do: every
- * table, view and index the migrations create, plus the seeded queue config.
+ * Checks every table, view and index the migrations create, plus the seeded
+ * queue config, against a Postgres database (information_schema / pg_indexes).
  *
  * Usage: node scripts/verify-migration.js
  * Exits non-zero when anything is missing.
@@ -44,10 +43,12 @@ const EXPECTED_INDEXES = [
 const EXPECTED_QUEUES = ["workflow_jobs", "workflow_jobs_dlq"];
 
 async function namesOfType(type) {
-  const rows = await db.manyOrNone(
-    "select name from sqlite_master where type = ? and name not like 'sqlite_%'",
-    [type],
-  );
+  const sql = {
+    table: "select table_name as name from information_schema.tables where table_schema = current_schema() and table_type = 'BASE TABLE'",
+    view: "select table_name as name from information_schema.views where table_schema = current_schema()",
+    index: "select indexname as name from pg_indexes where schemaname = current_schema()",
+  }[type];
+  const rows = await db.manyOrNone(sql);
   return new Set(rows.map((r) => r.name));
 }
 
@@ -81,16 +82,6 @@ async function main() {
   console.log(
     `\n📦 ${applied.length} migration(s) applied: ${applied.map((m) => m.version).join(", ") || "none"}`,
   );
-
-  // Foreign keys are off by default in SQLite; the app relies on cascades, so
-  // flag it rather than let deletes silently orphan rows.
-  const [{ foreign_keys: fkEnabled }] = await db.manyOrNone("pragma foreign_keys");
-  if (!fkEnabled) {
-    console.log(
-      "\nℹ️  foreign_keys pragma is OFF for this connection. libSQL enables it " +
-        "per-connection; cascade deletes will not fire while it is off.",
-    );
-  }
 
   await db.close();
 

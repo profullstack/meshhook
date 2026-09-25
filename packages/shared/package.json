@@ -10,7 +10,7 @@
     "./lib/crypto.js": "./lib/crypto.js"
   },
   "dependencies": {
-    "@libsql/client": "^0.15.7",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "@profullstack/libsql-pg": "^0.1.1"
   }
 }
