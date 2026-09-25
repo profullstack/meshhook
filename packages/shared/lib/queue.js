@@ -78,7 +78,8 @@ export class Queue {
            from queue_messages
           where queue_name = ? and vt <= ?
           order by msg_id
-          limit ?`,
+          limit ?
+            for update skip locked`,
         [this.name, nowIso, qty],
       );
 
