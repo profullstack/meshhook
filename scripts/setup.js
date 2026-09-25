@@ -22,7 +22,7 @@ const ENVIRONMENTS = {
   local: {
     name: "Local development",
     file: ".env.local",
-    defaultUrl: "postgres://meshhook:meshhook@localhost:5432/meshhook",
+    defaultUrl: "postgres://meshhook@localhost:5432/meshhook",
     committed: false,
   },
   staging: { name: "Staging", file: ".env.staging", defaultUrl: "", committed: false },

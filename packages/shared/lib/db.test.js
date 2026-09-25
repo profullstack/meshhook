@@ -7,11 +7,11 @@ import { resolveConnection, toLibsqlSql, toBindable, json } from "./db.js";
 
 describe("resolveConnection", () => {
   it("accepts postgres:// and postgresql://", () => {
-    expect(resolveConnection({ DATABASE_URL: "postgres://u:p@h:5432/d" })).toEqual({
-      url: "postgres://u:p@h:5432/d",
+    expect(resolveConnection({ DATABASE_URL: "postgres://h:5432/d" })).toEqual({
+      url: "postgres://h:5432/d",
     });
-    expect(resolveConnection({ DATABASE_URL: "postgresql://u:p@h/d" }).url).toBe(
-      "postgresql://u:p@h/d",
+    expect(resolveConnection({ DATABASE_URL: "postgresql://h/d" }).url).toBe(
+      "postgresql://h/d",
     );
   });
 
