@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "node",
     // Only the suites that are actually written for vitest. src/nodes,
     // src/workers and src/utils use the node:test runner instead and are run by
-    // `pnpm run test:node`; collecting them here just reports "no test suite".
+    // `bun run test:node`; collecting them here just reports "no test suite".
     include: [
       "*.test.js",
       "src/queue/**/*.test.js",

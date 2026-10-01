@@ -144,8 +144,8 @@ async function main() {
 
   console.log("\nNext steps:");
   console.log(`  1. Point .env at it:  ln -sf ${config.file} .env`);
-  console.log("  2. Apply the schema:  pnpm run db:migrate");
-  console.log("  3. Start the app:     pnpm run dev");
+  console.log("  2. Apply the schema:  bun run db:migrate");
+  console.log("  3. Start the app:     bun run dev");
 }
 
 main().catch((error) => {

@@ -5,16 +5,13 @@
 # orchestrator. See server.mjs for why they are two child processes rather than
 # one Node process.
 #
-# Railpack picks the package manager from the `packageManager` field in
-# package.json and from the committed pnpm-lock.yaml. Without those it fell back
-# to npm and ran `npm install` during its own install step — before this
-# buildCommand ever executed — which fails because the workspace uses pnpm's
-# `workspace:*` protocol. Keep both in place or the build breaks again.
+# Historical: meshhook left Railway for dev2 in September 2026, where the
+# Dockerfile (Bun) is what builds and runs. Kept in step for reference only.
 [build]
-buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @meshhook/web run build"
+buildCommand = "bun install --frozen-lockfile && bun run build"
 
 [deploy]
-startCommand = "node server.mjs"
+startCommand = "bun server.mjs"
 healthcheckPath = "/"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

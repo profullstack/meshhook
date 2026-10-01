@@ -86,7 +86,7 @@ async function main() {
   await db.close();
 
   if (!ok) {
-    console.error("\n❌ Schema verification failed. Run: pnpm run db:migrate");
+    console.error("\n❌ Schema verification failed. Run: bun run db:migrate");
     process.exit(1);
   }
 

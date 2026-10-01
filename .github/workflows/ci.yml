@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    name: install, test, build (Bun)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The version comes from packageManager in package.json, the same Bun the
+      # image (Dockerfile) pins.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+      - run: bun run build
+      # The SvelteKit server must boot under Bun and answer.
+      - name: Web server answers under Bun
+        run: |
+          (cd apps/web && PORT=3000 HOST=127.0.0.1 ORIGIN=http://127.0.0.1:3000 bun build/index.js > /tmp/web.log 2>&1 &)
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ || true)
+            case "$code" in 2*|3*) echo "/ -> $code"; exit 0;; esac
+            sleep 1
+          done
+          cat /tmp/web.log; exit 1

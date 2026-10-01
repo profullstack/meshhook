@@ -505,6 +505,9 @@ describe('HttpCallNode', () => {
 
       const call = mockFetch.mock.calls[0];
       const sentBody = JSON.parse(call.arguments[1].body);
+      assert.deepEqual(sentBody, inputData);
+    });
+
     it('should send XML body with text/xml Content-Type without JSON stringifying', async () => {
       const xmlBody = '<?xml version="1.0"?><root><item>test</item></root>';
       
@@ -581,8 +584,6 @@ describe('HttpCallNode', () => {
       const call = mockFetch.mock.calls[0];
       assert.equal(call.arguments[1].headers['Content-Type'], 'application/json');
       assert.equal(call.arguments[1].body, JSON.stringify(jsonBody));
-    });
-      assert.deepEqual(sentBody, inputData);
     });
   });
 
