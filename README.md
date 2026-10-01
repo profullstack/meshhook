@@ -41,12 +41,12 @@
 
 1. **Install dependencies**
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. **Setup environment** (interactive)
    ```bash
-   pnpm run setup
+   bun run setup
    ```
    Select "Local Development" when prompted. This creates `.env.local` pointing at a
    local SQLite file (`file:./meshhook.db`) and generates a secrets encryption key.
@@ -55,12 +55,12 @@
 
 3. **Run migrations**
    ```bash
-   pnpm run db:migrate
+   bun run db:migrate
    ```
 
 4. **Start the orchestrator**
    ```bash
-   pnpm run start
+   bun run start
    ```
    Runs on port 8080 (configurable via PORT environment variable)
 
@@ -68,12 +68,12 @@
 
 1. **Install dependencies**
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. **Setup environment** (interactive)
    ```bash
-   pnpm run setup
+   bun run setup
    ```
    Select "Production" or "Staging" and enter your Postgres URL
    (`postgres://user:pass@host:5432/meshhook`). Anything else is refused.
@@ -81,26 +81,26 @@
 
 3. **Run migrations**
    ```bash
-   pnpm run db:migrate
+   bun run db:migrate
    ```
    Applies any pending migrations from `migrations/` and records them in
    `schema_migrations`. Re-running is a no-op.
 
 4. **Start the server**
    ```bash
-   pnpm run start
+   bun run start
    ```
    Runs on port 8080 by default. Configure your reverse proxy to forward traffic to this port.
 
 ## Available Commands
 
-- `pnpm run setup` - Interactive environment configuration (local/staging/production)
-- `pnpm run db:migrate` - Apply pending database migrations
-- `pnpm run db:status` - Show applied and pending migrations
-- `pnpm run db:verify` - Verify the schema matches what the app expects
-- `pnpm test` - Run the test suite
-- `pnpm run start` - Start the orchestrator worker (production)
-- `pnpm mh --help` - CLI help
+- `bun run setup` - Interactive environment configuration (local/staging/production)
+- `bun run db:migrate` - Apply pending database migrations
+- `bun run db:status` - Show applied and pending migrations
+- `bun run db:verify` - Verify the schema matches what the app expects
+- `bun run test` - Run the test suite
+- `bun run start` - Start the orchestrator worker (production)
+- `bun run mh --help` - CLI help
 
 ## Environment Files
 

@@ -15,15 +15,15 @@ function run(bin, argv, opts = {}) {
 switch (cmd) {
   case "dev:web":
     console.log(blue("MeshHook — starting Web (SvelteKit)…"));
-    run("pnpm", ["--filter", "@meshhook/web", "dev"]);
+    run("bun", ["--filter", "@meshhook/web", "dev"]);
     break;
   case "start:orch":
     console.log(blue("MeshHook — starting Orchestrator…"));
-    run("node", ["workers/orchestrator.mjs"]);
+    run("bun", ["workers/orchestrator.mjs"]);
     break;
   case "start:http":
     console.log(blue("MeshHook — starting HTTP Executor…"));
-    run("node", ["workers/http-exec.mjs"]);
+    run("bun", ["workers/http-exec.mjs"]);
     break;
   case "migrate":
     console.log(green("Applying schema.sql to $DATABASE_URL…"));
