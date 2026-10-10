@@ -39,54 +39,13 @@
 	{@render children()}
 </main>
 
-<footer class="site-footer">
-	<nav class="webring" aria-label="Profullstack webring">
-		<a
-			href="https://rssamplifier.com/ring/profullstack/previous?from=https%3A%2F%2Fmeshhook.com%2F"
-			rel="prev"
-			title="Previous site">&lt;&lt;</a
-		>
-		<a href="https://rssamplifier.com/ring/profullstack">Profullstack</a>
-		<a
-			href="https://rssamplifier.com/ring/profullstack/next?from=https%3A%2F%2Fmeshhook.com%2F"
-			rel="next"
-			title="Next site">&gt;&gt;</a
-		>
-		<a
-			href="https://rssamplifier.com/ring/profullstack/random?from=https%3A%2F%2Fmeshhook.com%2F"
-			title="Random site"
-			aria-label="Random site">&#x2684;</a
-		>
-	</nav>
-</footer>
+<!-- Copyright and the Profullstack webring, rendered by +layout.server.js. -->
+{@html data.footer}
 
 <style>
 	main {
 		min-height: calc(100vh - 64px);
 		background-color: var(--color-bg-primary);
 		color: var(--color-text-primary);
-	}
-
-	.site-footer {
-		padding: 16px;
-		border-top: 1px solid var(--color-border-primary);
-		background-color: var(--color-bg-primary);
-		font-size: 0.8125rem;
-	}
-
-	.webring {
-		display: flex;
-		justify-content: center;
-		gap: 12px;
-	}
-
-	.webring a {
-		color: var(--color-text-secondary);
-		text-decoration: none;
-	}
-
-	.webring a:hover {
-		color: var(--color-text-primary);
-		text-decoration: underline;
 	}
 </style>

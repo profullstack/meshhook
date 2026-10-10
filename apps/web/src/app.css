@@ -204,3 +204,11 @@ button:disabled {
 		font-size: 2.4rem;
 	}
 }
+
+/* The shared Profullstack footer (+layout.server.js), on the page's own colours. */
+footer.pfs-footer {
+	--pfs-footer-muted: var(--color-text-secondary);
+	border-top-color: var(--color-border-primary);
+	background-color: var(--color-bg-primary);
+	color: var(--color-text-primary);
+}
