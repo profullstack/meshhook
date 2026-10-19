@@ -1,4 +1,6 @@
 <script>
+	import AdUnit from '$lib/components/AdUnit.svelte';
+
 	let { data } = $props();
 </script>
 
@@ -32,6 +34,9 @@
 			<a href="/auth/login" class="button">Sign In</a>
 		</section>
 	{/if}
+
+	<!-- One CrawlProof unit on the public home page. -->
+	<AdUnit />
 </div>
 
 <style>
