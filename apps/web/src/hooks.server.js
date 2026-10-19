@@ -1,8 +1,8 @@
 /**
  * SvelteKit Server Hooks
  *
- * Resolves the session cookie to a user on every request, and handles the
- * www -> non-www redirect.
+ * Resolves the session cookie to a user on every request, handles the
+ * www -> non-www redirect, and appends the pit.world network footer to pages.
  *
  * Previously this created a Supabase client per request and called
  * supabase.auth.getUser(). Sessions are now MeshHook's own rows in Turso, so
@@ -12,6 +12,7 @@
 
 import { validateSession, SESSION_COOKIE, sessionCookieOptions } from '@meshhook/shared/lib/auth.js';
 import { dev } from '$app/environment';
+import { pitFooter } from '$lib/server/pit-footer.js';
 
 /**
  * @param {Object} params
@@ -48,5 +49,10 @@ export async function handle({ event, resolve }) {
 	event.locals.user = result?.user ?? null;
 	event.locals.session = result?.session ?? null;
 
-	return resolve(event);
+	// The pit.world network footer goes in last, after the app root, on every page.
+	const pit = await pitFooter();
+	if (!pit) return resolve(event);
+	return resolve(event, {
+		transformPageChunk: ({ html }) => html.replace('</body>', `${pit}\n</body>`)
+	});
 }
