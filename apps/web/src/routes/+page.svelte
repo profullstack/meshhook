@@ -12,6 +12,9 @@
 <div class="container">
 	<h1>Welcome to MeshHook</h1>
 
+	<!-- One CrawlProof unit on the public home page, under the heading (never by the footer). -->
+	<AdUnit />
+
 	<section class="intro">
 		<p>
 			A webhook-first, deterministic, SQLite-native workflow engine that delivers n8n's visual
@@ -34,9 +37,6 @@
 			<a href="/auth/login" class="button">Sign In</a>
 		</section>
 	{/if}
-
-	<!-- One CrawlProof unit on the public home page. -->
-	<AdUnit />
 </div>
 
 <style>
