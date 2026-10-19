@@ -39,31 +39,13 @@
 	{@render children()}
 </main>
 
-<footer class="site-footer">
-	<span>&copy; {new Date().getFullYear()} Profullstack, Inc.</span>
-	<a href="https://github.com/profullstack/meshhook">Source</a>
-</footer>
+<!-- Source link, the Profullstack webring and the copyright, rendered by +layout.server.js. -->
+{@html data.footer}
 
 <style>
 	main {
 		min-height: calc(100vh - 64px);
 		background-color: var(--color-bg-primary);
 		color: var(--color-text-primary);
-	}
-
-	.site-footer {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 0.25rem 1.25rem;
-		padding: 1.25rem 1rem;
-		border-top: 1px solid var(--color-border-primary);
-		font-size: 0.875rem;
-		color: var(--color-text-secondary);
-		background-color: var(--color-bg-primary);
-	}
-
-	.site-footer a {
-		color: inherit;
 	}
 </style>
