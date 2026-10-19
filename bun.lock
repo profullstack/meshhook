@@ -23,6 +23,7 @@
       "name": "@meshhook/web",
       "dependencies": {
         "@meshhook/shared": "workspace:*",
+        "@profullstack/footer": "latest",
         "@profullstack/libsql-pg": "^0.1.1",
         "@xyflow/svelte": "^1.3.1",
         "jmespath": "^0.16.0",
@@ -235,6 +236,8 @@
     "@nodable/entities": ["@nodable/entities@3.0.0", "", {}, "sha512-8L9xFeTYKhm49xfIypoe2W5wV1m/3Z58kT+7kR9A8OyFxcPduI4VmxaUMQyKYrRjUoLLSXv6EKKID5Tvj9cUVw=="],
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
+
+    "@profullstack/footer": ["@profullstack/footer@0.2.4", "", { "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"], "bin": { "profullstack-footer": "bin/profullstack-footer.js" } }, "sha512-2ErIzHJCDA2baP8aK6f7rCHohW4EX+wnp7D1mrVMQTUxRcyZwKzmho96hhEFJndXRBGgxT3H/78BHOeBfLxTzg=="],
 
     "@profullstack/libsql-pg": ["@profullstack/libsql-pg@0.1.1", "", { "dependencies": { "pg": "8.23.0" }, "peerDependencies": { "@libsql/client": ">=0.5.0" }, "optionalPeers": ["@libsql/client"], "bin": { "libsql-pg": "bin/libsql-pg.js" } }, "sha512-KD4+bCDM31hwheWYxOyn6zxRw1hTqhEqAl/LXfgoQNbZ88ODbDNJViDtxPWCCv7IPgXAMWsh2kbkrjRiT7Sn1Q=="],
 
