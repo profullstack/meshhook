@@ -1,6 +1,4 @@
 <script>
-	import AdUnit from '$lib/components/AdUnit.svelte';
-
 	let { data } = $props();
 </script>
 
@@ -11,9 +9,6 @@
 
 <div class="container">
 	<h1>Welcome to MeshHook</h1>
-
-	<!-- One CrawlProof unit on the public home page, under the heading (never by the footer). -->
-	<AdUnit />
 
 	<section class="intro">
 		<p>
