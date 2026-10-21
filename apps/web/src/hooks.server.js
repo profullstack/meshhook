@@ -13,6 +13,7 @@
 import { validateSession, SESSION_COOKIE, sessionCookieOptions } from '@meshhook/shared/lib/auth.js';
 import { dev } from '$app/environment';
 import { pitFooter } from '$lib/server/pit-footer.js';
+import { crawlGate } from '$lib/server/crawl-gate.js';
 
 /**
  * @param {Object} params
@@ -32,6 +33,12 @@ export async function handle({ event, resolve }) {
 			status: 301,
 			headers: { location: redirectUrl }
 		});
+	}
+
+	// Training crawlers buy a day pass before anything else is done for them.
+	if (crawlGate) {
+		const sold = await crawlGate.handle(event.request);
+		if (sold) return sold;
 	}
 
 	const token = event.cookies.get(SESSION_COOKIE);

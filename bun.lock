@@ -25,6 +25,7 @@
         "@meshhook/shared": "workspace:*",
         "@profullstack/footer": "latest",
         "@profullstack/libsql-pg": "^0.1.1",
+        "@profullstack/x402-gateway": "^0.11.0",
         "@xyflow/svelte": "^1.3.1",
         "jmespath": "^0.16.0",
         "undici": "^6.19.8",
@@ -237,11 +238,15 @@
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
-    "@profullstack/footer": ["@profullstack/footer@0.2.4", "", { "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"], "bin": { "profullstack-footer": "bin/profullstack-footer.js" } }, "sha512-2ErIzHJCDA2baP8aK6f7rCHohW4EX+wnp7D1mrVMQTUxRcyZwKzmho96hhEFJndXRBGgxT3H/78BHOeBfLxTzg=="],
+    "@profullstack/footer": ["@profullstack/footer@0.2.5", "", { "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"], "bin": { "profullstack-footer": "bin/profullstack-footer.js" } }, "sha512-/CKwFP3m+qM0ZFTC9Rj11fgClutJzeYliX44Qp4qwrv2JgA/1k4tVOB3mhkPhaeckUhnfg5UyESDI1uoWr9c2w=="],
+
+    "@profullstack/keys": ["@profullstack/keys@0.1.0", "", {}, "sha512-Vys47LvS5ivhdZu4SYOxh9Le3DEmWhjP0+CtrU45RhXAbY0ZFG/2Dk9V1bIIUGDp8UWMJqctvUD21JrNjfh04w=="],
 
     "@profullstack/libsql-pg": ["@profullstack/libsql-pg@0.1.1", "", { "dependencies": { "pg": "8.23.0" }, "peerDependencies": { "@libsql/client": ">=0.5.0" }, "optionalPeers": ["@libsql/client"], "bin": { "libsql-pg": "bin/libsql-pg.js" } }, "sha512-KD4+bCDM31hwheWYxOyn6zxRw1hTqhEqAl/LXfgoQNbZ88ODbDNJViDtxPWCCv7IPgXAMWsh2kbkrjRiT7Sn1Q=="],
 
     "@profullstack/x402-client": ["@profullstack/x402-client@0.2.0", "", { "dependencies": { "@noble/curves": "2.4.0", "@noble/hashes": "2.4.0" }, "bin": { "x402": "bin/x402.js" } }, "sha512-kJGAomE9Tf/ruhsCStaKVXpjklCbOh2UFcMGTIfTqcWaSsW2NFWQRaTxJBLvc6r7Iy2+fpAWzfJnerolI6IrRQ=="],
+
+    "@profullstack/x402-gateway": ["@profullstack/x402-gateway@0.11.0", "", { "dependencies": { "@profullstack/keys": "^0.1.0" } }, "sha512-Lfrz+SRTwQZfcoCaVtaaMNPJx74Lp/5oyS7vJJAEuJmH1TjBzhE7dWquISkj1p42oc+VW5I9xH9p7YhEKqmr4Q=="],
 
     "@rollup/plugin-commonjs": ["@rollup/plugin-commonjs@29.0.3", "", { "dependencies": { "@rollup/pluginutils": "5.4.0", "commondir": "1.0.1", "estree-walker": "2.0.2", "fdir": "6.5.0", "is-reference": "1.2.1", "magic-string": "0.30.21", "picomatch": "4.0.5" }, "peerDependencies": { "rollup": "^2.68.0||^3.0.0||^4.0.0" }, "optionalPeers": ["rollup"] }, "sha512-ZaOxZceP7SOUW7Lqw5IRVweSQYWaeIPnXIGLiB690EBA3FGJTO40EEr2L5yZplJWsgTCogILRSpcAe7+U0Otdg=="],
 
