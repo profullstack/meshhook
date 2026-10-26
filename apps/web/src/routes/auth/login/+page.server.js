@@ -21,6 +21,7 @@ import {
 	sessionCookieOptions
 } from '@meshhook/shared/lib/auth.js';
 import { ensureDefaultProject } from '@meshhook/shared/lib/authz.js';
+import { signUpWithProfile, SIGNUP_PROFILE_FIELDS } from '@meshhook/shared/lib/profile.js';
 
 /** Only allow same-site relative paths, so `next` cannot be an open redirect. */
 function safeNext(next) {
@@ -77,15 +78,30 @@ export const actions = {
 		const password = data.get('password');
 		const next = safeNext(data.get('next'));
 
+		// The profile fields typed so far, echoed back on a failed sign-up.
+		const profile = Object.fromEntries(
+			SIGNUP_PROFILE_FIELDS.map((k) => [k, data.get(k)?.toString() ?? ''])
+		);
+
 		if (!email || !password) {
-			return fail(400, { error: 'Email and password are required.', email });
+			return fail(400, { error: 'Email and password are required.', email, signup: true, profile });
 		}
 
 		let user;
 		try {
-			user = await createUser({ email, password });
+			const r = await signUpWithProfile({ ...profile, email, password }, { createUser });
+			if (!r.ok) {
+				return fail(400, {
+					error: Object.values(r.errors)[0],
+					errors: r.errors,
+					email,
+					signup: true,
+					profile
+				});
+			}
+			user = r.user;
 		} catch (error) {
-			return fail(400, { error: error.message, email });
+			return fail(400, { error: error.message, email, signup: true, profile });
 		}
 
 		// Supabase seeded a project with a trigger on auth.users; do it here.

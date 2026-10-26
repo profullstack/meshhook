@@ -7,10 +7,12 @@
     "./lib/queue.js": "./lib/queue.js",
     "./lib/auth.js": "./lib/auth.js",
     "./lib/authz.js": "./lib/authz.js",
-    "./lib/crypto.js": "./lib/crypto.js"
+    "./lib/crypto.js": "./lib/crypto.js",
+    "./lib/profile.js": "./lib/profile.js"
   },
   "dependencies": {
-    "dotenv": "^17.2.3",
-    "@profullstack/libsql-pg": "^0.1.1"
+    "@profullstack/libsql-pg": "^0.1.1",
+    "@profullstack/profile": "0.1.3",
+    "dotenv": "^17.2.3"
   }
 }
