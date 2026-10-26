@@ -1,6 +1,6 @@
 <script>
 	import { enhance } from '$app/forms';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { trackSignIn, trackSignUp, trackError } from '$lib/utils/analytics.js';
 	import { renderProfileFields } from '@profullstack/profile';
 
@@ -14,7 +14,7 @@
 	// sign-in neither validates nor posts them.
 	let signingUp = $state(false);
 	$effect(() => {
-		if (form?.signup || $page.url.searchParams.has('signup')) signingUp = true;
+		if (form?.signup || page.url.searchParams.has('signup')) signingUp = true;
 	});
 	const profileFields = $derived(
 		renderProfileFields({
@@ -26,7 +26,7 @@
 
 	// Credentials are posted to a server action rather than to Supabase from the
 	// browser, so the page no longer holds an auth client or the session token.
-	const next = $derived($page.url.searchParams.get('next') ?? '/workflows');
+	const next = $derived(page.url.searchParams.get('next') ?? '/workflows');
 
 	/** Report the outcome to analytics once the action responds. */
 	function submitHandler(kind) {

@@ -1,5 +1,5 @@
 <script>
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import ThemeToggle from './ThemeToggle.svelte'; // Import ThemeToggle
 
 	let { session } = $props();
@@ -13,9 +13,9 @@
 
 	function isActive(href) {
 		if (href === '/') {
-			return $page.url.pathname === '/';
+			return page.url.pathname === '/';
 		}
-		return $page.url.pathname.startsWith(href);
+		return page.url.pathname.startsWith(href);
 	}
 </script>
 
