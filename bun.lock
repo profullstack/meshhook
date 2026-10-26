@@ -228,7 +228,7 @@
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
-    "@profullstack/footer": ["@profullstack/footer@0.2.6", "", { "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"], "bin": { "profullstack-footer": "bin/profullstack-footer.js" } }, "sha512-BKwbDszAc7e0mYIBiPjgr/5WS8WyDt8IW718s/zW/8pCWOIB1BGwSNs6fmImRSo5kqIjQKUVbXp22jZQ5GEipA=="],
+    "@profullstack/footer": ["@profullstack/footer@0.4.0", "", { "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"], "bin": { "profullstack-footer": "bin/profullstack-footer.js" } }, "sha512-EJZnMUQmWDi9Gzx6BAjogloeaPFFSSCHtHJuC9dsXiOz8M87hfn6Z+Zx9AMYWk8s6xemPrPlkXKGB3PZugkcEA=="],
 
     "@profullstack/keys": ["@profullstack/keys@0.1.0", "", {}, "sha512-Vys47LvS5ivhdZu4SYOxh9Le3DEmWhjP0+CtrU45RhXAbY0ZFG/2Dk9V1bIIUGDp8UWMJqctvUD21JrNjfh04w=="],
 
