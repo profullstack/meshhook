@@ -25,6 +25,7 @@
         "@meshhook/shared": "workspace:*",
         "@profullstack/footer": "latest",
         "@profullstack/libsql-pg": "^0.1.1",
+        "@profullstack/profile": "0.1.3",
         "@profullstack/x402-gateway": "^0.11.0",
         "@xyflow/svelte": "^1.3.1",
         "jmespath": "^0.16.0",
@@ -66,6 +67,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@profullstack/libsql-pg": "^0.1.1",
+        "@profullstack/profile": "0.1.3",
         "dotenv": "^17.2.3",
       },
     },
@@ -243,6 +245,8 @@
     "@profullstack/keys": ["@profullstack/keys@0.1.0", "", {}, "sha512-Vys47LvS5ivhdZu4SYOxh9Le3DEmWhjP0+CtrU45RhXAbY0ZFG/2Dk9V1bIIUGDp8UWMJqctvUD21JrNjfh04w=="],
 
     "@profullstack/libsql-pg": ["@profullstack/libsql-pg@0.1.1", "", { "dependencies": { "pg": "8.23.0" }, "peerDependencies": { "@libsql/client": ">=0.5.0" }, "optionalPeers": ["@libsql/client"], "bin": { "libsql-pg": "bin/libsql-pg.js" } }, "sha512-KD4+bCDM31hwheWYxOyn6zxRw1hTqhEqAl/LXfgoQNbZ88ODbDNJViDtxPWCCv7IPgXAMWsh2kbkrjRiT7Sn1Q=="],
+
+    "@profullstack/profile": ["@profullstack/profile@0.1.3", "", { "peerDependencies": { "@libsql/client": ">=0.6.0", "postgres": "^3.4.0", "react": ">=18" }, "optionalPeers": ["@libsql/client", "postgres", "react"], "bin": { "profile": "src/cli.js" } }, "sha512-P+VdOqCnNGWa5W8EGLU/ls3hwovRcY8bOBOhWZp3h23sW2LDMFyeWF/pUfO+iiYH3E2Tie2/9xyUnpO4ctwSHw=="],
 
     "@profullstack/x402-client": ["@profullstack/x402-client@0.2.0", "", { "dependencies": { "@noble/curves": "2.4.0", "@noble/hashes": "2.4.0" }, "bin": { "x402": "bin/x402.js" } }, "sha512-kJGAomE9Tf/ruhsCStaKVXpjklCbOh2UFcMGTIfTqcWaSsW2NFWQRaTxJBLvc6r7Iy2+fpAWzfJnerolI6IrRQ=="],
 
