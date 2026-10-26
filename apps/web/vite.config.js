@@ -1,3 +1,4 @@
+import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 /**
@@ -9,7 +10,18 @@ import { sveltekit } from '@sveltejs/kit/vite';
 const NATIVE_DEPS = ['@profullstack/libsql-pg', 'pg', 'pg-native'];
 
 export default {
-	plugins: [sveltekit()],
+	// SvelteKit 3 takes its config here; svelte.config.js is no longer read.
+	plugins: [
+		sveltekit({
+			adapter: adapter(),
+			alias: {
+				$lib: './src/lib',
+				$components: './src/lib/components',
+				$stores: './src/lib/stores',
+				$utils: './src/lib/utils'
+			}
+		})
+	],
 	ssr: {
 		// Mark worker modules as external so they're not bundled
 		// They'll be resolved at runtime from the monorepo root

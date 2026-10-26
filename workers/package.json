@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "@meshhook/shared": "workspace:*",
-    "undici": "^6.19.8"
+    "undici": "^8.12.3"
   }
 }

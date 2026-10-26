@@ -11,8 +11,8 @@
     "./lib/profile.js": "./lib/profile.js"
   },
   "dependencies": {
-    "@profullstack/libsql-pg": "^0.1.1",
-    "@profullstack/profile": "0.1.3",
-    "dotenv": "^17.2.3"
+    "@profullstack/libsql-pg": "^0.1.4",
+    "@profullstack/profile": "0.1.6",
+    "dotenv": "^18.0.9"
   }
 }

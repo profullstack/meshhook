@@ -1,7 +1,7 @@
 <script>
 	import '../app.css';
 	import Header from '$lib/components/Header.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { trackPageView, identifyUser } from '$lib/utils/analytics.js';
 	import { onMount } from 'svelte';
 
@@ -19,17 +19,12 @@
 				email: data.session.user.email
 			});
 		}
+	});
 
-		// Subscribe to page changes for SPA navigation
-		const unsubscribe = page.subscribe(($page) => {
-			if ($page.url?.pathname) {
-				trackPageView($page.url.pathname);
-			}
-		});
-
-		return () => {
-			unsubscribe();
-		};
+	// Track SPA navigations ($app/stores is gone in SvelteKit 3; $app/state is reactive)
+	$effect(() => {
+		const pathname = page.url?.pathname;
+		if (pathname) trackPageView(pathname);
 	});
 </script>
 

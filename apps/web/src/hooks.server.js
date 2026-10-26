@@ -11,7 +11,7 @@
  */
 
 import { validateSession, SESSION_COOKIE, sessionCookieOptions } from '@meshhook/shared/lib/auth.js';
-import { dev } from '$app/environment';
+import { dev } from '$app/env';
 import { pitFooter } from '$lib/server/pit-footer.js';
 import { crawlGate } from '$lib/server/crawl-gate.js';
 

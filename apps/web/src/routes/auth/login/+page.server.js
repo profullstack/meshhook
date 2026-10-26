@@ -12,7 +12,7 @@
  */
 
 import { fail, redirect } from '@sveltejs/kit';
-import { dev } from '$app/environment';
+import { dev } from '$app/env';
 import {
 	authenticate,
 	createUser,

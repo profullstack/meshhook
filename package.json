@@ -32,17 +32,20 @@
     "security:patch": "SOCKET_API_TOKEN=${SOCKET_API_TOKEN} bun scripts/socket-patch.mjs"
   },
   "devDependencies": {
-    "chai": "^5.1.2",
-    "dotenv": "^17.2.3",
-    "inquirer": "^12.9.6",
-    "prettier": "^3.3.3",
-    "vitest": "^3.2.4"
+    "chai": "^6.3.0",
+    "dotenv": "^18.0.9",
+    "inquirer": "^14.2.4",
+    "prettier": "^3.9.10",
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "@meshhook/shared": "workspace:*",
-    "@profullstack/x402-client": "0.2.0",
-    "fast-xml-parser": "^5.3.0",
+    "@profullstack/x402-client": "0.3.0",
+    "fast-xml-parser": "^5.11.2",
     "jmespath": "^0.16.0",
-    "openai": "^6.3.0"
+    "openai": "^7.43.0"
+  },
+  "overrides": {
+    "source-map-js": "^1.2.2"
   }
 }
