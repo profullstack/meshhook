@@ -27,7 +27,7 @@
     "db:status": "bun scripts/db-migrate.js --status",
     "test": "bun run test:vitest && bun run test:node",
     "test:watch": "bun --bun vitest",
-    "test:node": "bun test src/nodes src/workers src/utils",
+    "test:node": "bun test src/nodes src/workers src/utils ./src/lib/paid-fetch.test.js",
     "test:vitest": "bun --bun vitest run",
     "security:patch": "SOCKET_API_TOKEN=${SOCKET_API_TOKEN} bun scripts/socket-patch.mjs"
   },

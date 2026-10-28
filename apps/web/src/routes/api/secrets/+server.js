@@ -8,15 +8,16 @@
  *    `value_encrypted`), so every insert failed. The field is now `key`, and
  *    `name` is still accepted on input for backwards compatibility.
  *  - It stored the raw value with a comment claiming a database trigger would
- *    encrypt it. No such trigger ever existed. Values are encrypted here, with
- *    AES-256-GCM, before they reach the database.
+ *    encrypt it. No such trigger ever existed. Values are now sealed to the
+ *    owner's key vault (unlock-on-use, 2026-10-28): the server can seal them,
+ *    never open them; no server key is involved.
  *
  * Ciphertext is never returned by either handler.
  */
 
 import { json } from '@sveltejs/kit';
 import { db } from '@meshhook/shared/lib/db.js';
-import { encryptSecret, encryptionConfigured } from '@meshhook/shared/lib/crypto.js';
+import { sealUserSecret } from '@meshhook/shared/lib/vault.js';
 import { ownedProjectIdsSql, assertProjectAccess, ensureDefaultProject } from '@meshhook/shared/lib/authz.js';
 
 /**
@@ -56,14 +57,6 @@ export async function POST(event) {
 		return json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
 	}
 
-	if (!encryptionConfigured()) {
-		// Refuse rather than fall back to storing plaintext.
-		return json(
-			{ error: 'Secret storage is not configured (SECRETS_ENCRYPTION_KEY is unset)' },
-			{ status: 503 }
-		);
-	}
-
 	let body;
 	try {
 		body = await event.request.json();
@@ -84,11 +77,12 @@ export async function POST(event) {
 			? await assertProjectAccess(user.id, projectId)
 			: await ensureDefaultProject(user.id);
 
+		const sealed = await sealUserSecret(db, user.id, key, value);
 		const secret = await db.one(
 			`insert into secrets (project_id, key, value_encrypted) values (?, ?, ?)
 			 on conflict (project_id, key) do update set value_encrypted = excluded.value_encrypted
 			 returning id, key, project_id, created_at, updated_at`,
-			[targetProject, key, encryptSecret(String(value))]
+			[targetProject, key, sealed]
 		);
 
 		return json({ secret }, { status: 201 });

@@ -22,6 +22,9 @@
  */
 
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -60,6 +63,19 @@ export function buildChildEnv(env = process.env) {
 
 const origin = resolveOrigin();
 const childEnv = buildChildEnv();
+
+// The operator unlock channel's token: fresh per container start, handed to
+// the orchestrator by env and to the operator CLI (`docker exec`) by a 0600
+// file. It opens nothing by itself; it only lets a data key be handed over.
+if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
+  childEnv.OPERATOR_CONTROL_TOKEN ??= randomBytes(32).toString("hex");
+  const tokenFile = process.env.OPERATOR_CONTROL_TOKEN_FILE ?? join(tmpdir(), "meshhook-operator-control.token");
+  try {
+    writeFileSync(tokenFile, childEnv.OPERATOR_CONTROL_TOKEN, { mode: 0o600 });
+  } catch (e) {
+    console.error(`[supervisor] could not write the operator control token: ${e.message}`);
+  }
+}
 
 /** Tag each line so the two log streams stay tellable apart in Railway. */
 export function pipeWithPrefix(stream, prefix, sink) {

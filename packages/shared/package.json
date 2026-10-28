@@ -8,11 +8,14 @@
     "./lib/auth.js": "./lib/auth.js",
     "./lib/authz.js": "./lib/authz.js",
     "./lib/crypto.js": "./lib/crypto.js",
-    "./lib/profile.js": "./lib/profile.js"
+    "./lib/profile.js": "./lib/profile.js",
+    "./lib/vault.js": "./lib/vault.js",
+    "./lib/operator-keys.js": "./lib/operator-keys.js"
   },
   "dependencies": {
     "@profullstack/libsql-pg": "^0.1.4",
     "@profullstack/profile": "0.1.6",
+    "@profullstack/sealed-secrets": "0.1.0",
     "dotenv": "^18.0.9"
   }
 }
