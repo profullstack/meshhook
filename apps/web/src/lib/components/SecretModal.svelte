@@ -96,7 +96,7 @@
 					<div class="form-group">
 						<label for="value">Secret Value *</label>
 						<MaskedInput bind:value={formData.value} placeholder="Enter secret value" disabled={saving} />
-						<p class="help-text">The encrypted value will be stored securely</p>
+						<p class="help-text">Sealed with your key vault passphrase: MeshHook stores it but cannot read it</p>
 					</div>
 
 					<div class="form-group">

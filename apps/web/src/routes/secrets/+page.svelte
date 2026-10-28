@@ -2,6 +2,7 @@
 	import SecretModal from '$lib/components/SecretModal.svelte';
 	import MaskedInput from '$lib/components/MaskedInput.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
+	import KeyVaultPanel from '$lib/components/KeyVaultPanel.svelte';
 
 	let { data } = $props();
 
@@ -51,7 +52,7 @@
 				body: JSON.stringify(formData)
 			});
 
-			if (!response.ok) throw new Error('Failed to save secret');
+			if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error ?? 'Failed to save secret');
 
 			const result = await response.json();
 
@@ -113,6 +114,8 @@
 		<h1>Secrets Vault</h1>
 		<button class="btn-primary" onclick={handleCreate}>Create Secret</button>
 	</header>
+
+	<KeyVaultPanel userId={data.user?.id} />
 
 	<div class="secrets-content">
 		<div class="controls">

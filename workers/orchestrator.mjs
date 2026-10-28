@@ -19,6 +19,7 @@ import { db, json, resolveConnection } from "./lib/db.js";
 import { RUN_QUEUE, STEP_QUEUE, enqueueRun, enqueueStep } from "./lib/queue.js";
 import { Worker } from "../src/queue/index.js";
 import { executeStep } from "./http-exec.mjs";
+import { startOperatorControl } from "@meshhook/shared/lib/operator-keys.js";
 
 /**
  * Rebuild a run's position from its event log.
@@ -176,6 +177,10 @@ export async function startOrchestrator() {
   await runWorker.start();
   await stepWorker.start();
 
+  // Operator unlock channel (loopback only): the x402 payer key opens only
+  // after `scripts/operator-vault.mjs unlock`; a restart re-locks it.
+  const control = startOperatorControl({ db });
+
   console.log("🧠 MeshHook Orchestrator running");
   console.log(`   queues: ${RUN_QUEUE}, ${STEP_QUEUE}`);
 
@@ -187,6 +192,7 @@ export async function startOrchestrator() {
     stopping = true;
     console.log(`\n${signal} received, stopping workers...`);
 
+    control?.stop(true);
     await Promise.allSettled([runWorker.stop(), stepWorker.stop()]);
     await db.close();
 

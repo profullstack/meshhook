@@ -9,7 +9,7 @@
 
 import { json } from '@sveltejs/kit';
 import { db } from '@meshhook/shared/lib/db.js';
-import { encryptSecret, encryptionConfigured } from '@meshhook/shared/lib/crypto.js';
+import { sealUserSecret } from '@meshhook/shared/lib/vault.js';
 import { ownedProjectIdsSql } from '@meshhook/shared/lib/authz.js';
 
 /**
@@ -20,13 +20,6 @@ export async function PUT(event) {
 
 	if (!user) {
 		return json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });
-	}
-
-	if (!encryptionConfigured()) {
-		return json(
-			{ error: 'Secret storage is not configured (SECRETS_ENCRYPTION_KEY is unset)' },
-			{ status: 503 }
-		);
 	}
 
 	const { id } = event.params;
@@ -45,19 +38,25 @@ export async function PUT(event) {
 	}
 
 	try {
+		const existing = await db.oneOrNone(
+			'select key from secrets where id = ? and project_id in (select id from projects where owner = ?)',
+			[id, user.id]
+		);
+		if (!existing) {
+			return json({ error: 'Secret not found' }, { status: 404 });
+		}
+		// Sealed to the owner's key vault: the server can write it, never read it.
+		const sealed = await sealUserSecret(db, user.id, existing.key, value);
 		const secret = await db.oneOrNone(
 			`update secrets set value_encrypted = ?
 			  where id = ? and project_id in (${ownedProjectIdsSql()})
 			 returning id, key, project_id, created_at, updated_at`,
-			[encryptSecret(String(value)), id, user.id]
+			[sealed, id, user.id]
 		);
-
-		if (!secret) {
-			return json({ error: 'Secret not found' }, { status: 404 });
-		}
 
 		return json({ secret });
 	} catch (error) {
+		if (error.status === 409) return json({ error: error.message }, { status: 409 });
 		console.error('Error updating secret:', error);
 		return json({ error: 'Failed to update secret' }, { status: 500 });
 	}
