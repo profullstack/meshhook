@@ -15,9 +15,8 @@
  */
 
 import { createInterface } from "node:readline";
-import { bytesToBase64, wipe } from "@profullstack/sealed-secrets";
 import { db } from "@meshhook/shared/lib/db.js";
-import { OPERATOR, createVault, getVault, operatorSealer } from "@meshhook/shared/lib/vault.js";
+import { OPERATOR, bytesToBase64, createVault, getVault, operatorSealer, wipe } from "@meshhook/shared/lib/vault.js";
 import { CONTROL_PORT, readControlToken } from "@meshhook/shared/lib/operator-keys.js";
 
 function ask(question, { hidden = true } = {}) {

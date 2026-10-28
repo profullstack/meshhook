@@ -15,7 +15,9 @@
  *    memory; see operator-keys.js).
  */
 
-import { createSealer, isInboxEntry, isSealRecord } from "@profullstack/sealed-secrets";
+import { bytesToBase64, createSealer, isInboxEntry, isSealRecord, wipe } from "@profullstack/sealed-secrets";
+
+export { bytesToBase64, wipe };
 
 export const userSealer = createSealer({ app: "meshhook", scope: "workflow_secrets" });
 export const operatorSealer = createSealer({ app: "meshhook", scope: "operator" });
