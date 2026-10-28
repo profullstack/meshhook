@@ -39,7 +39,7 @@ export async function PUT(event) {
 
 	try {
 		const existing = await db.oneOrNone(
-			`select key from secrets where id = ? and project_id in (${ownedProjectIdsSql()})`,
+			'select key from secrets where id = ? and project_id in (select id from projects where owner = ?)',
 			[id, user.id]
 		);
 		if (!existing) {

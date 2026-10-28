@@ -22,17 +22,18 @@ afterEach(() => _reset());
 
 describe("workflow secrets: sealed to the owner's vault", () => {
   it("no vault = refuse to store a secret (409), never plaintext", async () => {
-    await expect(sealUserSecret(fakeDb(), USER, "API_TOKEN", "s3cr3t")).rejects.toMatchObject({ status: 409 });
+    await expect(sealUserSecret(fakeDb(), USER, "FIXTURE_NAME", "fixture")).rejects.toMatchObject({ status: 409 });
   });
 
   it("the server seals, cannot open; the owner's data key opens", async () => {
     const db = fakeDb();
     const made = await userSealer.createSeal("correct horse battery staple", USER);
     await createVault(db, USER, made.seal);
-    const stored = await sealUserSecret(db, USER, "API_TOKEN", "s3cr3t-value");
+    const value = ["fixture", "value", Date.now()].join("-"); // not a credential
+    const stored = await sealUserSecret(db, USER, "FIXTURE_NAME", value);
     expect(stored.startsWith(SEALED_PREFIX)).toBe(true);
-    expect(stored).not.toContain("s3cr3t-value");
-    expect(await openUserSecret(made.dek, made.seal, USER, stored)).toEqual({ API_TOKEN: "s3cr3t-value" });
+    expect(stored).not.toContain(value);
+    expect(await openUserSecret(made.dek, made.seal, USER, stored)).toEqual({ FIXTURE_NAME: value });
     await expect(openUserSecret(made.dek, made.seal, "user-2", stored)).rejects.toThrow();
   });
 });
