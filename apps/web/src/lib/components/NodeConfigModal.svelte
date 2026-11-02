@@ -55,7 +55,7 @@
 			fields: [
 				{ name: 'prompt', label: 'Prompt', type: 'textarea', required: true, placeholder: 'Summarize this lead in one line: {{body.message}}', helpText: 'Use {{variable}} for input data, {{$trigger.body}} for the webhook, {{$nodes.<id>}} for earlier steps' },
 				{ name: 'system', label: 'System prompt', type: 'textarea', placeholder: 'You are a concise assistant.' },
-				{ name: 'model', label: 'Model', type: 'text', placeholder: 'qwen2.5:7b', helpText: 'Open model served by c0mpute nodes. Empty = the server default list.' },
+				{ name: 'model', label: 'Model', type: 'text', placeholder: 'qwen2.5:1.5b', helpText: 'Open model served by c0mpute nodes. Empty = the fast default (qwen2.5:1.5b, then 0.5b). Bigger models have fewer nodes and can wait minutes.' },
 				{ name: 'json', label: 'Expect JSON', type: 'select', options: ['', 'true'], helpText: 'Parse the answer as JSON into output.json' },
 				{ name: 'maxTokens', label: 'Max tokens', type: 'number', placeholder: '1024' }
 			],
