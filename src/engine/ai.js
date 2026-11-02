@@ -14,7 +14,19 @@
  * own hourly budget instead of the public per-IP one.
  */
 
-import { NodeError, resolveTemplates, templateData } from './runners.js';
+import { NodeError as BaseNodeError, resolveTemplates, templateData } from './runners.js';
+
+/**
+ * Inference capacity comes and goes: one busy node, or Infernet itself
+ * restarting for a deploy (a few minutes of 503s that also cut live streams).
+ * Retryable AI errors therefore wait 30 s, 60 s, 120 s... and get at least five
+ * attempts, whatever the workflow's own retry settings.
+ */
+class NodeError extends BaseNodeError {
+	constructor(message, opts = {}) {
+		super(message, opts.retryable ? { retryAfter: 30, minAttempts: 5, ...opts } : opts);
+	}
+}
 
 const DEFAULT_MODELS = 'qwen2.5:7b,qwen3:4b,gemma3:4b';
 

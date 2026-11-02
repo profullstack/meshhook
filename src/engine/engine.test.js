@@ -275,3 +275,11 @@ describe('branch fan-out', () => {
 		expect(decide(g, s).nodes.map((x) => x.id)).toEqual(['x', 'y']);
 	});
 });
+
+describe('ai capacity backoff', () => {
+	it('marks retryable AI errors with a long backoff and a bigger budget', async () => {
+		const fetch = async () => new Response('<html>down for maintenance</html>', { status: 503 });
+		const err = await runAi({ prompt: 'x' }, {}, {}, { env: { MESHHOOK_AI_MODELS: 'm' }, fetch }).catch((e) => e);
+		expect(err).toMatchObject({ retryable: true, retryAfter: 30, minAttempts: 5 });
+	});
+});

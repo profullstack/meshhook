@@ -11,11 +11,19 @@ import { processTemplate } from '../../apps/web/src/lib/utils/template-processor
 import { TRIGGER_KINDS, configOf, kindOf } from './graph.js';
 
 export class NodeError extends Error {
-	/** @param {boolean} retryable  worth another attempt (network, 5xx, 429) */
-	constructor(message, { retryable = false, cause } = {}) {
+	/**
+	 * @param {boolean} retryable    worth another attempt (network, 5xx, 429)
+	 * @param {number}  retryAfter   minimum seconds before the next attempt, for
+	 *                               capacity errors a 1 s backoff would only burn
+	 * @param {number}  minAttempts  attempts this error deserves even when the
+	 *                               workflow's retry budget is smaller
+	 */
+	constructor(message, { retryable = false, retryAfter, minAttempts, cause } = {}) {
 		super(message);
 		this.name = 'NodeError';
 		this.retryable = retryable;
+		if (retryAfter) this.retryAfter = retryAfter;
+		if (minAttempts) this.minAttempts = minAttempts;
 		if (cause) this.cause = cause;
 	}
 }
