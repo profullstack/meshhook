@@ -177,6 +177,33 @@ describe.skipIf(!hasTestDb)("engine end to end", () => {
     expect(await statusOf(runId)).toBe("failed");
   });
 
+  it("gives capacity errors their own attempt budget and backoff", async () => {
+    const { NodeError } = await import("../src/engine/runners.js");
+    const runId = await seedRun({
+      nodes: [n("hook", "webhook"), n("ai", "ai", { prompt: "x" })],
+      edges: [e("hook", "ai")],
+      settings: { retryAttempts: 1 },
+    });
+    let calls = 0;
+    const execute = async (node, input) => {
+      if (node.id !== "ai") return { output: input };
+      calls++;
+      throw new NodeError("no node free", { retryable: true, retryAfter: 30, minAttempts: 3 });
+    };
+    await start(runId);
+    await drive(runId, execute);
+    const retry = (await stepQueue.peek(10))[0];
+    expect(retry.message.step_attempt).toBe(2);
+    // ~30 s out, not the 1 s workflow backoff.
+    expect(Date.parse(retry.vt) - Date.now()).toBeGreaterThan(20_000);
+    for (let i = 0; i < 3; i++) {
+      await getClient().pool.query("update queue_messages set vt = '1970-01-01T00:00:00.000Z'");
+      await drive(runId, execute);
+    }
+    expect(calls).toBe(3);
+    expect(await statusOf(runId)).toBe("failed");
+  });
+
   it("fails fast on a non-retryable failure", async () => {
     const runId = await seedRun({ nodes: [n("hook", "webhook"), n("t", "transform", { expression: "[[" })], edges: [e("hook", "t")] });
     await start(runId);

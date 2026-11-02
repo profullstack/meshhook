@@ -174,7 +174,9 @@ export async function handleStep(message, { execute = executeNode } = {}) {
     if (kind === "terminate") await appendEvent(db, runId, "run_terminated", { node: ref });
   } catch (error) {
     if (!(error instanceof NodeError)) throw error; // infrastructure: let the worker retry
-    const { max, delaySeconds } = retryPolicy(graph.settings);
+    const policy = retryPolicy(graph.settings);
+    const max = Math.max(policy.max, error.minAttempts ?? 0);
+    const delaySeconds = (n) => Math.max(policy.delaySeconds(n), (error.retryAfter ?? 0) * 2 ** (n - 1));
     const final = !error.retryable || attempt >= max;
     await appendEvent(db, runId, "step_failed", {
       node: ref,
