@@ -53,8 +53,8 @@ afterAll(async () => {
   await db?.close();
 });
 
-/** A fresh project/workflow/run, plus helpers to drive its event log. */
-async function seedRun() {
+/** A fresh project/workflow/run for a definition, with its webhook payload. */
+async function seedRun(definition, payload = { headers: {}, body: "{}" }) {
   const project = await db.one("insert into projects (owner, name) values (?, ?) returning id", [
     randomUUID(),
     "orch-test",
@@ -62,143 +62,150 @@ async function seedRun() {
   const workflow = await db.one(
     `insert into workflow_definitions (project_id, slug, name, definition)
      values (?, ?, ?, ?) returning id`,
-    [project.id, `wf-${randomUUID()}`, "WF", JSON.stringify({ nodes: [] })],
+    [project.id, `wf-${randomUUID()}`, "WF", JSON.stringify(definition)],
   );
   const run = await db.one(
     `insert into workflow_runs (project_id, workflow_id, status)
      values (?, ?, 'running') returning id`,
     [project.id, workflow.id],
   );
+  await db.none("insert into workflow_events (run_id, type, payload) values (?, 'run_created', ?)", [
+    run.id,
+    JSON.stringify(payload),
+  ]);
   return run.id;
 }
 
-const succeed = (runId, node, next) =>
-  db.none("insert into workflow_events (run_id, type, payload) values (?, 'step_succeeded', ?)", [
-    runId,
-    JSON.stringify({ node, next }),
-  ]);
+const n = (id, type, config = {}) => ({ id, type: "default", data: { type, label: id, config } });
+const e = (source, target, sourceHandle) => ({ id: `${source}-${target}`, source, target, sourceHandle });
 
 const statusOf = async (runId) =>
   (await db.one("select status from workflow_runs where id = ?", [runId])).status;
 
-const eventTypes = async (runId) =>
-  (await db.manyOrNone("select type from workflow_events where run_id = ? order by id", [runId])).map(
-    (e) => e.type,
+const events = async (runId) =>
+  (await db.manyOrNone("select type, payload from workflow_events where run_id = ? order by id", [runId])).map(
+    (r) => ({ type: r.type, ...JSON.parse(r.payload || "{}") }),
   );
 
-describe.skipIf(!hasTestDb)("nextNodesFor", () => {
-  let runId;
+/**
+ * Drive a run to rest the way the two workers would: drain the run queue,
+ * then the step queue, until both are empty. Delayed messages are left alone.
+ */
+async function drive(runId, execute, rounds = 50) {
+  for (let i = 0; i < rounds; i++) {
+    const [job] = await runQueue.read(30, 1);
+    if (job) {
+      await orchestrator.handleRun(job.message);
+      await runQueue.deleteMessage(job.msg_id);
+      continue;
+    }
+    const [step] = await stepQueue.read(30, 1);
+    if (step) {
+      await orchestrator.handleStep(step.message, execute ? { execute } : undefined);
+      await stepQueue.deleteMessage(step.msg_id);
+      continue;
+    }
+    return;
+  }
+  throw new Error("run did not settle");
+}
+
+const start = async (runId) => runQueue.send({ run_id: runId });
+
+describe.skipIf(!hasTestDb)("engine end to end", () => {
   beforeEach(async () => {
-    runId = await seedRun();
-  });
-
-  it("starts a fresh run at the first node", async () => {
-    expect(await orchestrator.nextNodesFor(runId)).toEqual([{ id: "mapLead", type: "transform" }]);
-  });
-
-  it("advances through the pipeline", async () => {
-    await succeed(runId, { id: "mapLead", type: "transform" }, "mapLead");
-    expect(await orchestrator.nextNodesFor(runId)).toEqual([
-      { id: "createContact", type: "http_call" },
-    ]);
-
-    await succeed(runId, { id: "createContact", type: "http_call" }, "createContact");
-    expect(await orchestrator.nextNodesFor(runId)).toEqual([{ id: "terminate", type: "terminate" }]);
-  });
-
-  it("stops after a terminate node rather than restarting", async () => {
-    await succeed(runId, { id: "mapLead", type: "transform" }, "mapLead");
-    await succeed(runId, { id: "createContact", type: "http_call" }, "createContact");
-    // terminate reports next: null, which alone looks identical to "not started".
-    await succeed(runId, { id: "terminate", type: "terminate" }, null);
-
-    expect(await orchestrator.nextNodesFor(runId)).toEqual([]);
-  });
-
-  it("stops once a run_completed event exists", async () => {
-    await db.none("insert into workflow_events (run_id, type, payload) values (?, 'run_completed', '{}')", [
-      runId,
-    ]);
-    expect(await orchestrator.nextNodesFor(runId)).toEqual([]);
-  });
-});
-
-describe.skipIf(!hasTestDb)("handleRun", () => {
-  let runId;
-  beforeEach(async () => {
-    runId = await seedRun();
     await stepQueue.purge();
     await runQueue.purge();
   });
 
-  it("records step_started and enqueues the step", async () => {
-    await orchestrator.handleRun({ run_id: runId });
-
-    expect(await eventTypes(runId)).toEqual(["step_started"]);
-
-    const queued = await stepQueue.peek(10);
-    expect(queued).toHaveLength(1);
-    expect(queued[0].message).toMatchObject({ run_id: runId, node: { id: "mapLead" } });
-  });
-
-  it("completes a terminated run", async () => {
-    await succeed(runId, { id: "terminate", type: "terminate" }, null);
-
-    await orchestrator.handleRun({ run_id: runId });
+  it("walks a webhook -> branch -> transform DAG and takes one side", async () => {
+    const runId = await seedRun(
+      {
+        nodes: [
+          n("hook", "webhook"),
+          n("vip", "conditional", { condition: "body.vip" }),
+          n("yes", "transform", { expression: "{tier: 'gold', name: body.name}" }),
+          n("no", "transform", { expression: "{tier: 'basic'}" }),
+          n("end", "terminate"),
+        ],
+        edges: [e("hook", "vip"), e("vip", "yes", "true"), e("vip", "no", "false"), e("yes", "end"), e("no", "end")],
+      },
+      { headers: {}, body: JSON.stringify({ vip: true, name: "Ada" }) },
+    );
+    await start(runId);
+    await drive(runId);
 
     expect(await statusOf(runId)).toBe("succeeded");
-    expect(await eventTypes(runId)).toContain("run_completed");
+    const log = await events(runId);
+    const done = log.filter((x) => x.type === "step_succeeded").map((x) => x.node.id);
+    expect(done).toEqual(["hook", "vip", "yes", "end"]);
+    expect(log.find((x) => x.node?.id === "yes" && x.type === "step_succeeded").output).toEqual({ tier: "gold", name: "Ada" });
+    expect(log.filter((x) => x.type === "run_completed")).toHaveLength(1);
+    expect(log.every((x) => x.type !== "step_succeeded" || x.executed_on?.backend === "local")).toBe(true);
   });
 
-  it("is idempotent when the job is redelivered", async () => {
-    await succeed(runId, { id: "terminate", type: "terminate" }, null);
-
+  it("dispatches each node once even when the run job is redelivered", async () => {
+    const runId = await seedRun({ nodes: [n("hook", "webhook")], edges: [] });
     await orchestrator.handleRun({ run_id: runId });
     await orchestrator.handleRun({ run_id: runId });
-
-    // A second completion would append another run_completed and rewrite
-    // finished_at.
-    const completed = (await eventTypes(runId)).filter((t) => t === "run_completed");
-    expect(completed).toHaveLength(1);
+    expect((await events(runId)).filter((x) => x.type === "step_started")).toHaveLength(1);
+    expect(await stepQueue.peek(10)).toHaveLength(1);
   });
 
-  it("drops a job whose run no longer exists", async () => {
+  it("retries a retryable failure, then fails the run", async () => {
+    const { NodeError } = await import("../src/engine/runners.js");
+    const runId = await seedRun({
+      nodes: [n("hook", "webhook"), n("call", "httpCall", { url: "https://x.test" })],
+      edges: [e("hook", "call")],
+      settings: { retryAttempts: 2, retryDelay: 250 },
+    });
+    let calls = 0;
+    const execute = async (node, input) => {
+      if (node.id !== "call") return { output: input };
+      calls++;
+      throw new NodeError("HTTP 503", { retryable: true });
+    };
+    await start(runId);
+    await drive(runId, execute);
+    // The retry was enqueued with a delay; make it visible and finish.
+    await getClient().pool.query("update queue_messages set vt = '1970-01-01T00:00:00.000Z'");
+    await drive(runId, execute);
+
+    const fails = (await events(runId)).filter((x) => x.type === "step_failed");
+    expect(fails.map((f) => [f.attempt, f.final])).toEqual([[1, false], [2, true]]);
+    expect(calls).toBe(2);
+    expect(await statusOf(runId)).toBe("failed");
+  });
+
+  it("fails fast on a non-retryable failure", async () => {
+    const runId = await seedRun({ nodes: [n("hook", "webhook"), n("t", "transform", { expression: "[[" })], edges: [e("hook", "t")] });
+    await start(runId);
+    await drive(runId);
+    expect(await statusOf(runId)).toBe("failed");
+    const failed = (await events(runId)).find((x) => x.type === "run_failed");
+    expect(failed.error).toMatch(/node t: transform failed/);
+  });
+
+  it("turns a delay into a durable scheduled redelivery", async () => {
+    const runId = await seedRun({ nodes: [n("hook", "webhook"), n("wait", "delay", { duration: 60_000 })], edges: [e("hook", "wait")] });
+    await start(runId);
+    await drive(runId);
+    const log = await events(runId);
+    expect(log.some((x) => x.type === "delay_started")).toBe(true);
+    expect(log.some((x) => x.type === "step_succeeded" && x.node.id === "wait")).toBe(false);
+    expect(await statusOf(runId)).toBe("running");
+  });
+
+  it("fails a run whose definition does not parse", async () => {
+    const runId = await seedRun({ nodes: [n("a", "transform"), n("b", "transform")], edges: [e("a", "b"), e("b", "a")] });
+    await start(runId);
+    await drive(runId);
+    expect(await statusOf(runId)).toBe("failed");
+  });
+
+  it("drops jobs for missing runs and rejects malformed ones", async () => {
     await expect(orchestrator.handleRun({ run_id: randomUUID() })).resolves.toBeUndefined();
-  });
-
-  it("rejects a job with no run_id", async () => {
     await expect(orchestrator.handleRun({})).rejects.toThrow(/missing run_id/);
-  });
-});
-
-describe.skipIf(!hasTestDb)("handleStep", () => {
-  let runId;
-  beforeEach(async () => {
-    runId = await seedRun();
-    await stepQueue.purge();
-    await runQueue.purge();
-  });
-
-  it("executes a transform and re-enqueues the run", async () => {
-    await orchestrator.handleStep({ run_id: runId, node: { id: "mapLead", type: "transform" } });
-
-    expect(await eventTypes(runId)).toEqual(["step_succeeded"]);
-
-    // Re-enqueueing the run is what closes the loop.
-    const queued = await runQueue.peek(10);
-    expect(queued).toHaveLength(1);
-    expect(queued[0].message.run_id).toBe(runId);
-  });
-
-  it("rejects an unknown node type instead of reporting success", async () => {
-    await expect(
-      orchestrator.handleStep({ run_id: runId, node: { id: "x", type: "nope" } }),
-    ).rejects.toThrow(/Unknown node type/);
-
-    expect(await eventTypes(runId)).toEqual([]);
-  });
-
-  it("rejects a malformed job", async () => {
-    await expect(orchestrator.handleStep({ run_id: runId })).rejects.toThrow(/missing run_id or node/);
+    await expect(orchestrator.handleStep({ run_id: randomUUID() })).rejects.toThrow(/missing run_id or node/);
   });
 });

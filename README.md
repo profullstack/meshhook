@@ -113,6 +113,7 @@
 
 - [`./docs/Environment-Setup.md`](./docs/Environment-Setup.md) - Detailed environment setup guide
 - [`./docs/Turso-Migration.md`](./docs/Turso-Migration.md) - What changed in the move off Supabase (to Turso, since superseded by Postgres: see `migrations-pg/`)
+- [`./docs/c0mpute.md`](./docs/c0mpute.md) - Running steps on the c0mpute network
 - [`./docs/PRD.md`](./docs/PRD.md) - Product requirements
 - [`./docs/Architecture.md`](./docs/Architecture.md) - System architecture
 - [`./docs/diagrams/*.puml`](./docs/diagrams/) - PlantUML diagrams
@@ -121,8 +122,7 @@
 
 MeshHook runs as a single service on port 8080 that handles:
 - Webhook intake and processing
-- Workflow orchestration
-- Background job execution
-- HTTP request execution with retries
+- Workflow orchestration: the saved DAG is walked from the event log (`src/engine/`), with conditional branches, fan-out/merge, loops, durable delays and per-workflow retries
+- Step execution on c0mpute (`workflow.step` jobs bridge, Infernet inference) or locally, per workflow (`docs/c0mpute.md`)
 
 All components communicate through the Postgres database - no inter-service HTTP calls needed.
