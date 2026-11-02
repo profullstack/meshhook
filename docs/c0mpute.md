@@ -25,7 +25,7 @@ webhook ──► workflow_runs + run_created ──► workflow_jobs ──► 
 
 | Node | Where it runs |
 |------|---------------|
-| `ai` | Always c0mpute inference (Infernet `POST /api/chat`, `p2p_only: true`). Open models only; it never falls back to a paid hosted model. |
+| `ai` | Always c0mpute inference (Infernet `POST /api/chat`, `p2p_only: true`). Open models only; it never falls back to a paid hosted model. Default models `qwen2.5:1.5b`, then `0.5b` (several nodes, ~10 s); set a node's `model` for something bigger, which has fewer nodes and can queue for minutes. |
 | `transform` with a JMESPath `expression` | c0mpute `workflow.step` worker when the workflow runs on c0mpute; otherwise this server. |
 | `httpCall` | c0mpute worker when it carries **no credentials**, or when the workflow pins trusted workers (`allowPeers`). Otherwise this server. |
 | template `transform`, `xmlJsonTransform`, `conditional`, `branch`, `loop`, `delay`, `terminate`, triggers | This server (cheap, or they need the run's state). |

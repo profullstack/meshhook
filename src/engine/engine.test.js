@@ -234,12 +234,17 @@ describe('ai node (c0mpute inference)', () => {
 			}
 			return sse([['token', { text: '```json\n{"score": 8}\n```' }], ['done', {}]]);
 		};
-		const r = await runAi({ prompt: 'Rate {{name}}', json: true }, { name: 'Ada' }, {}, { env: {}, fetch });
+		const r = await runAi({ prompt: 'Rate {{name}}', json: true }, { name: 'Ada' }, {}, { env: { MESHHOOK_AI_MODELS: 'qwen2.5:7b,qwen3:4b' }, fetch });
 		expect(posts.every((p) => p.p2p_only === true)).toBe(true);
 		expect(posts[0].messages.at(-1).content).toBe('Rate Ada');
 		expect(posts.map((p) => p.modelName)).toEqual(['qwen2.5:7b', 'qwen3:4b']);
 		expect(r.output).toMatchObject({ json: { score: 8 }, model: 'qwen3:4b', provider: 'bonita', job_id: 'job9' });
 		expect(r.executed_on.backend).toBe('c0mpute-inference');
+	});
+
+	it('defaults to the small models several nodes serve', async () => {
+		const { aiSettings } = await import('./ai.js');
+		expect(aiSettings({})).toMatchObject({ models: ['qwen2.5:1.5b', 'qwen2.5:0.5b'], timeoutMs: 120_000 });
 	});
 
 	it('refuses a job that did not land on a peer', async () => {

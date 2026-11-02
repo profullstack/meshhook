@@ -28,14 +28,18 @@ class NodeError extends BaseNodeError {
 	}
 }
 
-const DEFAULT_MODELS = 'qwen2.5:7b,qwen3:4b,gemma3:4b';
+// Small models that several c0mpute nodes actually serve. Measured
+// 2026-11-02: qwen2.5:1.5b / 0.5b answered 8 of 8 JSON-shaped prompts in
+// 8-16 s; the 7b default lived on one shared CPU node and took 26 minutes
+// (4 failed attempts) to get through. A node can still ask for a bigger model.
+const DEFAULT_MODELS = 'qwen2.5:1.5b,qwen2.5:0.5b';
 
 export function aiSettings(env = process.env) {
 	return {
 		baseUrl: (env.INFERNET_URL ?? env.C0MPUTE_URL ?? 'https://infernetprotocol.com').replace(/\/$/, ''),
 		apiKey: (env.INFERNET_CLIENT_KEY ?? env.C0MPUTE_API_KEY)?.trim() || undefined,
 		models: (env.MESHHOOK_AI_MODELS ?? DEFAULT_MODELS).split(',').map((m) => m.trim()).filter(Boolean),
-		timeoutMs: Number(env.MESHHOOK_AI_TIMEOUT_MS ?? 300_000)
+		timeoutMs: Number(env.MESHHOOK_AI_TIMEOUT_MS ?? 120_000)
 	};
 }
 
