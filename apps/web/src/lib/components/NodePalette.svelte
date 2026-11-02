@@ -34,6 +34,12 @@
 					description: 'Transform data using JMESPath'
 				},
 				{
+					type: 'ai',
+					label: 'AI (c0mpute)',
+					icon: '🧠',
+					description: 'Prompt an open model on the c0mpute network'
+				},
+				{
 					type: 'xmlJsonTransform',
 					label: 'XML ↔ JSON',
 					icon: '🔀',

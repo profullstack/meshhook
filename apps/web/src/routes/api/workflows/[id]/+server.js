@@ -13,6 +13,7 @@
 
 import { json } from '@sveltejs/kit';
 import { db, json as parseJson } from '@meshhook/shared/lib/db.js';
+import { sanitizeSettings } from '$lib/utils/workflow-settings.js';
 import { getWorkflow, ownedProjectIdsSql } from '@meshhook/shared/lib/authz.js';
 
 /** Decode the stored JSON definition for the response. */
@@ -61,7 +62,7 @@ export async function PUT(event) {
 		return json({ error: 'Invalid JSON body' }, { status: 400 });
 	}
 
-	const { name, description, nodes, edges, status } = body;
+	const { name, description, nodes, edges, status, settings } = body;
 
 	try {
 		const current = await getWorkflow(user.id, id);
@@ -70,10 +71,18 @@ export async function PUT(event) {
 			return json({ error: 'Workflow not found' }, { status: 404 });
 		}
 
-		const definition =
-			nodes !== undefined || edges !== undefined
-				? JSON.stringify({ nodes, edges })
-				: current.definition;
+		// settings ride inside the definition (the engine reads definition.settings),
+		// so a save that only touches the canvas keeps them, and vice versa.
+		const currentDef = parseJson(current.definition, {}) ?? {};
+		const definitionTouched = nodes !== undefined || edges !== undefined || settings !== undefined;
+		const nextSettings = sanitizeSettings(settings !== undefined ? settings : currentDef.settings);
+		const definition = definitionTouched
+			? JSON.stringify({
+					nodes: nodes ?? currentDef.nodes ?? [],
+					edges: edges ?? currentDef.edges ?? [],
+					...(nextSettings ? { settings: nextSettings } : {})
+				})
+			: current.definition;
 
 		const isPublishing = status === 'published' && current.status === 'draft';
 
@@ -122,7 +131,7 @@ export async function PUT(event) {
 			updates.push('description = ?');
 			params.push(description);
 		}
-		if (nodes !== undefined || edges !== undefined) {
+		if (definitionTouched) {
 			updates.push('definition = ?');
 			params.push(definition);
 		}

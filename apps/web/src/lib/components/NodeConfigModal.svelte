@@ -51,6 +51,17 @@
 			supportsTemplates: true,
 			inputDescription: 'This node supports template variables using {{variable}} syntax in URL, headers, and body. You can reference nested data like {{user.profile.name}} or array items like {{items[0]}}.'
 		},
+		ai: {
+			fields: [
+				{ name: 'prompt', label: 'Prompt', type: 'textarea', required: true, placeholder: 'Summarize this lead in one line: {{body.message}}', helpText: 'Use {{variable}} for input data, {{$trigger.body}} for the webhook, {{$nodes.<id>}} for earlier steps' },
+				{ name: 'system', label: 'System prompt', type: 'textarea', placeholder: 'You are a concise assistant.' },
+				{ name: 'model', label: 'Model', type: 'text', placeholder: 'qwen2.5:7b', helpText: 'Open model served by c0mpute nodes. Empty = the server default list.' },
+				{ name: 'json', label: 'Expect JSON', type: 'select', options: ['', 'true'], helpText: 'Parse the answer as JSON into output.json' },
+				{ name: 'maxTokens', label: 'Max tokens', type: 'number', placeholder: '1024' }
+			],
+			supportsTemplates: true,
+			inputDescription: 'Runs on c0mpute inference (peer nodes only, never a paid hosted model). Output: { text, json?, model, provider, job_id }.'
+		},
 		transform: {
 			fields: [
 				{ name: 'template', label: 'Template', type: 'template-picker', required: true },

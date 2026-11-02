@@ -32,6 +32,6 @@ export async function enqueueRun(runId, delaySeconds = 0) {
 }
 
 /** Ask an executor to run a single node. */
-export async function enqueueStep(runId, node, delaySeconds = 0) {
-  return stepQueue.send({ run_id: runId, node }, delaySeconds);
+export async function enqueueStep(runId, node, delaySeconds = 0, stepAttempt = 1) {
+  return stepQueue.send({ run_id: runId, node, step_attempt: stepAttempt }, delaySeconds);
 }

@@ -22,9 +22,24 @@ switch (cmd) {
     run("bun", ["workers/orchestrator.mjs"]);
     break;
   case "start:http":
-    console.log(blue("MeshHook — starting HTTP Executor…"));
-    run("bun", ["workers/http-exec.mjs"]);
+    // Steps run inside the orchestrator now (locally or on c0mpute).
+    console.log(blue("MeshHook — the HTTP executor is part of the orchestrator; starting it…"));
+    run("bun", ["workers/orchestrator.mjs"]);
     break;
+  case "c0mpute": {
+    const { C0mputeClient, executionMode } = await import("../../../src/engine/c0mpute.js");
+    const { aiSettings } = await import("../../../src/engine/ai.js");
+    const client = new C0mputeClient();
+    const health = await client.health();
+    const ai = aiSettings();
+    const report = {
+      executor: executionMode({}),
+      bridge: { url: client.url, token: client.token ? "set" : "missing", health: health ?? "unreachable" },
+      inference: { url: ai.baseUrl, client_key: ai.apiKey ? "set" : "public budget", models: ai.models },
+    };
+    console.log(args.json ? JSON.stringify(report) : JSON.stringify(report, null, 2));
+    process.exit(health || report.executor === "local" ? 0 : 1);
+  }
   case "migrate":
     console.log(green("Applying schema.sql to $DATABASE_URL…"));
     run("psql", ["$DATABASE_URL", "-f", "schema.sql"], { env: process.env });
@@ -36,7 +51,8 @@ ${green("MeshHook CLI (mh)")}
 Usage:
   mh dev:web        Start SvelteKit (UI/API)
   mh start:orch     Start Orchestrator worker
-  mh start:http     Start HTTP Executor worker
+  mh start:http     Alias of start:orch (steps run in the orchestrator)
+  mh c0mpute        Show the step executor, c0mpute bridge and inference status [--json]
   mh migrate        Apply schema.sql to DATABASE_URL
 
 Examples:

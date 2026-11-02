@@ -114,8 +114,14 @@ export function validateNodeConfig(node) {
 			break;
 
 		case 'transform':
-			if (!config.expression) {
-				errors.push(`Node ${node.id}: JMESPath expression is required for Transform`);
+			if (!config.expression && !config.template) {
+				errors.push(`Node ${node.id}: a template or JMESPath expression is required for Transform`);
+			}
+			break;
+
+		case 'ai':
+			if (!config.prompt) {
+				errors.push(`Node ${node.id}: a prompt is required for AI`);
 			}
 			break;
 

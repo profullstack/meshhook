@@ -7,6 +7,7 @@
 	import { organizeCanvas } from '$lib/utils/layout-organizer.js';
 	import { getChildNodes, getContainerExecutionOrder } from '$lib/utils/container-utils.js';
 	import { goto } from '$app/navigation';
+	import { runsOnFrom, withRunsOn } from '$lib/utils/workflow-settings.js';
 	import { trackWorkflowSaved, trackWorkflowExecuted, trackFeatureUsed, trackError } from '$lib/utils/analytics.js';
 
 	let { data } = $props();
@@ -17,6 +18,10 @@
 	let workflowName = $state(data.workflow?.name || 'Untitled Workflow');
 	let workflowDescription = $state(data.workflow?.description || '');
 	let workflowStatus = $state(data.workflow?.status || 'draft');
+	// Where steps execute: auto (server default), this server only, the c0mpute
+	// network, or private (never leaves this server, whatever the default).
+	let workflowSettings = $state(data.workflow?.definition?.settings || {});
+	let runsOn = $state(runsOnFrom(data.workflow?.definition?.settings));
 
 	let saving = $state(false);
 	let validationErrors = $state([]);
@@ -604,6 +609,7 @@
 					description: workflowDescription,
 					nodes,
 					edges,
+					settings: withRunsOn(workflowSettings, runsOn),
 					status: publish ? 'published' : 'draft'
 				})
 			});
@@ -690,6 +696,15 @@
 				</div>
 			</div>
 			<div class="header-actions">
+				<label class="runs-on" title="Where this workflow's steps execute. c0mpute runs JMESPath transforms and credential-free HTTP calls on peer nodes and falls back to this server; AI steps always use c0mpute inference.">
+					<span>Runs on</span>
+					<select bind:value={runsOn} aria-label="Where steps run">
+						<option value="auto">Auto</option>
+						<option value="c0mpute">c0mpute network</option>
+						<option value="local">This server</option>
+						<option value="private">Private (never leaves)</option>
+					</select>
+				</label>
 				<button
 					class="btn-organize"
 					onclick={handleOrganizeCanvas}
@@ -831,7 +846,26 @@
 
 	.header-actions {
 		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
 		gap: 0.75rem;
+	}
+
+	.runs-on {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.875rem;
+		color: var(--color-text-secondary);
+	}
+
+	.runs-on select {
+		padding: 0.4rem 0.5rem;
+		border: 1px solid var(--color-border);
+		border-radius: 6px;
+		background: var(--color-bg-primary);
+		color: var(--color-text-primary);
+		font: inherit;
 	}
 
 	button {
