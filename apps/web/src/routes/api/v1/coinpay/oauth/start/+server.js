@@ -34,5 +34,10 @@ export function GET({ url, cookies, locals }) {
 		sameSite: 'lax',
 		maxAge: 600
 	});
-	throw redirect(303, authorizeUrl(cfg, { ...req, scope: intent === 'connect' ? CONNECT_SCOPE : LOGIN_SCOPE }));
+	// Kit 3's redirect() refuses other origins; a plain 303 still carries the
+	// cookie set above (endpoint responses get event.cookies merged in).
+	return new Response(null, {
+		status: 303,
+		headers: { location: authorizeUrl(cfg, { ...req, scope: intent === 'connect' ? CONNECT_SCOPE : LOGIN_SCOPE }) }
+	});
 }
