@@ -86,7 +86,19 @@
 			let lastOutput = {};
 			
 			for (const node of executionPath) {
-				if (node.data?.type === 'httpCall') {
+				if (node.data?.type === 'plugin') {
+					const response = await fetch('/api/test-node', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ node, input: lastOutput, project_id: null })
+					});
+					const result = await response.json();
+					if (!result.success) {
+						return { success: false, error: `Failed to execute ${node.data?.label || node.id}: ${result.error || 'Unknown error'}` };
+					}
+					lastOutput = result.output;
+					nodes = nodes.map(n => (n.id === node.id ? { ...n, data: { ...n.data, testResult: lastOutput } } : n));
+				} else if (node.data?.type === 'httpCall') {
 					// Execute HTTP call
 					const response = await fetch('/api/test-http', {
 						method: 'POST',

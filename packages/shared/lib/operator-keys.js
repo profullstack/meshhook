@@ -18,6 +18,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { base64ToBytes, parseTtl, UnlockStore, wipe } from "@profullstack/sealed-secrets";
 import { OPERATOR, getVault, legacyKeyMigrationEnabled, operatorSealer } from "./vault.js";
+import { unlockUser, userSessions } from "./user-keys.js";
+
+/** A user's run unlock: 8h unless they pick otherwise (UnlockStore clamps to 7d). */
+export const USER_TTL_SECONDS = 8 * 3600;
 
 export const OPERATOR_TTL_SECONDS = 7 * 24 * 3600;
 export const CONTROL_TOKEN_FILE = process.env.OPERATOR_CONTROL_TOKEN_FILE ?? join(tmpdir(), "meshhook-operator-control.token");
@@ -88,7 +92,11 @@ export function readControlToken(file = CONTROL_TOKEN_FILE) {
 }
 
 /** The orchestrator's loopback control server. Bodies are never logged. */
-export function startOperatorControl({ db, token = process.env.OPERATOR_CONTROL_TOKEN, port = CONTROL_PORT, log = console.log } = {}) {
+/**
+ * `routes` adds POST handlers ({ "/path": async (body) => Response }) the
+ * orchestrator owns, e.g. running one node for the builder's test button.
+ */
+export function startOperatorControl({ db, token = process.env.OPERATOR_CONTROL_TOKEN, port = CONTROL_PORT, log = console.log, routes = {} } = {}) {
   if (!token) {
     log("[operator] no OPERATOR_CONTROL_TOKEN: operator unlock channel disabled");
     return null;
@@ -100,8 +108,38 @@ export function startOperatorControl({ db, token = process.env.OPERATOR_CONTROL_
       if (!tokenOk(req.headers.get("x-operator-control-token"), token)) return Response.json({ error: "forbidden" }, { status: 403 });
       const url = new URL(req.url);
       if (req.method === "GET" && url.pathname === "/status") return Response.json(operatorSessions.status(OPERATOR));
+      // Users' run unlocks. The web app forwards these for the signed-in user only.
+      if (req.method === "GET" && url.pathname === "/user-status") {
+        const userId = url.searchParams.get("user_id");
+        if (!userId || userId === OPERATOR) return Response.json({ error: "user_id required" }, { status: 400 });
+        return Response.json(userSessions.status(userId));
+      }
       if (req.method !== "POST") return Response.json({ error: "not found" }, { status: 404 });
       const body = await req.json().catch(() => ({}));
+      if (Object.hasOwn(routes, url.pathname)) return routes[url.pathname](body);
+      if (url.pathname === "/user-lock" || url.pathname === "/user-unlock") {
+        const userId = String(body.user_id ?? "");
+        if (!userId || userId === OPERATOR) return Response.json({ error: "user_id required" }, { status: 400 });
+        if (url.pathname === "/user-lock") {
+          userSessions.lock(userId);
+          return Response.json({ unlocked: false, expiresAt: null });
+        }
+        let key;
+        try {
+          key = base64ToBytes(String(body.data_key ?? ""));
+        } catch {
+          return Response.json({ error: "data_key is not base64" }, { status: 400 });
+        }
+        try {
+          const ttl = typeof body.ttl === "number" ? body.ttl : typeof body.ttl === "string" && body.ttl ? parseTtl(body.ttl) : USER_TTL_SECONDS;
+          const status = await unlockUser(db, userId, key, ttl);
+          if (!status) return Response.json({ error: "that key does not open your vault" }, { status: 403 });
+          log("[vault] a user unlocked secrets for runs");
+          return Response.json(status);
+        } finally {
+          wipe(key);
+        }
+      }
       if (url.pathname === "/lock") {
         operatorSessions.lock(OPERATOR);
         alertOnce(log);

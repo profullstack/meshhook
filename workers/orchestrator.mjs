@@ -21,8 +21,10 @@ import { Worker } from "../src/queue/index.js";
 import { startOperatorControl } from "@meshhook/shared/lib/operator-keys.js";
 import { buildGraph, configOf, kindOf } from "../src/engine/graph.js";
 import { decide, inputFor, nodeOutputs, replay } from "../src/engine/scheduler.js";
-import { NodeError, triggerOutput } from "../src/engine/runners.js";
+import { NodeError, runLocal, triggerOutput } from "../src/engine/runners.js";
 import { executeNode } from "../src/engine/c0mpute.js";
+import { compilePluginCall } from "@meshhook/shared/lib/plugins/compile.js";
+import { SecretMissingError, VaultLockedError, openSecrets, referencedSecrets } from "@meshhook/shared/lib/user-keys.js";
 
 const now = () => new Date().toISOString();
 const NOW_SQL = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
@@ -37,7 +39,7 @@ const appendEvent = (q, runId, type, payload) =>
 /** The run, its definition and its event log, in one place. */
 async function loadRun(q, runId, { lock = false } = {}) {
   const run = await q.oneOrNone(
-    `select r.id, r.status, r.workflow_id, d.definition
+    `select r.id, r.status, r.workflow_id, r.project_id, d.definition
        from workflow_runs r
        join workflow_definitions d on d.id = r.workflow_id
       where r.id = ?${lock ? " for update of r" : ""}`,
@@ -160,12 +162,15 @@ export async function handleStep(message, { execute = executeNode } = {}) {
   const ins = graph.incoming.get(ref.id) ?? [];
   const input = ins.length === 0 ? trigger : inputFor(graph, state, node);
   const ctx = { trigger, nodes: nodeOutputs(graph, state), loopBody: graph.loopBody };
+  let secretValues = [];
 
   try {
+    ctx.secrets = await stepSecrets(loaded.run.project_id, node, graph);
+    secretValues = Object.values(ctx.secrets).map(String).filter((v) => v.length >= 4);
     const result = await execute(node, input, ctx, { settings: graph.settings });
     await appendEvent(db, runId, "step_succeeded", {
       node: ref,
-      output: result.output ?? null,
+      output: scrub(result.output ?? null, secretValues),
       ...(result.branch !== undefined ? { branch: result.branch } : {}),
       executed_on: result.executed_on ?? { backend: "local" },
       attempt,
@@ -182,7 +187,7 @@ export async function handleStep(message, { execute = executeNode } = {}) {
       node: ref,
       attempt,
       final,
-      error: error.message,
+      error: scrub(error.message, secretValues),
       ...(error.status ? { status: error.status } : {}),
       ...(error.executed_on ? { executed_on: error.executed_on } : {}),
     });
@@ -193,6 +198,70 @@ export async function handleStep(message, { execute = executeNode } = {}) {
   }
 
   await enqueueRun(runId);
+}
+
+/** Secret names a node (and, for a loop, its body) refers to. */
+export function secretNames(node, graph) {
+  const nodes = kindOf(node) === "loop" && graph.loopBody ? [node, ...graph.loopBody(node.id)] : [node];
+  const names = new Set();
+  for (const n of nodes) {
+    const config = configOf(n);
+    for (const name of referencedSecrets(config)) names.add(name);
+    if (kindOf(n) === "plugin") {
+      try {
+        for (const name of compilePluginCall(config).secretsUsed) names.add(name);
+      } catch {
+        /* an incomplete plugin node fails with its own message when it runs */
+      }
+    }
+  }
+  return [...names];
+}
+
+/** Open what this step needs, or a NodeError the run log can explain. */
+async function stepSecrets(projectId, node, graph) {
+  const names = secretNames(node, graph);
+  if (!names.length) return {};
+  try {
+    return await openSecrets(db, projectId, names);
+  } catch (error) {
+    // Locked: keep retrying for ~half an hour so an unlock rescues the run.
+    if (error instanceof VaultLockedError) throw new NodeError(error.message, { retryable: true, retryAfter: 60, minAttempts: 6 });
+    if (error instanceof SecretMissingError) throw new NodeError(error.message);
+    throw error;
+  }
+}
+
+/**
+ * The builder's "test this node": run one node through the real engine, with
+ * the caller's secrets when their vault is unlocked for runs. The web app
+ * forwards only for the signed-in user and a project they own.
+ */
+export async function testNode(body, { q = db } = {}) {
+  const { user_id: userId, project_id: projectId, node, input = {}, nodes = {} } = body ?? {};
+  if (!userId || !projectId || !node) return Response.json({ success: false, error: "user_id, project_id and node required" }, { status: 400 });
+  const project = await q.oneOrNone("select owner from projects where id = ?", [projectId]);
+  if (!project || project.owner !== userId) return Response.json({ success: false, error: "project not found" }, { status: 404 });
+  let secretValues = [];
+  try {
+    const names = secretNames(node, { loopBody: () => [] });
+    const secrets = names.length ? await openSecrets(q, projectId, names) : {};
+    secretValues = Object.values(secrets).map(String).filter((v) => v.length >= 4);
+    const result = await runLocal(node, input, { trigger: input, nodes, secrets });
+    return Response.json({ success: true, output: scrub(result.output ?? null, secretValues) });
+  } catch (error) {
+    return Response.json({ success: false, error: scrub(String(error?.message ?? error), secretValues) });
+  }
+}
+
+/** Replace any opened secret value in what goes to the event log. */
+export function scrub(value, secrets) {
+  if (!secrets.length || value == null) return value;
+  const text = typeof value === "string" ? value : JSON.stringify(value);
+  if (!secrets.some((s) => text.includes(s))) return value;
+  let out = text;
+  for (const s of secrets) out = out.split(s).join("***");
+  return typeof value === "string" ? out : JSON.parse(out);
 }
 
 /** Fail fast and legibly rather than crash-looping on the first query. */
@@ -238,7 +307,7 @@ export async function startOrchestrator() {
 
   // Operator unlock channel (loopback only): the x402 payer key opens only
   // after `scripts/operator-vault.mjs unlock`; a restart re-locks it.
-  const control = startOperatorControl({ db });
+  const control = startOperatorControl({ db, routes: { "/user-test-node": testNode } });
 
   console.log("🧠 MeshHook Orchestrator running");
   console.log(`   queues: ${RUN_QUEUE}, ${STEP_QUEUE}`);

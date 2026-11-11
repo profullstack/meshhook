@@ -288,3 +288,34 @@ describe('ai capacity backoff', () => {
 		expect(err).toMatchObject({ retryable: true, retryAfter: 30, minAttempts: 5 });
 	});
 });
+
+describe('plugin steps', () => {
+	it('compile to an authenticated request, open the key from $secrets, return the body', async () => {
+		const seen = [];
+		const fetch = async (url, init) => {
+			seen.push({ url, init });
+			return jsonResponse(200, { ip: '203.0.113.9' });
+		};
+		const node = n('ip', 'plugin', { plugin: 'myip', action: 'getIp', params: { format: 'json' } });
+		const r = await runLocal(node, {}, { fetch, secrets: {} });
+		expect(seen[0].url).toBe('https://my.ip.pit.world/?format=json');
+		expect(r.output).toEqual({ ip: '203.0.113.9', $status: 200 });
+	});
+
+	it('fail with the reason when the node is incomplete', async () => {
+		await expect(runLocal(n('x', 'plugin', { plugin: 'nope' }), {}, {})).rejects.toThrow(/unknown plugin/);
+	});
+
+	it('$secrets resolve in httpCall templates and such steps never go to the network', async () => {
+		const seen = [];
+		const fetch = async (url, init) => {
+			seen.push(init.headers);
+			return jsonResponse(200, {});
+		};
+		const node = n('h', 'httpCall', { method: 'GET', url: 'https://api.example.test/', headers: { Authorization: 'Bearer {{$secrets.K}}' } });
+		await runLocal(node, {}, { fetch, secrets: { K: 'fixture-value' } });
+		expect(seen[0].Authorization).toBe('Bearer fixture-value');
+		expect(planRemote(node, {}, { secrets: { K: 'fixture-value' } }, {}).local).toMatch(/credentials/);
+		expect(planRemote(n('p', 'plugin', { plugin: 'myip', action: 'getIp' }), {}, {}, {}).local).toMatch(/locally/);
+	});
+});

@@ -1,6 +1,12 @@
 <script>
+	import { pluginCatalog } from '@meshhook/shared/lib/plugins/compile.js';
+
+	// Every Profullstack service, one draggable node each (see packages/shared/lib/plugins).
+	const plugins = pluginCatalog();
+	let search = $state('');
+
 	// Node type definitions
-	const nodeCategories = [
+	const coreCategories = [
 		{
 			name: 'Triggers',
 			nodes: [
@@ -89,7 +95,27 @@
 		}
 	];
 
-	let expandedCategories = $state(new Set(['Triggers', 'Actions']));
+	const appCategory = {
+		name: 'Profullstack apps',
+		nodes: plugins.map((p) => ({
+			type: 'plugin',
+			label: p.name,
+			icon: p.icon,
+			description: p.description,
+			config: { plugin: p.id, action: p.actions[0]?.id ?? '', params: {}, credential: p.credential }
+		}))
+	};
+
+	const nodeCategories = $derived.by(() => {
+		const all = [...coreCategories.slice(0, 2), appCategory, ...coreCategories.slice(2)];
+		const q = search.trim().toLowerCase();
+		if (!q) return all;
+		return all
+			.map((c) => ({ ...c, nodes: c.nodes.filter((n) => `${n.label} ${n.description}`.toLowerCase().includes(q)) }))
+			.filter((c) => c.nodes.length);
+	});
+
+	let expandedCategories = $state(new Set(['Triggers', 'Actions', 'Profullstack apps']));
 
 	function toggleCategory(categoryName) {
 		if (expandedCategories.has(categoryName)) {
@@ -100,19 +126,12 @@
 		expandedCategories = new Set(expandedCategories);
 	}
 
-	function onDragStart(event, nodeType, label) {
-		console.log('=== NodePalette Drag Start ===');
-		console.log('Node type:', nodeType);
-		console.log('Label:', label);
-		
+	function onDragStart(event, node) {
 		event.dataTransfer.effectAllowed = 'move';
 		event.dataTransfer.setData(
 			'application/reactflow',
-			JSON.stringify({ type: nodeType, label })
+			JSON.stringify({ type: node.type, label: node.label, ...(node.config ? { config: node.config } : {}) })
 		);
-		
-		console.log('Drag data set');
-		console.log('==============================');
 	}
 </script>
 
@@ -121,6 +140,8 @@
 		<h3>Node Palette</h3>
 		<p class="hint">Drag nodes to canvas</p>
 	</div>
+
+	<input class="palette-search" type="search" placeholder="Search nodes and apps" bind:value={search} aria-label="Search nodes" />
 
 	<div class="palette-content">
 		{#each nodeCategories as category}
@@ -131,19 +152,19 @@
 					onclick={() => toggleCategory(category.name)}
 				>
 					<span class="category-icon">
-						{expandedCategories.has(category.name) ? '▼' : '▶'}
+						{expandedCategories.has(category.name) || search ? '▼' : '▶'}
 					</span>
 					<span class="category-name">{category.name}</span>
 					<span class="category-count">{category.nodes.length}</span>
 				</button>
 
-				{#if expandedCategories.has(category.name)}
+				{#if expandedCategories.has(category.name) || search}
 					<div class="category-nodes">
 						{#each category.nodes as node}
 							<div
 								class="node-item"
 								draggable="true"
-								ondragstart={(e) => onDragStart(e, node.type, node.label)}
+								ondragstart={(e) => onDragStart(e, node)}
 								role="button"
 								tabindex="0"
 							>
@@ -162,6 +183,16 @@
 </div>
 
 <style>
+	.palette-search {
+		margin: 0 0.75rem 0.5rem;
+		padding: 0.4rem 0.6rem;
+		border: 1px solid var(--border-color, #ccc);
+		border-radius: 6px;
+		background: var(--bg-secondary, #fff);
+		color: inherit;
+		width: calc(100% - 1.5rem);
+		box-sizing: border-box;
+	}
 	.node-palette {
 		width: 280px;
 		height: 100%;
