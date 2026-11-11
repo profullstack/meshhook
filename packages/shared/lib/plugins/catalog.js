@@ -34,7 +34,7 @@ export const PLUGINS = [
 						"name": "business_id",
 						"in": "body",
 						"type": "string",
-						"description": "Taken from the API key if omitted"
+						"description": "Your CoinPay business id. Required with Connect CoinPay; an API key implies it"
 					},
 					{
 						"name": "amount_usd",
@@ -130,7 +130,7 @@ export const PLUGINS = [
 						"name": "business_id",
 						"in": "body",
 						"type": "string",
-						"description": "Taken from the key if omitted"
+						"description": "Your CoinPay business id. Required with Connect CoinPay; an API key implies it"
 					}
 				],
 				"source": "/home/anthony/www/coinpayportal.com/app/src/app/api/checkout/sessions/route.ts (validateCreateSessionInput in src/lib/checkout/sessions.ts)"
@@ -140,7 +140,7 @@ export const PLUGINS = [
 				"label": "Create invoice",
 				"method": "POST",
 				"path": "/invoices",
-				"description": "Create an invoice, optionally itemised or recurring. Supports an Idempotency-Key header",
+				"description": "Create an invoice, optionally itemised or recurring. Supports an Idempotency-Key header. Needs business_id and an amount (or line_items)",
 				"params": [
 					{
 						"name": "amount",
