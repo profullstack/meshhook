@@ -12,6 +12,7 @@
 
 import { validateSession, SESSION_COOKIE, sessionCookieOptions } from '@meshhook/shared/lib/auth.js';
 import { dev } from '$app/env';
+import { formCsrf } from '@meshhook/shared/lib/form-csrf.js';
 import { pitFooter } from '$lib/server/pit-footer.js';
 import { crawlGate } from '$lib/server/crawl-gate.js';
 
@@ -22,6 +23,9 @@ import { crawlGate } from '$lib/server/crawl-gate.js';
  * @returns {Promise<Response>}
  */
 export async function handle({ event, resolve }) {
+	const forbidden = formCsrf(event.request, event.url);
+	if (forbidden) return forbidden;
+
 	const host = event.request.headers.get('host');
 
 	if (host?.startsWith('www.')) {

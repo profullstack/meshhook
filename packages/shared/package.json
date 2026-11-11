@@ -13,7 +13,8 @@
     "./lib/operator-keys.js": "./lib/operator-keys.js",
     "./lib/user-keys.js": "./lib/user-keys.js",
     "./lib/plugins/compile.js": "./lib/plugins/compile.js",
-    "./lib/plugins/catalog.js": "./lib/plugins/catalog.js"
+    "./lib/plugins/catalog.js": "./lib/plugins/catalog.js",
+    "./lib/form-csrf.js": "./lib/form-csrf.js"
   },
   "dependencies": {
     "@profullstack/libsql-pg": "^0.1.4",
