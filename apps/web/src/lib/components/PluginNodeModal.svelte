@@ -115,6 +115,9 @@
 						? ` (${plugin.auth.hint})`
 						: ''}. Runs need the key vault unlocked for runs.
 				</small>
+				{#if plugin.connect}
+					<a class="connect" href={plugin.connect} target="_blank" rel="noopener">Connect {plugin.name} →</a>
+				{/if}
 			{/if}
 
 			{#if previousNodeOutput && Object.keys(previousNodeOutput).length}
@@ -220,6 +223,10 @@
 		font-size: 0.85rem;
 		opacity: 0.8;
 		margin: 0;
+	}
+	.connect {
+		font-weight: 600;
+		font-size: 0.9rem;
 	}
 	.error {
 		color: #d33;

@@ -24,7 +24,7 @@ import { decide, inputFor, nodeOutputs, replay } from "../src/engine/scheduler.j
 import { NodeError, runLocal, triggerOutput } from "../src/engine/runners.js";
 import { executeNode } from "../src/engine/c0mpute.js";
 import { compilePluginCall } from "@meshhook/shared/lib/plugins/compile.js";
-import { SecretMissingError, VaultLockedError, openSecrets, referencedSecrets } from "@meshhook/shared/lib/user-keys.js";
+import { ReconnectError, SecretMissingError, VaultLockedError, openSecrets, referencedSecrets } from "@meshhook/shared/lib/user-keys.js";
 
 const now = () => new Date().toISOString();
 const NOW_SQL = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')";
@@ -227,7 +227,7 @@ async function stepSecrets(projectId, node, graph) {
   } catch (error) {
     // Locked: keep retrying for ~half an hour so an unlock rescues the run.
     if (error instanceof VaultLockedError) throw new NodeError(error.message, { retryable: true, retryAfter: 60, minAttempts: 6 });
-    if (error instanceof SecretMissingError) throw new NodeError(error.message);
+    if (error instanceof SecretMissingError || error instanceof ReconnectError) throw new NodeError(error.message);
     throw error;
   }
 }

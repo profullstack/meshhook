@@ -3,6 +3,7 @@
 	import MaskedInput from '$lib/components/MaskedInput.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import KeyVaultPanel from '$lib/components/KeyVaultPanel.svelte';
+	import CoinPayConnectPanel from '$lib/components/CoinPayConnectPanel.svelte';
 
 	let { data } = $props();
 
@@ -116,6 +117,7 @@
 	</header>
 
 	<KeyVaultPanel userId={data.user?.id} />
+	<CoinPayConnectPanel />
 
 	<div class="secrets-content">
 		<div class="controls">
