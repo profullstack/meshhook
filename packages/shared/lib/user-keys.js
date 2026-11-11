@@ -11,7 +11,8 @@
  */
 
 import { UnlockStore } from "@profullstack/sealed-secrets";
-import { SEALED_PREFIX, getVault, openUserSecret, userSealer } from "./vault.js";
+import { SEALED_PREFIX, getVault, openUserSecret, sealUserSecret, userSealer } from "./vault.js";
+import { CoinpayOAuthError, needsRefresh, oauthConfig, parseTokenRecord, refreshTokens, tokenRecord } from "./coinpay-oauth.js";
 
 export let userSessions = new UnlockStore();
 export function _resetUserSessions(store = new UnlockStore({ useTimers: false })) {
@@ -25,6 +26,13 @@ export class VaultLockedError extends Error {
         "Open Secrets > Key vault and choose \"Unlock for runs\"; the step retries on its own.",
     );
     this.name = "VaultLockedError";
+  }
+}
+
+export class ReconnectError extends Error {
+  constructor(name, why) {
+    super(`${name}: CoinPay refused the saved connection (${why}). Reconnect CoinPay on the Secrets page.`);
+    this.name = "ReconnectError";
   }
 }
 
@@ -77,7 +85,44 @@ export async function openSecrets(db, projectId, names) {
     const text = typeof stored === "string" ? stored : Buffer.from(stored).toString("utf8");
     if (!text.startsWith(SEALED_PREFIX)) throw new SecretMissingError([`${name} (stored before the key vault; re-save it on the Secrets page)`]);
     const patch = await openUserSecret(dek, vault.seal, project.owner, text);
-    out[name] = patch[name] ?? Object.values(patch)[0];
+    const value = patch[name] ?? Object.values(patch)[0];
+    const rec = parseTokenRecord(value);
+    out[name] = rec ? await freshAccessToken(db, projectId, project.owner, name, rec) : value;
   }
   return out;
+}
+
+// One refresh per secret at a time: CoinPay rotates refresh tokens and revokes
+// the whole family when a used one is presented again.
+const refreshing = new Map();
+
+/**
+ * A connected-account secret ({type:"oauth"} record) resolves to a live access
+ * token, refreshed and re-sealed when it is about to expire. Sealing needs only
+ * the vault's public key, so the new record is stored the same way a user would.
+ */
+export async function freshAccessToken(db, projectId, owner, name, rec, { fetchImpl, now = Date.now() } = {}) {
+  if (!needsRefresh(rec, now)) return rec.access_token;
+  const key = `${projectId}:${name}`;
+  if (!refreshing.has(key)) {
+    refreshing.set(
+      key,
+      (async () => {
+        const cfg = oauthConfig();
+        if (!cfg || !rec.refresh_token) throw new ReconnectError(name, cfg ? "no refresh token" : "CoinPay sign-in is not configured on this server");
+        let tokens;
+        try {
+          tokens = await refreshTokens(cfg, rec.refresh_token, fetchImpl);
+        } catch (e) {
+          if (e instanceof CoinpayOAuthError && e.status && e.status < 500) throw new ReconnectError(name, e.code ?? `HTTP ${e.status}`);
+          throw e;
+        }
+        const next = tokenRecord({ ...tokens, refresh_token: tokens.refresh_token ?? rec.refresh_token, scope: tokens.scope ?? rec.scope });
+        const sealed = await sealUserSecret(db, owner, name, JSON.stringify(next));
+        await db.none("update secrets set value_encrypted = ? where project_id = ? and key = ?", [sealed, projectId, name]);
+        return next.access_token;
+      })().finally(() => refreshing.delete(key)),
+    );
+  }
+  return refreshing.get(key);
 }

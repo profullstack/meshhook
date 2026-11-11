@@ -58,6 +58,16 @@
 		{#if form?.error}
 			<div class="error-message">{form.error}</div>
 		{/if}
+		{#if page.url.searchParams.get('coinpay') === 'failed'}
+			<div class="error-message">CoinPay sign-in did not complete. Try again.</div>
+		{:else if page.url.searchParams.get('coinpay') === 'unavailable'}
+			<div class="error-message">CoinPay sign-in is not available right now.</div>
+		{/if}
+
+		<a class="coinpay-btn" href={`/api/v1/coinpay/oauth/start?intent=login&next=${encodeURIComponent(next)}`}>
+			🪙 Sign in with CoinPay
+		</a>
+		<div class="divider"><span>or with email</span></div>
 
 		<form method="POST" action="?/login" use:enhance={submitHandler('login')}>
 			<input type="hidden" name="next" value={next} />
@@ -132,6 +142,35 @@
 </div>
 
 <style>
+	.coinpay-btn {
+		display: block;
+		text-align: center;
+		padding: 0.75rem 1rem;
+		border-radius: 8px;
+		border: 1px solid var(--border-color, #ccc);
+		background: var(--bg-secondary, #f7f7f7);
+		color: inherit;
+		font-weight: 600;
+		text-decoration: none;
+		margin-bottom: 1rem;
+	}
+	.coinpay-btn:hover {
+		border-color: var(--primary-color, #6366f1);
+	}
+	.divider {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin: 0 0 1rem;
+		font-size: 0.85rem;
+		opacity: 0.7;
+	}
+	.divider::before,
+	.divider::after {
+		content: '';
+		flex: 1;
+		border-top: 1px solid var(--border-color, #ddd);
+	}
 	.auth-container {
 		display: flex;
 		justify-content: center;

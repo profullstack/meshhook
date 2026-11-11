@@ -19,8 +19,8 @@ export const PLUGINS = [
 		"baseUrl": "https://coinpayportal.com/api",
 		"auth": {
 			"type": "bearer",
-			"secret": "COINPAY_API_KEY",
-			"hint": "Business API key (cp_live_... or cp_test_...) from the CoinPay dashboard, Business > API keys. OAuth tokens with the merchant scope also work."
+			"secret": "COINPAY_CONNECT",
+			"hint": "Connect CoinPay on the Secrets page (stored as COINPAY_CONNECT), or save a cp_live_ business API key as a secret and name it here"
 		},
 		"actions": [
 			{
@@ -93,52 +93,6 @@ export const PLUGINS = [
 					}
 				],
 				"source": "/home/anthony/www/coinpayportal.com/app/src/app/api/payments/[id]/route.ts"
-			},
-			{
-				"id": "listPayments",
-				"label": "List payments",
-				"method": "GET",
-				"path": "/payments",
-				"description": "List payments, with filters",
-				"params": [
-					{
-						"name": "business_id",
-						"in": "query",
-						"type": "string",
-						"description": "Business"
-					},
-					{
-						"name": "status",
-						"in": "query",
-						"type": "string",
-						"description": "Payment status"
-					},
-					{
-						"name": "currency",
-						"in": "query",
-						"type": "string",
-						"description": "Coin"
-					},
-					{
-						"name": "date_from",
-						"in": "query",
-						"type": "string",
-						"description": "ISO date"
-					},
-					{
-						"name": "date_to",
-						"in": "query",
-						"type": "string",
-						"description": "ISO date"
-					},
-					{
-						"name": "limit",
-						"in": "query",
-						"type": "number",
-						"description": "Page size"
-					}
-				],
-				"source": "/home/anthony/www/coinpayportal.com/app/src/app/api/payments/route.ts"
 			},
 			{
 				"id": "createCheckoutSession",
@@ -267,7 +221,8 @@ export const PLUGINS = [
 				],
 				"source": "/home/anthony/www/coinpayportal.com/app/src/app/api/rates/route.ts; live GET https://coinpayportal.com/api/rates?coin=BTC returned 200"
 			}
-		]
+		],
+		"connect": "/api/v1/coinpay/oauth/start?intent=connect&next=/secrets"
 	},
 	{
 		"id": "c0mpute",
