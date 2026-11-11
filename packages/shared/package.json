@@ -15,7 +15,8 @@
     "./lib/plugins/compile.js": "./lib/plugins/compile.js",
     "./lib/plugins/catalog.js": "./lib/plugins/catalog.js",
     "./lib/form-csrf.js": "./lib/form-csrf.js",
-    "./lib/coinpay-oauth.js": "./lib/coinpay-oauth.js"
+    "./lib/coinpay-oauth.js": "./lib/coinpay-oauth.js",
+    "./lib/logicsrc-grants.js": "./lib/logicsrc-grants.js"
   },
   "dependencies": {
     "@profullstack/libsql-pg": "^0.1.4",
