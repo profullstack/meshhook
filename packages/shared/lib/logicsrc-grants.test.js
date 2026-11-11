@@ -59,7 +59,7 @@ describe("keys from logicsrc", () => {
     await createVault(db, "u1", made.seal);
 
     const url = new URL(await startGrant(db, { userId: "u1", keys: "COINPAY_API_KEY", next: "/secrets", origin: "https://meshhook.com" }));
-    expect(url.origin + url.pathname).toBe("https://logicsrc.com/grant");
+    expect(url.origin + url.pathname).toBe("https://app.logicsrc.com/grant");
     expect(url.searchParams.get("origin")).toBe("https://meshhook.com");
     const nonce = url.searchParams.get("nonce");
 
