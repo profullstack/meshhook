@@ -115,6 +115,9 @@
 						? ` (${plugin.auth.hint})`
 						: ''}. Runs need the key vault unlocked for runs.
 				</small>
+				{#if credential.trim()}
+					<a class="connect" href={`/api/v1/logicsrc/grant/start?keys=${encodeURIComponent(credential.trim())}&next=/secrets`} target="_blank" rel="noopener">Get {credential.trim()} from logicsrc →</a>
+				{/if}
 				{#if plugin.connect}
 					<a class="connect" href={plugin.connect} target="_blank" rel="noopener">Connect {plugin.name} →</a>
 				{/if}
