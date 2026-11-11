@@ -149,7 +149,7 @@
 				data: {
 					label: nodeData.label,
 					type: nodeData.type,
-					config: isLoopNode ? { items: '', description: '' } : {},
+					config: isLoopNode ? { items: '', description: '' } : structuredClone(nodeData.config ?? {}),
 					// Add container-specific properties for loop nodes
 					...(isLoopNode ? {
 						isContainer: true,

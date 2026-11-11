@@ -1,4 +1,5 @@
 <script>
+	import PluginNodeModal from './PluginNodeModal.svelte';
 	import HttpResponseViewer from './HttpResponseViewer.svelte';
 	import VariablePickerTemplate from './VariablePickerTemplate.svelte';
 	import TransformNodeModal from './TransformNodeModal.svelte';
@@ -301,6 +302,8 @@
 		{onExecuteWorkflow}
 		{isInsideLoop}
 	/>
+{:else if editedNode.data?.type === 'plugin'}
+	<PluginNodeModal {node} {onSave} {onCancel} {previousNodeOutput} />
 {:else if editedNode.data?.type === 'webhook'}
 	<!-- Use Webhook Modal with three-panel layout -->
 	<WebhookModal

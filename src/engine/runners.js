@@ -9,6 +9,7 @@ import { paidFetch } from '../lib/paid-fetch.js';
 import { XmlJsonTransformNode } from '../nodes/transform-xml-json.js';
 import { processTemplate } from '../../apps/web/src/lib/utils/template-processor.js';
 import { TRIGGER_KINDS, configOf, kindOf } from './graph.js';
+import { compilePluginCall, pluginOutput } from '@meshhook/shared/lib/plugins/compile.js';
 
 export class NodeError extends Error {
 	/**
@@ -35,7 +36,8 @@ const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
  * previews it), plus `$input`, `$trigger` and `$nodes.<id|label>`.
  */
 export function templateData(input, ctx = {}) {
-	const extra = { $input: input, $trigger: ctx.trigger ?? null, $nodes: ctx.nodes ?? {} };
+	// $secrets holds only the secrets this step named, opened for this step.
+	const extra = { $input: input, $trigger: ctx.trigger ?? null, $nodes: ctx.nodes ?? {}, $secrets: ctx.secrets ?? {} };
 	return isObj(input) ? { ...input, ...extra } : extra;
 }
 
@@ -245,6 +247,16 @@ export async function runLocal(node, input, ctx = {}) {
 	switch (kind) {
 		case 'httpCall':
 			return runHttp(config, input, ctx);
+		case 'plugin': {
+			let http;
+			try {
+				http = compilePluginCall(config);
+			} catch (err) {
+				throw new NodeError(err.message);
+			}
+			const r = await runHttp(http, input, ctx);
+			return { output: pluginOutput(r.output) };
+		}
 		case 'transform':
 			return runTransform(config, input);
 		case 'xmlJsonTransform':

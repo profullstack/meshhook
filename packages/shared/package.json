@@ -10,7 +10,10 @@
     "./lib/crypto.js": "./lib/crypto.js",
     "./lib/profile.js": "./lib/profile.js",
     "./lib/vault.js": "./lib/vault.js",
-    "./lib/operator-keys.js": "./lib/operator-keys.js"
+    "./lib/operator-keys.js": "./lib/operator-keys.js",
+    "./lib/user-keys.js": "./lib/user-keys.js",
+    "./lib/plugins/compile.js": "./lib/plugins/compile.js",
+    "./lib/plugins/catalog.js": "./lib/plugins/catalog.js"
   },
   "dependencies": {
     "@profullstack/libsql-pg": "^0.1.4",
