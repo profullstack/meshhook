@@ -16,7 +16,8 @@
 	let label = $state(node.data?.label ?? plugin?.name ?? 'App');
 	let actionId = $state(initial.action || plugin?.actions?.[0]?.id || '');
 	let params = $state({ ...(initial.params ?? {}) });
-	let credential = $state(initial.credential || (plugin ? defaultCredential(plugin) : ''));
+	let credential = $state(initial.credential ?? (plugin && !plugin.auth?.optional ? defaultCredential(plugin) : ''));
+	let baseUrl = $state(initial.baseUrl ?? '');
 	let error = $state('');
 
 	const action = $derived(plugin?.actions?.find((a) => a.id === actionId) ?? null);
@@ -24,6 +25,10 @@
 
 	function save() {
 		if (!plugin) return onCancel();
+		if (plugin.baseUrlEditable && plugin.baseUrlRequired && !baseUrl.trim()) {
+			error = 'Set the base URL of your instance';
+			return;
+		}
 		const missing = (action?.params ?? []).filter((p) => p.required && p.default === undefined && !String(params[p.name] ?? '').trim());
 		if (missing.length) {
 			error = `Required: ${missing.map((p) => p.label ?? p.name).join(', ')}`;
@@ -35,7 +40,14 @@
 		const clean = Object.fromEntries(Object.entries(params).filter(([k, v]) => keep.has(k) && v !== '' && v != null));
 		onSave({
 			...node,
-			data: { ...node.data, label, config: { plugin: plugin.id, action: actionId, params: clean, ...(needsKey ? { credential: credential.trim() } : {}) } }
+			data: { ...node.data, label, config: {
+					plugin: plugin.id,
+					action: actionId,
+					params: clean,
+					...(needsKey ? { credential: credential.trim() } : {}),
+					...(plugin.baseUrlEditable && baseUrl.trim() ? { baseUrl: baseUrl.trim() } : {})
+				}
+			}
 		});
 	}
 </script>
@@ -54,6 +66,11 @@
 
 			<label for="pl-label">Node label</label>
 			<input id="pl-label" type="text" bind:value={label} />
+
+			{#if plugin.baseUrlEditable}
+				<label for="pl-base">Base URL of your instance{#if plugin.baseUrlRequired}<span class="req">*</span>{/if}</label>
+				<input id="pl-base" type="text" bind:value={baseUrl} placeholder={plugin.baseUrl} />
+			{/if}
 
 			<label for="pl-action">Action</label>
 			<select id="pl-action" bind:value={actionId}>
@@ -91,7 +108,7 @@
 			{/if}
 
 			{#if needsKey}
-				<label for="pl-cred">API key secret</label>
+				<label for="pl-cred">API key secret{#if plugin.auth.optional}<span class="type">optional: reads work without a key</span>{/if}</label>
 				<input id="pl-cred" type="text" bind:value={credential} />
 				<small class="hint">
 					Name of a secret on the <a href="/secrets" target="_blank">Secrets page</a> holding your {plugin.name} key{plugin.auth.hint

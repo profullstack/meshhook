@@ -9,7 +9,7 @@ describe("step secrets", () => {
     const graph = { loopBody: (id) => (id === "L" ? [n("a", "httpCall", { headers: { "X-Key": "{{$secrets.INNER}}" } })] : []) };
     expect(secretNames(n("h", "httpCall", { url: "https://x.test/?k={{$secrets.Q}}" }), graph)).toEqual(["Q"]);
     expect(secretNames(loop, graph)).toEqual(["INNER"]);
-    expect(secretNames(n("p", "plugin", { plugin: "pitworld-ip", action: "myIp" }), graph)).toEqual([]);
+    expect(secretNames(n("p", "plugin", { plugin: "myip", action: "getIp" }), graph)).toEqual([]);
   });
 
   it("scrubs opened values from what is logged", () => {

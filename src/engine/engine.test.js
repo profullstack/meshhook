@@ -296,7 +296,7 @@ describe('plugin steps', () => {
 			seen.push({ url, init });
 			return jsonResponse(200, { ip: '203.0.113.9' });
 		};
-		const node = n('ip', 'plugin', { plugin: 'pitworld-ip', action: 'myIp', params: {} });
+		const node = n('ip', 'plugin', { plugin: 'myip', action: 'getIp', params: { format: 'json' } });
 		const r = await runLocal(node, {}, { fetch, secrets: {} });
 		expect(seen[0].url).toBe('https://my.ip.pit.world/?format=json');
 		expect(r.output).toEqual({ ip: '203.0.113.9', $status: 200 });
@@ -316,6 +316,6 @@ describe('plugin steps', () => {
 		await runLocal(node, {}, { fetch, secrets: { K: 'fixture-value' } });
 		expect(seen[0].Authorization).toBe('Bearer fixture-value');
 		expect(planRemote(node, {}, { secrets: { K: 'fixture-value' } }, {}).local).toMatch(/credentials/);
-		expect(planRemote(n('p', 'plugin', { plugin: 'pitworld-ip', action: 'myIp' }), {}, {}, {}).local).toMatch(/locally/);
+		expect(planRemote(n('p', 'plugin', { plugin: 'myip', action: 'getIp' }), {}, {}, {}).local).toMatch(/locally/);
 	});
 });

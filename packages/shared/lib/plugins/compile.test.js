@@ -21,7 +21,7 @@ describe("plugin catalog", () => {
         }
         // and every required param compiles once given a value
         const params = Object.fromEntries(a.params.map((q) => [q.name, q.type === "number" ? "1" : q.type === "json" ? "{}" : q.type === "boolean" ? "true" : "x"]));
-        const req = compilePluginCall({ plugin: p.id, action: a.id, params });
+        const req = compilePluginCall({ plugin: p.id, action: a.id, params, ...(p.baseUrlEditable ? { baseUrl: p.baseUrl } : {}) });
         expect(req.url.startsWith(p.baseUrl.replace(/\/$/, ""))).toBe(true);
         expect(req.url).not.toMatch(/\{[^}]+\}/);
       }
@@ -76,6 +76,22 @@ describe("compilePluginCall", () => {
     expect(() => compilePluginCall({ plugin: "demo", action: "nope" })).toThrow(/pick an action/);
     expect(() => compilePluginCall({ plugin: "nope" })).toThrow(/unknown plugin/);
     expect(() => compilePluginCall({ plugin: "demo", action: "create", credential: "a b", params: { list: "l", amount: 1 } })).toThrow(/valid secret name/);
+  });
+
+  it("optional keys: keyless unless the node names a secret", () => {
+    const keyless = compilePluginCall({ plugin: "rssamp", action: "search", params: { q: "x" } });
+    expect(keyless.secretsUsed).toEqual([]);
+    expect(keyless.headers.Authorization).toBeUndefined();
+    const keyed = compilePluginCall({ plugin: "rssamp", action: "search", credential: "RSSAMP_API_KEY", params: { q: "x" } });
+    expect(keyed.headers.Authorization).toBe("Bearer {{$secrets.RSSAMP_API_KEY}}");
+  });
+
+  it("header auth and self-hosted base URLs", () => {
+    const sms = compilePluginCall({ plugin: "smshub", action: "sendSms", params: { to: "+15555550100", message: "hi" } });
+    expect(sms.headers["X-API-Key"]).toBe("{{$secrets.SMSHUB_API_KEY}}");
+    expect(() => compilePluginCall({ plugin: "myna", action: "post", params: { text: "hi" } })).toThrow(/base URL/);
+    const myna = compilePluginCall({ plugin: "myna", action: "post", baseUrl: "https://myna.mine.test/", params: { text: "hi" } });
+    expect(myna.url).toBe("https://myna.mine.test/v1/post");
   });
 
   it("names a default secret and shapes the output", () => {

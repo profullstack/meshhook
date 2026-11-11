@@ -47,6 +47,16 @@ function coerce(value, type) {
 
 export class PluginConfigError extends Error {}
 
+/** Self-hosted services (auth.baseUrlEditable) take the node's base URL. */
+function baseUrlOf(plugin, config) {
+	const custom = plugin.baseUrlEditable && !isBlank(config.baseUrl) ? String(config.baseUrl).trim() : null;
+	if (custom && !/^https?:\/\/[^/]/i.test(custom)) throw new PluginConfigError(`${plugin.name}: base URL must start with http(s)://`);
+	if (plugin.baseUrlEditable && !custom && plugin.baseUrlRequired) {
+		throw new PluginConfigError(`${plugin.name}: set the base URL of your instance`);
+	}
+	return (custom ?? plugin.baseUrl).replace(/\/$/, '');
+}
+
 /**
  * Plugin node config -> httpCall config. Throws PluginConfigError with a
  * message fit for the run log when the node is incomplete.
@@ -96,8 +106,11 @@ export function compilePluginCall(config = {}) {
 	}
 
 	const auth = plugin.auth ?? { type: 'none' };
+	// auth.optional: the service reads without a key; a key is sent only when
+	// the node names one (writes, higher limits).
+	const keyless = auth.type === 'none' || (auth.optional && isBlank(config.credential));
 	const credential = isBlank(config.credential) ? defaultCredential(plugin) : String(config.credential).trim();
-	if (auth.type !== 'none') {
+	if (!keyless) {
 		if (!/^[A-Za-z0-9_.-]+$/.test(credential)) throw new PluginConfigError(`${plugin.name}: "${credential}" is not a valid secret name`);
 		const ref = `{{$secrets.${credential}}}`;
 		if (auth.type === 'query') query[auth.param] = ref;
@@ -108,13 +121,13 @@ export function compilePluginCall(config = {}) {
 	const sendsBody = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
 	return {
 		method,
-		url: plugin.baseUrl.replace(/\/$/, '') + path,
+		url: baseUrlOf(plugin, config) + path,
 		headers,
 		queryParams: Object.keys(query).length ? query : undefined,
 		// An explicit empty object stops httpCall from forwarding the node input.
 		body: sendsBody ? (Object.keys(body).length ? body : method === 'DELETE' ? undefined : {}) : undefined,
 		timeout: action.timeout ?? 30_000,
-		secretsUsed: auth.type === 'none' ? [] : [credential]
+		secretsUsed: keyless ? [] : [credential]
 	};
 }
 
@@ -127,5 +140,5 @@ export function pluginOutput(httpOut) {
 
 /** What the builder's palette and config form need (no functions, JSON-safe). */
 export function pluginCatalog() {
-	return PLUGINS.map((p) => ({ ...p, credential: defaultCredential(p) }));
+	return PLUGINS.map((p) => ({ ...p, credential: p.auth?.optional ? '' : defaultCredential(p) }));
 }
