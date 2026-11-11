@@ -14,6 +14,10 @@ export default {
 	plugins: [
 		sveltekit({
 			adapter: adapter(),
+			// Kit's cross-site form check is global; webhook senders (Twilio,
+			// Slack, form posts) must reach /api/hooks/*. The same check is
+			// re-applied to every other route in hooks.server.js (formCsrf).
+			csrf: { trustedOrigins: ['*'] },
 			alias: {
 				$lib: './src/lib',
 				$components: './src/lib/components',
