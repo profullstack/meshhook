@@ -50,6 +50,48 @@
 		<!-- CrawlProof stats -->
 		<script data-site="32fc2327-2a83-4401-802a-371df222f679" src="https://crawlproof.com/stats.js" async></script>
 
+		<!-- WebMCP (@profullstack/webmcp): site_info, open_page, and the signed-in person's
+		     workflows and runs as read-only tools for the AI agent in their browser. -->
+		<script type="module" data-webmcp src="https://cdn.jsdelivr.net/npm/@profullstack/webmcp@0/src/embed.js"
+			data-pages='{"workflows":"/workflows","runs":"/runs","secrets":"/secrets","sign_in":"/auth/login"}'></script>
+		<script type="module">
+			const W = window.ProfullstackWebMCP;
+			const get = async (path) => {
+				const r = await fetch(path, { credentials: 'same-origin', headers: { accept: 'application/json' } });
+				if (r.status === 401) return { error: 'Sign in to meshhook first (/auth/login).' };
+				return r.json();
+			};
+			if (W?.supported) {
+				W.registerTools([
+					{
+						name: 'list_workflows',
+						description: "List the signed-in person's meshhook workflows (id, name, trigger, status).",
+						inputSchema: { type: 'object', properties: {} },
+						annotations: { readOnlyHint: true },
+						execute: () => get('/api/workflows')
+					},
+					{
+						name: 'list_runs',
+						description: "Recent workflow runs for the signed-in person, newest first. Optional status filter (e.g. failed, completed, running).",
+						inputSchema: {
+							type: 'object',
+							properties: {
+								status: { type: 'string', description: 'Only runs in this status' },
+								limit: { type: 'integer', minimum: 1, maximum: 200, description: 'Max runs (default 50)' }
+							}
+						},
+						annotations: { readOnlyHint: true },
+						execute: ({ status, limit } = {}) => {
+							const q = new URLSearchParams();
+							if (status) q.set('status', status);
+							if (limit) q.set('limit', String(limit));
+							return get('/api/runs' + (q.size ? '?' + q : ''));
+						}
+					}
+				]);
+			}
+		</script>
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
