@@ -15,7 +15,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { SEALED_PREFIX, getVault } from "./vault.js";
 import { ensureDefaultProject } from "./authz.js";
 
-export const LOGICSRC_URL = (process.env.LOGICSRC_URL ?? "https://logicsrc.com").replace(/\/$/, "");
+export const LOGICSRC_URL = (process.env.LOGICSRC_URL ?? "https://app.logicsrc.com").replace(/\/$/, "");
 const TTL_MS = 30 * 60_000;
 const KEY_NAME = /^[A-Za-z_][A-Za-z0-9_.-]{0,127}$/;
 
