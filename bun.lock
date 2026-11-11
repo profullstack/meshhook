@@ -67,6 +67,7 @@
       "name": "@meshhook/shared",
       "version": "1.0.0",
       "dependencies": {
+        "@profullstack/key-grants": "0.1.0",
         "@profullstack/libsql-pg": "^0.1.4",
         "@profullstack/profile": "0.1.6",
         "@profullstack/sealed-secrets": "0.1.0",
@@ -231,6 +232,8 @@
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 
     "@profullstack/footer": ["@profullstack/footer@0.4.0", "", { "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"], "bin": { "profullstack-footer": "bin/profullstack-footer.js" } }, "sha512-EJZnMUQmWDi9Gzx6BAjogloeaPFFSSCHtHJuC9dsXiOz8M87hfn6Z+Zx9AMYWk8s6xemPrPlkXKGB3PZugkcEA=="],
+
+    "@profullstack/key-grants": ["@profullstack/key-grants@0.1.0", "", {}, "sha512-Ncv+1anGx7G6kMzby1Pz42FpQ6etLrwESe4VvI2KIBIRM9VVtSbKM2HtDh//ZONYD5Cv+7fmsaAI5tDv5VW7qA=="],
 
     "@profullstack/keys": ["@profullstack/keys@0.1.0", "", {}, "sha512-Vys47LvS5ivhdZu4SYOxh9Le3DEmWhjP0+CtrU45RhXAbY0ZFG/2Dk9V1bIIUGDp8UWMJqctvUD21JrNjfh04w=="],
 
