@@ -17,7 +17,7 @@
     "@profullstack/libsql-pg": "^0.1.4",
     "@profullstack/profile": "0.1.6",
     "@profullstack/sealed-secrets": "0.1.0",
-    "@profullstack/x402-gateway": "^0.18.0",
+    "@profullstack/x402-gateway": "^0.18.1",
     "@xyflow/svelte": "^1.7.0",
     "jmespath": "^0.16.0",
     "undici": "^8.12.3"
