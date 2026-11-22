@@ -31,6 +31,10 @@ describe('crawl gate', () => {
     expect(await ask('/', { ...CHROME, cookie: 'meshhook_session=x' })).toBeNull();
     expect(await ask('/api/health', { 'user-agent': GPT })).toBeNull();
   });
+  it('lets GPTBot read robots.txt and the sitemap (x402-gateway 0.18.4)', async () => {
+    expect(await ask('/robots.txt', { 'user-agent': GPT })).toBeNull();
+    expect(await ask('/sitemap.xml', { 'user-agent': GPT })).toBeNull();
+  });
 });
 
 describe('a forged session cookie (x402-gateway 0.18.3 sessionCookie)', () => {
