@@ -13,6 +13,8 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 export const COINPAY_BASE = (process.env.COINPAY_OAUTH_BASE ?? "https://coinpayportal.com").replace(/\/$/, "");
+/** Names MeshHook to CoinPay, whose logs and throttle otherwise see one dev2 IP for every fleet app. */
+export const COINPAY_UA = process.env.COINPAY_USER_AGENT ?? "meshhook.com (+https://meshhook.com)";
 export const CALLBACK_PATH = "/api/v1/coinpay/oauth/callback";
 export const CONNECT_SECRET = "COINPAY_CONNECT";
 export const LOGIN_SCOPE = "openid profile email";
@@ -68,6 +70,7 @@ async function tokenRequest(cfg, params, fetchImpl = fetch) {
     headers: {
       "content-type": "application/x-www-form-urlencoded",
       accept: "application/json",
+      "user-agent": COINPAY_UA,
       // client_secret_basic: id and secret form-encoded, then base64 (RFC 6749 2.3.1)
       authorization: `Basic ${Buffer.from(`${encodeURIComponent(cfg.clientId)}:${encodeURIComponent(cfg.clientSecret)}`).toString("base64")}`,
     },
@@ -94,7 +97,7 @@ export function refreshTokens(cfg, refreshToken, fetchImpl) {
 
 export async function userinfo(accessToken, fetchImpl = fetch) {
   const res = await fetchImpl(`${COINPAY_BASE}/api/oauth/userinfo`, {
-    headers: { authorization: `Bearer ${accessToken}`, accept: "application/json" },
+    headers: { authorization: `Bearer ${accessToken}`, accept: "application/json", "user-agent": COINPAY_UA },
     signal: AbortSignal.timeout(15_000),
   });
   const body = await res.json().catch(() => ({}));
