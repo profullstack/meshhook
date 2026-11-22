@@ -1,2 +1,5 @@
 User-agent: *
 Allow: /*
+
+Sitemap: https://meshhook.com/sitemap.xml
+Sitemap: https://meshhook.com/blog/sitemap.xml
