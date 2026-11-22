@@ -20,7 +20,10 @@ export function createCrawlGate(env = process.env) {
 		payTo,
 		contact: 'mailto:anthony@profullstack.com',
 		openPaths: ['/api/', '/llms.txt'],
-		exempt: (request) => /(?:^|;\s*)meshhook_session=/.test(request.headers.get('cookie') ?? '')
+		// A session cookie that is merely present is a hint, never a pass (x402-gateway
+		// 0.18.3): it spares a signed-in reader's odd browser string, but GPTBot with a
+		// made-up cookie is still charged. It used to be `exempt`, which let it read free.
+		sessionCookie: 'meshhook_session'
 	});
 }
 

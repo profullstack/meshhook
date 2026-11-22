@@ -28,7 +28,13 @@ describe('crawl gate', () => {
   });
   it('passes browsers, signed-in users and the API', async () => {
     expect(await ask('/', CHROME)).toBeNull();
-    expect(await ask('/', { 'user-agent': GPT, cookie: 'meshhook_session=x' })).toBeNull();
+    expect(await ask('/', { ...CHROME, cookie: 'meshhook_session=x' })).toBeNull();
     expect(await ask('/api/health', { 'user-agent': GPT })).toBeNull();
+  });
+});
+
+describe('a forged session cookie (x402-gateway 0.18.3 sessionCookie)', () => {
+  it('does not exempt GPTBot', async () => {
+    expect((await ask('/', { 'user-agent': GPT, cookie: 'meshhook_session=forged' }))?.status).toBe(402);
   });
 });
